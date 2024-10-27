@@ -4,32 +4,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AdventOfCode
-{
-    public class Day2
-    {
-        public static void Solve()
-        {
+namespace AdventOfCode {
+    public class Day2 {
+        public static void Solve() {
             int part1 = 0;
             int part2 = 0;
             var lines = File.ReadAllLines("day2input.txt");
-            foreach (var line in lines)
-            {
+            foreach (var line in lines) {
                 var spl = line.Split(':');
                 int gameID = int.Parse(spl[0].Substring(5, spl[0].Length - 5));
                 var pulls = spl[1].Split(';');
                 int redMax = 0;
                 int greenMax = 0;
                 int blueMax = 0;
-                foreach (var pull in pulls)
-                {
+                foreach (var pull in pulls) {
                     var colors = pull.Split(',');
-                    foreach (var color in colors)
-                    {
+                    foreach (var color in colors) {
                         var colnum = color.Trim().Split(" ");
                         int num = int.Parse(colnum[0]);
-                        switch (colnum[1])
-                        {
+                        switch (colnum[1]) {
                             case "red":
                                 redMax = Math.Max(num, redMax);
                                 break;
