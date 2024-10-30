@@ -24,26 +24,54 @@ public class Day8
 		Dictionary<string, (string, string)> nodes;
 		char[] lr;
 		ReadInput(out nodes, out lr);
-        List<Solver> solvers = new List<Solver>();
+        List<long> stepsToReach = new List<long>();
         foreach (var k in nodes.Keys.Where(x => x.EndsWith("A"))) {
-            solvers.Add(new Solver(k, nodes));
+            var s = new Solver(k, nodes, lr);
+            stepsToReach.Add(s.CycleLength);
         }
-		int actLr = 0;
-		int result = 0;
-		while (true) { 
-            //seems brute force will not work here..
-            bool solved = true;
-            foreach (var solver in solvers) { 
-                if (!solver.MoveNext(lr[actLr] == 'L')) solved = false;
-            }
-			result++;
-            actLr++;
-            if (actLr >= lr.Length) actLr = 0;
-            if (solved) break;
-		}
-		Console.WriteLine(result);
-	}
 
+		Console.WriteLine(LCM(stepsToReach.ToArray()));
+	}
+    static long LCM(long[] numbers)
+    {
+        return numbers.Aggregate(lcm);
+    }
+    static long lcm(long a, long b)
+    {
+        return Math.Abs(a * b) / GCD(a, b);
+    }
+    static long GCD(long a, long b)
+    {
+        return b == 0 ? a : GCD(b, a % b);
+    }
+
+    public class Solver {
+        //seems brute force will not work here..
+        //we are going in cycles, so we can identify for each start the number of steps it takes to reach Z 
+        //we never go back to A, so we can start counting from the first step after A
+        private string node { get; set; } = "";
+        Dictionary<string, (string, string)> nodes;
+        public int CycleLength { get; private set; }
+        public Solver(string node, Dictionary<string, (string, string)> nodes, char[] lr) {
+            Console.Write($"{node}:");
+            this.node = node;
+            this.nodes = nodes;
+            int actLr = 0;
+            CycleLength = 1;
+            while (!MoveNext(lr[actLr] == 'L')) { 
+                actLr++;
+                CycleLength++;
+                if (actLr >= lr.Length) actLr = 0;
+            }
+            Console.WriteLine($"{CycleLength}");
+        }
+        private bool MoveNext(bool isLeft) {
+
+			var next = nodes[node];
+			node = isLeft ? next.Item1 : next.Item2;
+            return node.EndsWith("Z");
+        }
+    }
 
 	private static void ReadInput(out Dictionary<string, (string, string)> nodes, out char[] lr) {
         var lines = File.ReadAllLines("testinput.txt");
@@ -61,10 +89,10 @@ public class Day8
 		}
 	}
 
-    public class Solver {
+    public class BureForceSolver {
         private string node { get; set; } = "";
         Dictionary<string, (string, string)> nodes;
-        public Solver(string node, Dictionary<string, (string, string)> nodes) {
+        public BureForceSolver(string node, Dictionary<string, (string, string)> nodes) {
             this.node = node;
             this.nodes = nodes;
         }
