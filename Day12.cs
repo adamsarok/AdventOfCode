@@ -13,7 +13,7 @@ public class Day12 {
         //     result += solver.Solutions.Count;
         // });
         foreach (var line in lines) { //current best is 1590ms 
-            var solver = new Solver(line.Split(' '), false);
+            var solver = new Solver(line.Split(' '), 5);
             result += solver.Solutions.Count;
         }
         sw.Stop();
@@ -31,14 +31,12 @@ public class Day12 {
     }
     public class Solver {
         public HashSet<string> Solutions = new HashSet<string>();
-        List<int> conditions;
-        string line;
-        public Solver(string[] inputs, bool isPart2) {
-            line = inputs[0];
-            conditions = GetConditions(inputs[1]);
-            if (isPart2) {
-                line = String.Concat(Enumerable.Repeat(line, 5));
-                for (int i = 0; i < 5; i++) conditions.AddRange(conditions);;
+        List<int> conditions = new List<int>();
+        string line = "";
+        public Solver(string[] inputs, int repeat) {
+            for (int i = 0; i < repeat; i++) {
+                line += inputs[0];
+                conditions.AddRange(GetConditions(inputs[1]));
             }
             Solve();
         }
@@ -91,7 +89,7 @@ public class Day12 {
         HashSet<string> checkedAlready = new HashSet<string>();
 
         private enum Conditions { Satisfied, Overflow, Underflow }
-        private Conditions CheckLine(string line, List<int> conditions) {
+        private Conditions CheckLine(string line, List<int> conditions) { //TODO: if we would pass the last counts to this method, we would be done?
             //Console.Write($"Checking:{line}, {string.Join(",", conditions)} ");
             int actCond = 0;
             int actSprings = 0;
