@@ -25,7 +25,7 @@
             //Day13.SolvePart2();
 
 
-            Day25.SolvePart1();
+            Day25.Main.SolvePart1();
         }
     }
 }
