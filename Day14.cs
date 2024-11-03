@@ -7,50 +7,75 @@ public class Day14 {
     //this is such a cool task!
     const char ROLLING = 'O';
     const char EMPTY = '.';
-    const char CUBE = '#';
     public enum Directions { N, E, S, W }
     public static void SolvePart1() {
 		List<char[]> lines = ReadInput();
 		Roll(lines, Directions.N);
 		Console.WriteLine("After:");
 		WriteState(lines);
-		PrintResult(lines);
+		Console.WriteLine(GetResult(lines));
 	}
 
-	private static void PrintResult(List<char[]> lines) {
+	private static int GetResult(List<char[]> lines) {
 		int result = 0;
 		int mul = lines.Count;
 		foreach (var l in lines) {
-			result += mul * (l.Where(x => x == ROLLING).Count());
+			result += mul * l.Where(x => x == ROLLING).Count();
 			mul--;
 		}
-		Console.WriteLine($"Load: {result}");
+		return result;
 	}
 
 	public static void SolvePart2() {
         //N W S E
         //1000000000 cycles
-        //TODO: this wayyyyyyyyyyyyyyyy too slow
       	List<char[]> lines = ReadInput();
-        Stopwatch sw = Stopwatch.StartNew();
-        long maxIter = 1000000000;
-        long step = maxIter / 100;
-        for (long i = 0; i < maxIter; i++) {
-            if (i % (step) == 0) { 
-                Console.WriteLine($"{Math.Round((float)i / (float)maxIter * 100)} %");
-            }
+        var cl = new CycleDetector();
+        for (long i = 0; i < 1000; i++) {
             Roll(lines, Directions.N);
             Roll(lines, Directions.W);
             Roll(lines, Directions.S);
             Roll(lines, Directions.E);
+            var sum = GetResult(lines);
+            var r = cl.Detect(sum);
+            Console.WriteLine($"Iteration: {i} => {sum}");
+            if (r > 0) {
+                bool found = true;
+                //lazy to program whats left:
+                //1. this gets us the iteration cycle length & iteration cycle start
+                //2. result is index N in cycle = (1000000000 - cycle start) % cycle length 
+                //3. find element N in cycle
+            }
         }
-        sw.Stop();
-		Console.WriteLine($"Rolled in: {sw.ElapsedMilliseconds} ms");
-		WriteState(lines);
-		PrintResult(lines);
     }
 
-    //326 ms
+    class CycleDetector {
+        int length = 0;
+        int varalueToFindCL = 0;
+        static HashSet<int> results = new HashSet<int>();
+        int sameCycles = 0;
+        int lastCycle = 0;
+        public int Detect(int val) {
+            length++;
+            if (!results.Contains(val)) {
+                results.Add(val);
+            } else {
+                if (varalueToFindCL == 0) { 
+                    varalueToFindCL = val;
+                    length = 0;
+                } else if (val == varalueToFindCL) {
+                    if (lastCycle == length) { 
+                        sameCycles++;
+                        if (sameCycles >= 10) return lastCycle;
+                    }
+                    lastCycle = length;
+                    length = 0;
+                } 
+            }
+            return -1;
+        }
+    }
+
     private static void Roll(List<char[]> lines, Directions dir) {
         switch (dir) {
             case Directions.N:
