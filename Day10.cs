@@ -122,8 +122,6 @@ public class Day10 {
                 throw new NotImplementedException();
         }
     }
-
-
     struct Step {
         public int x;
         public int y;
@@ -136,98 +134,6 @@ public class Day10 {
             this.length = length;
         }
     }
-
-    //DFS is not correct as we dont stop at the correct position
-    public static void SolveDFS() {
-        input = ReadInput();
-        for (int y = 0; y < input.Length; y++) {
-            var row = input[y];
-            for (int x = 0; x < row.Length; x++) {
-                if (row[x] == 'S') {
-                    visitedCoords.Add(x, new List<int>() { y });
-                    VisitDFS(x + 1, y, Directions.West, 1);
-                    VisitDFS(x - 1, y, Directions.East, 1);
-                    VisitDFS(x, y + 1, Directions.North, 1);
-                    VisitDFS(x, y - 1, Directions.South, 1);
-                }
-            }
-        }
-        Console.WriteLine(result);
-    }
-    private static void VisitDFS(int x, int y, Directions comingFrom, int length) {
-        if (!CanVisit(x, y)) return;
-        var next = input[y][x];
-        Console.WriteLine($"[{x},{y}]={next} thisLength={length}");
-        switch (next) {
-            case '.':
-            case 'S':
-                return;
-            case '-':
-                switch (comingFrom) {
-                    case Directions.East:
-                        VisitDFS(x - 1, y, Directions.East, length + 1);
-                        break;
-                    case Directions.West:
-                        VisitDFS(x + 1, y, Directions.West, length + 1);
-                        break;
-                }
-                break;
-            case '|':
-                switch (comingFrom) {
-                    case Directions.North:
-                        VisitDFS(x, y + 1, Directions.North, length + 1);
-                        break;
-                    case Directions.South:
-                        VisitDFS(x, y - 1, Directions.South, length + 1);
-                        break;
-                }
-                break;
-            case 'J':
-                switch (comingFrom) {
-                    case Directions.North:
-                        VisitDFS(x - 1, y, Directions.East, length + 1);
-                        break;
-                    case Directions.West:
-                        VisitDFS(x, y - 1, Directions.South, length + 1);
-                        break;
-                }
-                break;
-            case 'L':
-                switch (comingFrom) {
-                    case Directions.North:
-                        VisitDFS(x + 1, y, Directions.West, length + 1);
-                        break;
-                    case Directions.East:
-                        VisitDFS(x, y - 1, Directions.South, length + 1);
-                        break;
-                }
-                break;
-            case '7':
-                switch (comingFrom) {
-                    case Directions.South:
-                        VisitDFS(x - 1, y, Directions.East, length + 1);
-                        break;
-                    case Directions.West:
-                        VisitDFS(x, y + 1, Directions.North, length + 1);
-                        break;
-                }
-                break;
-            case 'F':
-                switch (comingFrom) {
-                    case Directions.South:
-                        VisitDFS(x + 1, y, Directions.West, length + 1);
-                        break;
-                    case Directions.East:
-                        VisitDFS(x, y + 1, Directions.North, length + 1);
-                        break;
-                }
-                break;
-            default:
-                throw new NotImplementedException();
-        }
-        result = Math.Max(result, length);
-    }
-
     private static bool CanVisit(int x, int y) {
         if (y < 0 || y >= input.Length
             || x < 0 || x >= input[y].Length) {
@@ -247,7 +153,6 @@ public class Day10 {
         }
         l.Add(y);
     }
-
     private static char[][] ReadInput() {
         var lines = File.ReadAllLines("testinput.txt");
         char[][] result = new char[lines.Length][];
