@@ -2,21 +2,14 @@
 namespace AdventOfCode;
 
 public class Day5 {
-    public class Map {
-        public Map(long sourceStart, long destStart, long range) {
-            SourceStart = sourceStart;
-            DestStart = destStart;
-            Range = range;
-        }
+    public class Map(long sourceStart, long destStart, long range) {
         public long GetMapValue(long source) {
-            if (source < SourceStart || source > SourceEnd) return -1;
-            return DestStart + (source - SourceStart);
+            if (source < sourceStart || source > SourceEnd) return -1;
+            return destStart + (source - sourceStart);
         }
-        public long SourceStart { get; set; }
-        public long SourceEnd => SourceStart + Range - 1;
-        public long DestEnd => DestStart + Range - 1;
-        public long DestStart { get; set; }
-        public long Range { get; set; }
+        public long SourceStart => sourceStart;
+        public long SourceEnd => sourceStart + range - 1;
+        public long DestEnd => destStart + range - 1;
     }
     public class Level {
         public string Name { get; set; }
@@ -171,18 +164,5 @@ public class Day5 {
         }
 
         return result;
-    }
-
-    private class SeedRange() {
-        public long Start;
-        public long End;
-        public bool InRange(long val) { return val >= Start && val <= End; }
-        public static List<SeedRange> GetSeeds(List<long> seebs) {
-            var result = new List<SeedRange>();
-            for (int s = 0; s <= seebs.Count / 2; s += 2) {
-                result.Add(new SeedRange() { Start = seebs[s], End = seebs[s] + seebs[s + 1] });
-            }
-            return result;
-        }
     }
 }
