@@ -28,6 +28,7 @@
             //Day15.SolvePart1();
             //Day15.SolvePart2();
             Day16.SolvePart1();
+            Day16.SolvePart2();
             //Day25.Main.SolvePart1();
         }
     }
