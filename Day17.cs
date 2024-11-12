@@ -89,7 +89,7 @@ public class Day17 {
 		//             if (x == next.x && y == next.y) {
 		//                 Console.ForegroundColor = ConsoleColor.Yellow;
 		//                 Console.Write("*");
-		//             } else if (visited[y, x]) {
+		//             } else if (visited[y, x] != Directions.None) {
 		//                 Console.ForegroundColor = ConsoleColor.Green;
 		//                 Console.Write($"x"); //{distances[y,x]}");
 		//             } else {
