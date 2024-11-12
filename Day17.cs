@@ -1,88 +1,109 @@
 using System;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
 
 namespace AdventOfCode;
 
 public class Day17 {
 
-    //1. starting step = no heat loss
-    //2. can't go more than 3 steps in straight line
-    //3. options are go straight, left, right
-    //4. find minimal heat loss going from top left to bottom right corner
     public static void SolvePart1() {
-        var input = File.ReadAllLines("testinput.txt");
-        //1. starting step = no heat loss
-        //2. can't go more than 3 steps in straight line
-        //3. options are go straight, left, right
-        //4. find minimal heat loss going from top left to bottom right corner
-
-        //this is a graph we can use Dijkstra
-        //first try without the 3 step rule?
-        //implement with priority queue
+        char[][] input;
+        var file = File.ReadAllLines("testinput.txt");
+        input = new char[file.Length][];
+        for (int i = 0; i < file.Length; i++) {
+            input[i] = file[i].ToCharArray();
+        }
         var d = new Dijkstra(input);
         d.Solve();
     }
-    public class Dijkstra(string[] input) {
+    public class Dijkstra(char[][] input) {
         int[,] distances;
-        bool[,] visited;
+
+        // we have to store visited as visited FROM a direction, otherwose we would mark the 2nd row as visited
+        // starting from the left and we could not turn back (from example input)
+        // 456467998645v
+        // 12246868655<v
+        // 25465488877v5
+        // 43226746555v>
+        Directions[,] visited;
+
+        [Flags]
+        enum Directions { None = 0, 
+            Left = 1, 
+            Right = 1 << 1, 
+            Up = 1 << 2,
+            Down = 1 << 3
+        }
         PriorityQueue<Vertex, int> priorityQueue;
-        enum Directions { Left, Right, Up, Down, None }
         record struct Vertex(int x, int y, int cost, Directions lastDir, int dirCount) { }
         public void Solve() {
-            distances = new int[input.Length, input[0].Length];
-            visited = new bool[input.Length, input[0].Length];
-            for (int x = 0; x < input[0].Length; x++) {
-                for (int y = 0; y < input.Length; y++) {
-                    distances[y, x] = int.MaxValue;
-                }
-            }
-            priorityQueue = new PriorityQueue<Vertex, int>();
-            priorityQueue.Enqueue(new Vertex(0, 0, 0, Directions.None, 0), 0);
-            long cnt = 0;
-            while (priorityQueue.Count > 0) {
-                cnt++;
-                var next = priorityQueue.Dequeue();
-                visited[next.y, next.x] = true;
-                //Console.WriteLine($"Visiting {next.x}:{next.y}");
-                //if (IsDone(ref cnt)) break;
-                if (next.lastDir != Directions.Down) TryQueue(next, Directions.Up);
-                if (next.lastDir != Directions.Up) TryQueue(next, Directions.Down);
-                if (next.lastDir != Directions.Right) TryQueue(next, Directions.Left);
-                if (next.lastDir != Directions.Left) TryQueue(next, Directions.Right);
-            }
-            for (int y = 0; y < input.Length; ++y) {
-                for (int x = 0; x < input[0].Length; x++) {
-                    Console.Write(distances[y, x] + " ");
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine(distances[input.Length - 1, input[0].Length - 1]);
-            Console.WriteLine($"in steps: {cnt}");
-        }
+            //input[0][0] = '0';
+			distances = new int[input.Length, input[0].Length];
+			visited = new Directions[input.Length, input[0].Length];
+			for (int x = 0; x < input[0].Length; x++) {
+				for (int y = 0; y < input.Length; y++) {
+					distances[y, x] = int.MaxValue;
+				}
+			}
+			priorityQueue = new PriorityQueue<Vertex, int>();
+			priorityQueue.Enqueue(new Vertex(0, 0, 0, Directions.None, 0), 0);
+			long cnt = 0;
+			while (priorityQueue.Count > 0) {
+				cnt++;
+				var next = priorityQueue.Dequeue();
+				if (next.lastDir != Directions.None && visited[next.y, next.x].HasFlag(next.lastDir)) continue;
+				//PrintOut(next);
+				visited[next.y, next.x] = visited[next.y, next.x] | next.lastDir;
 
-        private bool IsDone(ref int cnt) {
-            //works on small input
-            //something is not right because we go extremely slow on the big input
-            //queue becomes gigantic. up until 40 rows we are okay, if the input is larger than this we slow down
-            //I think we can still turn back, that is the problem?
-            //when I try to optimize, I don't get the corret result... I'm missing something
-            cnt++;
-            for (int y = 0; y < input.Length; y++) {
-                for (int x = 0; x < input[0].Length; x++) {
-                    if (!visited[y, x]) {
-                        if (cnt % 1000000 == 0) {
-                            Console.WriteLine($"{x},{y}");
-                            cnt = 0;
-                        }
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
+                //TODO: we now finish in OK time, but something is still not right
+                //on the testinput we get 104 instead of 102 :(
 
-        private void TryQueue(Vertex prev, Directions dir) {
+				//Console.WriteLine($"Visiting {next.x}:{next.y}");
+				//if (IsDone(ref cnt)) break;
+				if (next.lastDir != Directions.Down) TryQueue(next, Directions.Up);
+				if (next.lastDir != Directions.Up) TryQueue(next, Directions.Down);
+				if (next.lastDir != Directions.Right) TryQueue(next, Directions.Left);
+				if (next.lastDir != Directions.Left) TryQueue(next, Directions.Right);
+			}
+			PrintResult(cnt);
+		}
+
+		private void PrintResult(long cnt) {
+			var result = distances[input.Length - 1, input[0].Length - 1];
+			var l = result.ToString().Length + 1;
+			for (int y = 0; y < input.Length; ++y) {
+				for (int x = 0; x < input[0].Length; x++) {
+					var d = distances[y, x].ToString();
+					Console.Write(d.PadRight(l, ' '));
+				}
+				Console.WriteLine();
+			}
+			Console.WriteLine(distances[input.Length - 1, input[0].Length - 1]);
+			Console.WriteLine($"in steps: {cnt}");
+		}
+
+		// private void PrintOut(Vertex next) {
+		//     //Console.Clear();
+		//     Console.WriteLine($"");
+		//     Console.WriteLine($"");
+		// 	for (int y = 0; y < input.Length; y++) {
+		//         for (int x = 0; x < input[0].Length; x++) {
+		//             if (x == next.x && y == next.y) {
+		//                 Console.ForegroundColor = ConsoleColor.Yellow;
+		//                 Console.Write("*");
+		//             } else if (visited[y, x]) {
+		//                 Console.ForegroundColor = ConsoleColor.Green;
+		//                 Console.Write($"x"); //{distances[y,x]}");
+		//             } else {
+		//                 Console.ForegroundColor = ConsoleColor.White;
+		//                 Console.Write($"{input[y][x]}");
+		//             }
+		//         }
+		//         Console.WriteLine($"");
+		//     }
+		//     Thread.Sleep(50);
+		// }
+
+
+		private void TryQueue(Vertex prev, Directions dir) {
             int x = prev.x, y = prev.y;
             int dirCount = prev.lastDir == dir ? prev.dirCount + 1 : 1;
             if (dirCount > 3) {
@@ -106,7 +127,7 @@ public class Day17 {
                 x >= input[0].Length || y >= input.Length) return;
             var costTo = int.Parse((input[y][x]).ToString()) + prev.cost;
             if (costTo < distances[y, x]) distances[y, x] = costTo;
-            if (visited[y, x]) return;
+            // if (visited[y, x] != Directions.None) return;
             priorityQueue.Enqueue(new Vertex(x, y, costTo, dir, dirCount), costTo);
         }
     }
