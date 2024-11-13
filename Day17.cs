@@ -5,16 +5,26 @@ namespace AdventOfCode;
 public class Day17 {
 
     public static void SolvePart1() {
-        char[][] input;
-        var file = File.ReadAllLines("testinput.txt");
-        input = new char[file.Length][];
-        for (int i = 0; i < file.Length; i++) {
-            input[i] = file[i].ToCharArray();
-        }
-        var d = new Dijkstra(input);
-        d.Solve();
-    }
-    public class Dijkstra(char[][] input) {
+		char[][] input = ReadFile("shortinput.txt"); 
+		var d = new Dijkstra(input);
+		d.Solve();
+		// var input2 = ReadFile("testinput.txt"); 
+		// var d2 = new Dijkstra(input);
+		// d2.Solve();
+	}
+
+	private static char[][] ReadFile(string fileName) {
+		char[][] input;
+		var file = File.ReadAllLines(fileName);
+		input = new char[file.Length][];
+		for (int i = 0; i < file.Length; i++) {
+			input[i] = file[i].ToCharArray();
+		}
+
+		return input;
+	}
+
+	public class Dijkstra(char[][] input) {
         int[,] distances;
 
         // we have to store visited as visited FROM a direction, otherwose we would mark the 2nd row as visited
@@ -49,7 +59,7 @@ public class Day17 {
 			while (priorityQueue.Count > 0) {
 				cnt++;
 				var next = priorityQueue.Dequeue();
-				if (next.lastDir != Directions.None && visited[next.y, next.x].HasFlag(next.lastDir)) continue;
+				//if (next.lastDir != Directions.None && visited[next.y, next.x].HasFlag(next.lastDir)) continue;
 				//PrintOut(next);
 				visited[next.y, next.x] = visited[next.y, next.x] | next.lastDir;
 
@@ -65,42 +75,6 @@ public class Day17 {
 			}
 			PrintResult(cnt);
 		}
-
-		private void PrintResult(long cnt) {
-			var result = distances[input.Length - 1, input[0].Length - 1];
-			var l = result.ToString().Length + 1;
-			for (int y = 0; y < input.Length; ++y) {
-				for (int x = 0; x < input[0].Length; x++) {
-					var d = distances[y, x].ToString();
-					Console.Write(d.PadRight(l, ' '));
-				}
-				Console.WriteLine();
-			}
-			Console.WriteLine(distances[input.Length - 1, input[0].Length - 1]);
-			Console.WriteLine($"in steps: {cnt}");
-		}
-
-		// private void PrintOut(Vertex next) {
-		//     //Console.Clear();
-		//     Console.WriteLine($"");
-		//     Console.WriteLine($"");
-		// 	for (int y = 0; y < input.Length; y++) {
-		//         for (int x = 0; x < input[0].Length; x++) {
-		//             if (x == next.x && y == next.y) {
-		//                 Console.ForegroundColor = ConsoleColor.Yellow;
-		//                 Console.Write("*");
-		//             } else if (visited[y, x] != Directions.None) {
-		//                 Console.ForegroundColor = ConsoleColor.Green;
-		//                 Console.Write($"x"); //{distances[y,x]}");
-		//             } else {
-		//                 Console.ForegroundColor = ConsoleColor.White;
-		//                 Console.Write($"{input[y][x]}");
-		//             }
-		//         }
-		//         Console.WriteLine($"");
-		//     }
-		//     Thread.Sleep(50);
-		// }
 
 
 		private void TryQueue(Vertex prev, Directions dir) {
@@ -127,8 +101,25 @@ public class Day17 {
                 x >= input[0].Length || y >= input.Length) return;
             var costTo = int.Parse((input[y][x]).ToString()) + prev.cost;
             if (costTo < distances[y, x]) distances[y, x] = costTo;
+ 			if (dir != Directions.None && visited[y, x].HasFlag(dir)) return;
+
             // if (visited[y, x] != Directions.None) return;
             priorityQueue.Enqueue(new Vertex(x, y, costTo, dir, dirCount), costTo);
         }
+
+		private void PrintResult(long cnt) {
+			var result = distances[input.Length - 1, input[0].Length - 1];
+			var l = result.ToString().Length + 1;
+			for (int y = 0; y < input.Length; ++y) {
+				for (int x = 0; x < input[0].Length; x++) {
+					var d = distances[y, x].ToString();
+					Console.Write(d.PadRight(l, ' '));
+				}
+				Console.WriteLine();
+			}
+			Console.WriteLine(distances[input.Length - 1, input[0].Length - 1]);
+			Console.WriteLine($"in steps: {cnt}");
+		}
+
     }
 }
