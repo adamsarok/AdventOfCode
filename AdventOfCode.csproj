@@ -41,6 +41,7 @@
     <None Update="shortinput.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Remove="shoelace.py" />
   </ItemGroup>
 
 </Project>
