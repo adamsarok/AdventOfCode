@@ -31,11 +31,8 @@ public class Day18 {
 
 	class SolverShoeLace(List<Input> inputs) {
 		//fill is too slow for this giant matrix - apply shoelace method
-		//1. convert the matrix into a clockwise collection of vertices in coordinate system
-		//current [y,x] is different than matrix [x,y]
-		//apply shoelace method to calc
 		List<Vertex> vertices = new List<Vertex>();
-		private int circumference = 0;
+		private long circumference = 0;
 		public void Solve() {
 			Stopwatch sw = Stopwatch.StartNew();
 			vertices = new List<Vertex> { new Vertex(0, 0) };
@@ -67,8 +64,6 @@ public class Day18 {
 
 		private void Calc() {
 			long a = 0;
-			//this calc works for Part1 but not Part2... how is this possible?
-			//the input reading for Part2 seems correct?
 			for (int i = 0; i < vertices.Count; i++)
 			{
 				Vertex current = vertices[i];
@@ -76,7 +71,7 @@ public class Day18 {
 				a += (current.x * next.y) - (current.y * next.x);
 			}
 			var area = Math.Abs(a) / 2.0;
-			Console.WriteLine((int)(Math.Abs(area) - 0.5 * circumference + 1) + circumference);
+			Console.WriteLine(area + circumference / 2.0 + 1);
 		}
 	}
 	
@@ -110,7 +105,7 @@ public class Day18 {
     }
 
 
-    record struct Vertex(int x, int y) {}
+    record struct Vertex(long x, long y) {}
     
     class Solver(List<Input> inputs, bool doPrint) {
         char[,] dig;
@@ -173,7 +168,7 @@ public class Day18 {
 	        }
         }
 
-        private void TryQueue(Queue<Vertex> q, int x, int y) {
+        private void TryQueue(Queue<Vertex> q, long x, long y) {
 	        if (x >= 0 && x < width && y >= 0 && y < height && dig[y, x] == '.') {
 		        dig[y, x] = 'X';
 		        q.Enqueue(new Vertex(x,y));
