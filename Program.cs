@@ -33,7 +33,9 @@
                                     //if I check late there are too many queued vertices but result is correct
                                     //there is a fundamental error how dijkstra is implemented for this matrix
             //Day18.SolvePart1();
-            //Day18.SolvePart2(); 
+            //Day18.SolvePart2();
+            Day19.SolvePart1();
+            Day19.SolvePart2();
             //Day25.Main.SolvePart1();
         }
     }
