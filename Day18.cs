@@ -7,12 +7,15 @@ namespace AdventOfCode;
 
 public class Day18 {
 	public static void SolvePart1() {
-        var input = ReadFile("shortinput.txt");
-        var s = new Solver(input, true);
-        s.Solve();
+        // var input = ReadFile("shortinput.txt");
+        // var s = new Solver(input, true);
+        // s.Solve();
         // var input2 = ReadFile("testinput.txt"); 
         // var s2 = new Solver(input2, true);
         // s2.Solve();
+        var input = ReadFile("shortinput.txt");
+        var s = new SolverShoeLace(input);
+        s.Solve();
     }
 	public static void SolvePart2() {
 		// var input = ReadFilePart2("shortinput.txt");
@@ -28,6 +31,48 @@ public class Day18 {
 		//1. convert the matrix into a clockwise collection of vertices in coordinate system
 		//current [y,x] is different than matrix [x,y]
 		//apply shoelace method to calc
+		List<Vertex> vertices = new List<Vertex>();
+		public void Solve() {
+			Stopwatch sw = Stopwatch.StartNew();
+			vertices = new List<Vertex> { new Vertex(0, 0) };
+			foreach (var input in inputs) {
+				var last = vertices.Last();
+				//TODO this is incorrect, the polygon is smaller
+				switch (input.dir) {
+					case Directions.U: 
+						vertices.Add(new Vertex(last.x, last.y + input.length));
+						break;
+					case Directions.D: 
+						vertices.Add(new Vertex(last.x, last.y - input.length));
+						break;
+					case Directions.L: 
+						vertices.Add(new Vertex(last.x - input.length, last.y));
+						break;
+					case Directions.R: 
+						vertices.Add(new Vertex(last.x + input.length, last.y));
+						break;
+				}
+			}
+
+			foreach (var vertex in vertices) {
+				Console.WriteLine($"[{vertex.x},{vertex.y}]");
+			}
+			Calc();
+			sw.Stop();
+			Console.WriteLine($"Solved in {sw.ElapsedMilliseconds} ms");
+		}
+
+		private void Calc() {
+			int area = 0;
+		
+			for (int i = 0; i < vertices.Count; i++)
+			{
+				Vertex current = vertices[i];
+				Vertex next = vertices[(i + 1) % vertices.Count];
+				area += (current.x * next.y) - (current.y * next.x);
+			}
+			Console.WriteLine(Math.Abs(area) / 2.0);
+		}
 	}
 	
     public enum Directions { R, D, L, U }
@@ -44,13 +89,15 @@ public class Day18 {
         return result;
     }
 
+    record struct Vertex(int x, int y) {}
+    
     class Solver(List<Input> inputs, bool doPrint) {
         char[,] dig;
         int height, width;
         private int xInside, yInside;
         private int circumference = 0;
         private int minX = Int32.MaxValue, minY = Int32.MaxValue, maxX = 0, maxY = 0;
-        record struct Vertex(int x, int y) {}
+
         public void Solve() {
 	        Stopwatch sw = Stopwatch.StartNew();
             InitMatrix();
