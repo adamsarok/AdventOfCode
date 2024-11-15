@@ -32,7 +32,8 @@
             //Day17.SolvePart1();   //there is an error somewhere - if I check visited early, I don't get the optimal route 
                                     //if I check late there are too many queued vertices but result is correct
                                     //there is a fundamental error how dijkstra is implemented for this matrix
-            Day18.SolvePart1(); 
+            Day18.SolvePart1();
+            Day18.SolvePart2(); 
             //Day25.Main.SolvePart1();
         }
     }

@@ -16,14 +16,17 @@ public class Day18 {
         var input = ReadFile("shortinput.txt");
         var s = new SolverShoeLace(input);
         s.Solve();
+        var input2 = ReadFile("testinput.txt");
+        var s2 = new SolverShoeLace(input2);
+        s2.Solve();
     }
 	public static void SolvePart2() {
-		// var input = ReadFilePart2("shortinput.txt");
-		// var s = new SolverShoeLace(input);
-		// s.Solve();
-		// var input2 = ReadFile("testinput.txt"); 
-		// var s2 = new Solver(input2, true);
-		// s2.Solve();
+		var input = ReadFilePart2("shortinput.txt");
+		var s = new SolverShoeLace(input);
+		s.Solve();
+		var input2 = ReadFilePart2("testinput.txt"); 
+		var s2 = new SolverShoeLace(input2);
+		s2.Solve();
 	}
 
 	class SolverShoeLace(List<Input> inputs) {
@@ -32,13 +35,14 @@ public class Day18 {
 		//current [y,x] is different than matrix [x,y]
 		//apply shoelace method to calc
 		List<Vertex> vertices = new List<Vertex>();
+		private int circumference = 0;
 		public void Solve() {
 			Stopwatch sw = Stopwatch.StartNew();
 			vertices = new List<Vertex> { new Vertex(0, 0) };
 			foreach (var input in inputs) {
 				var last = vertices.Last();
-				//TODO this is incorrect, the polygon is smaller
-				switch (input.dir) {
+				circumference += input.length;
+				switch (input.dir) { 
 					case Directions.U: 
 						vertices.Add(new Vertex(last.x, last.y + input.length));
 						break;
@@ -53,41 +57,58 @@ public class Day18 {
 						break;
 				}
 			}
-
-			foreach (var vertex in vertices) {
-				Console.WriteLine($"[{vertex.x},{vertex.y}]");
-			}
+			// foreach (var vertex in vertices) {
+			// 	Console.WriteLine($"[{vertex.x},{vertex.y}]");
+			// }
 			Calc();
 			sw.Stop();
 			Console.WriteLine($"Solved in {sw.ElapsedMilliseconds} ms");
 		}
 
 		private void Calc() {
-			int area = 0;
-		
+			long a = 0;
+			//this calc works for Part1 but not Part2... how is this possible?
+			//the input reading for Part2 seems correct?
 			for (int i = 0; i < vertices.Count; i++)
 			{
 				Vertex current = vertices[i];
 				Vertex next = vertices[(i + 1) % vertices.Count];
-				area += (current.x * next.y) - (current.y * next.x);
+				a += (current.x * next.y) - (current.y * next.x);
 			}
-			Console.WriteLine(Math.Abs(area) / 2.0);
+			var area = Math.Abs(a) / 2.0;
+			Console.WriteLine((int)(Math.Abs(area) - 0.5 * circumference + 1) + circumference);
 		}
 	}
 	
     public enum Directions { R, D, L, U }
-    record struct Input(Directions dir, int length, string color) { }
+    record struct Input(Directions dir, int length) { }
 
     private static List<Input> ReadFile(string fileName) {
         var file = File.ReadAllLines(fileName);
         List<Input> result = new List<Input>();
         foreach (var line in file) {
             var s = line.Split(' ');
-            var input = new Input(dir: Enum.Parse<Directions>(s[0]), length: int.Parse(s[1]), color: s[2]);
+            var input = new Input(dir: Enum.Parse<Directions>(s[0]), length: int.Parse(s[1]));
             result.Add(input);
         }
         return result;
     }
+    
+    private static List<Input> ReadFilePart2(string fileName) {
+	    var file = File.ReadAllLines(fileName);
+	    List<Input> result = new List<Input>();
+	    foreach (var line in file) {
+		    var s = line.Split(' ');
+		    var hex = s[2].Substring(2, 5);
+		    var dir = s[2].Substring(7, 1);
+		    var input = new Input(
+			    dir: Enum.Parse<Directions>(dir), 
+			    length: int.Parse(hex, System.Globalization.NumberStyles.HexNumber));
+		    result.Add(input);
+	    }
+	    return result;
+    }
+
 
     record struct Vertex(int x, int y) {}
     
@@ -111,7 +132,7 @@ public class Day18 {
             Console.WriteLine($"Solved in {sw.ElapsedMilliseconds} ms");
         }
 
-        private void Shrink() { //I could grow a list or array during digging instead?
+        private void Shrink() {
 	        height = maxY - minY + 3;
 	        width = maxX - minX + 3;
 	        var copy = new char[height, width];
