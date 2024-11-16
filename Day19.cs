@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace AdventOfCode;
 
 public class Day19 {
@@ -16,7 +18,6 @@ public class Day19 {
 	}
 
 	public class SolverPart2(string inputFileName) : SolverBase(inputFileName) {
-		//TODO
 		record struct Interval(
 			int aFrom,
 			int aTo,
@@ -25,11 +26,9 @@ public class Day19 {
 			int mFrom,
 			int mTo,
 			int sFrom,
-			int sTo,
-			string result) { }
+			int sTo) { }
 
-		private List<Interval> intervals;
-		private Queue<Interval> intervalsToProcess;
+		//private List<Interval> intervals;
 
 		//brute force would take 243 years so that is not very feasible
 		//build up ranges from all rules, so we have a list of intervals:
@@ -37,77 +36,27 @@ public class Day19 {
 		//then count the number of values possible in all A intervals
 		public void Solve() {
 			ReadInput();
-			
-			//test
-			workflows = new Dictionary<string, List<Rule>>() {
-				{ "in", new List<Rule>() {
-					new Rule(Rule.Relations.GreaterThan, Rule.TargetFields.a, 100, "A"),
-					new Rule(Rule.Relations.Fallback, Rule.TargetFields.a, 0, "R"),
-				} }
-			}; //split into two intervals, under 100 approve
-			
-			intervals = new List<Interval>();
-			intervalsToProcess = new Queue<Interval>();
-			long result = 0;
-			var i = new Interval(1, 4000, 1, 4000, 1, 4000, 1, 4000, "in");
-			intervalsToProcess.Enqueue(i);
-			Interval next;
-			while (intervalsToProcess.TryDequeue(out next)) {
-				if (next.result == "A") {
-					result += (next.aTo - next.aFrom) * (next.xTo - next.xFrom) * (next.mTo - next.mFrom) *
-					          (next.sTo - next.sFrom);
-				} else if (next.result != "R") {
-					SplitInterval(next);
+			var intervals = new List<Interval>() { new Interval(1, 4000, 1, 4000, 1, 4000, 1, 4000) };
+			//collect all points in a,x,m,s where a new interval is needed
+			//later run the same rule matching as day 1, but only for 1 number in all intervals
+			var temp = new List<Interval>();
+			foreach (var wf in workflows) {
+				foreach (var rule in wf.Value.Where(r =>
+					         r.Rel != Rule.Relations.Fallback && r.TargetField == Rule.TargetFields.a)) {
+					//todo: split intersecting intervals
 				}
 			}
-		}
 
-		private void SplitInterval(Interval i) {
-			var rules = workflows[i.result];
-
-			//1. check incoming interval (example 50<a<100 ...)
-			//2. if rule[0] encompasses interval, set result and return (a < 1000)
-			//3. if rule[0] intersects interval, split and set result for intersect (a < 75)
-			//4. for input + split intervals, we check the next rule if rule[0] did not set result
-			foreach (var rule in rules) {
-				if (rule.Rel == Rule.Relations.Fallback) {
-					intervalsToProcess.Enqueue(new Interval(i.aFrom, i.aTo, i.xFrom, i.xTo, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));
-					return;
-				}
-				switch (rule.TargetField) {
-					case Rule.TargetFields.x:
-						// if (rule.Rel == Rule.Relations.GreaterThan) {
-						// 	if (i.xFrom < rule.Value) {
-						// 		//TODO: this is not correct, I need to go to the next rule for the split interval and not process the matching interval
-						// 		// intervalsToProcess.Enqueue(new Interval(i.aFrom, i.aTo, i.xFrom, rule.Value, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));
-						// 		// intervalsToProcess.Enqueue(new Interval(i.aFrom, i.aTo, i.xFrom, i.xTo, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));
-						// 		// interval.aFrom = rule.Value;
-						// 		// var split = new Interval()
-						// 	}
-						// }
-						break;
-					case Rule.TargetFields.m:
-						break;
-					case Rule.TargetFields.a:
-						if (rule.Rel == Rule.Relations.GreaterThan) {
-							if (i.aFrom < rule.Value && i.aTo > rule.Value) {
-								intervalsToProcess.Enqueue(new Interval(i.aFrom, rule.Value, i.xFrom, i.xTo, i.mFrom, i.mTo, i.sFrom, i.sTo, i.result));		 //if no match: requeue split range with original workflow key
-								intervalsToProcess.Enqueue(new Interval(rule.Value + 1, i.aTo, i.xFrom, i.xTo, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));  //where matching assign result and requeue
-								return;
-							}
-						}
-
-						break;
-					case Rule.TargetFields.s:
-						break;
+			foreach (var i in intervals) {
+				var dummy = new Part(i.xFrom, i.mFrom, i.aFrom, i.sFrom);
+				var result = TraverseWorkflows(dummy, "in");
+				var dummy2 = new Part(i.xTo, i.mTo, i.aTo, i.sTo);
+				var result2 = TraverseWorkflows(dummy2, "in");
+				if (result != result2) {
+					throw new Exception(
+						$"{dummy}={result} does not equal {dummy2}={result2}"); //if the ranges are set correctly, both start & end of range should be the same result either A or R
 				}
 			}
-			
-			//throw new Exception("shouldn't happen");
-		}
-
-		class RulePart2(Rule.Relations rel, Rule.TargetFields targetField, int value, string nextStep) {
-			
 		}
 	}
 
@@ -121,8 +70,19 @@ public class Day19 {
 
 			Console.WriteLine(result);
 		}
+	}
 
-		private void CheckPart(Part part) {
+	public class SolverBase(string inputFileName) {
+		protected Dictionary<string, List<Rule>> workflows;
+		protected List<Part> parts;
+		protected long result;
+
+		protected enum Results {
+			A,
+			R
+		}
+
+		protected void CheckPart(Part part) {
 			var r = TraverseWorkflows(part, "in");
 			switch (r) {
 				case Results.A:
@@ -135,17 +95,6 @@ public class Day19 {
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
-		}
-	}
-
-	public class SolverBase(string inputFileName) {
-		protected Dictionary<string, List<Rule>> workflows;
-		protected List<Part> parts;
-		protected long result;
-
-		protected enum Results {
-			A,
-			R
 		}
 
 		protected Results TraverseWorkflows(Part part, string workflowKey) {
