@@ -37,6 +37,15 @@ public class Day19 {
 		//then count the number of values possible in all A intervals
 		public void Solve() {
 			ReadInput();
+			
+			//test
+			workflows = new Dictionary<string, List<Rule>>() {
+				{ "in", new List<Rule>() {
+					new Rule(Rule.Relations.GreaterThan, Rule.TargetFields.a, 100, "A"),
+					new Rule(Rule.Relations.Fallback, Rule.TargetFields.a, 0, "R"),
+				} }
+			}; //split into two intervals, under 100 approve
+			
 			intervals = new List<Interval>();
 			intervalsToProcess = new Queue<Interval>();
 			long result = 0;
@@ -65,27 +74,33 @@ public class Day19 {
 					intervalsToProcess.Enqueue(new Interval(i.aFrom, i.aTo, i.xFrom, i.xTo, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));
 					return;
 				}
-				// switch (rule.TargetField) {
-				// 	case Rule.TargetFields.x:
-				// 		if (rule.Rel == Rule.Relations.GreaterThan) {
-				// 			if (i.xFrom < rule.Value) {
-				// 				//TODO: this is not correct, I need to go to the next rule for the split interval and not process the matching interval
-				// 				// intervalsToProcess.Enqueue(new Interval(i.aFrom, i.aTo, i.xFrom, rule.Value, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));
-				// 				// intervalsToProcess.Enqueue(new Interval(i.aFrom, i.aTo, i.xFrom, i.xTo, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));
-				// 				// interval.aFrom = rule.Value;
-				// 				// var split = new Interval()
-				// 			}
-				// 		}
-				// 	case Rule.TargetFields.m:
-				// 		return (rel == Rule.Relations.GreaterThan && value < part.m)
-				// 		       || (rel == Rule.Relations.LessThan && value > part.m);
-				// 	case Rule.TargetFields.a:
-				// 		return (rel == Rule.Relations.GreaterThan && value < part.a)
-				// 		       || (rel == Rule.Relations.LessThan && value > part.a);
-				// 	case Rule.TargetFields.s:
-				// 		return (rel == Rule.Relations.GreaterThan && value < part.s)
-				// 		       || (rel == Rule.Relations.LessThan && value > part.s);
-				// }
+				switch (rule.TargetField) {
+					case Rule.TargetFields.x:
+						// if (rule.Rel == Rule.Relations.GreaterThan) {
+						// 	if (i.xFrom < rule.Value) {
+						// 		//TODO: this is not correct, I need to go to the next rule for the split interval and not process the matching interval
+						// 		// intervalsToProcess.Enqueue(new Interval(i.aFrom, i.aTo, i.xFrom, rule.Value, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));
+						// 		// intervalsToProcess.Enqueue(new Interval(i.aFrom, i.aTo, i.xFrom, i.xTo, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));
+						// 		// interval.aFrom = rule.Value;
+						// 		// var split = new Interval()
+						// 	}
+						// }
+						break;
+					case Rule.TargetFields.m:
+						break;
+					case Rule.TargetFields.a:
+						if (rule.Rel == Rule.Relations.GreaterThan) {
+							if (i.aFrom < rule.Value && i.aTo > rule.Value) {
+								intervalsToProcess.Enqueue(new Interval(i.aFrom, rule.Value, i.xFrom, i.xTo, i.mFrom, i.mTo, i.sFrom, i.sTo, i.result));		 //if no match: requeue split range with original workflow key
+								intervalsToProcess.Enqueue(new Interval(rule.Value + 1, i.aTo, i.xFrom, i.xTo, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));  //where matching assign result and requeue
+								return;
+							}
+						}
+
+						break;
+					case Rule.TargetFields.s:
+						break;
+				}
 			}
 			
 			//throw new Exception("shouldn't happen");
