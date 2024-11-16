@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace AdventOfCode;
 
@@ -18,15 +19,7 @@ public class Day19 {
 	}
 
 	public class SolverPart2(string inputFileName) : SolverBase(inputFileName) {
-		record struct Interval(
-			int aFrom,
-			int aTo,
-			int xFrom,
-			int xTo,
-			int mFrom,
-			int mTo,
-			int sFrom,
-			int sTo) { }
+		record struct Interval(Rule.TargetFields targetField, int from, int to) { }
 
 		//private List<Interval> intervals;
 
@@ -34,29 +27,79 @@ public class Day19 {
 		//build up ranges from all rules, so we have a list of intervals:
 		//0<a<123 && 10<x<55 && 555<m<556 && 9<s<15 => A
 		//then count the number of values possible in all A intervals
+		void SplitIntervals(Rule.Relations rel, int value, ref List<Interval> intervals) {
+			Interval? toSplit;
+			if (rel == Rule.Relations.GreaterThan) {
+				toSplit = intervals.FirstOrDefault(x => x.from < value && x.to > value);
+			}
+			else {
+				toSplit = intervals.FirstOrDefault(x => x.from < value && x.to >= value);
+			}
+			if (toSplit != null) {
+				var val = toSplit.Value;
+				intervals.Remove(val);
+				Interval n1, n2;
+				if (rel == Rule.Relations.GreaterThan) {
+					n1 = new Interval(val.targetField, val.from, value);
+					n2 = new Interval(val.targetField, value + 1, val.to);
+				}
+				else {
+					n1 = new Interval(val.targetField, val.from, value - 1);
+					n2 = new Interval(val.targetField, value, val.to);
+				}
+				intervals.Add(new Interval(val.targetField, val.from, value));
+				intervals.Add(new Interval(val.targetField, value + 1, val.to));
+				Console.WriteLine($"Relation: {rel.ToString()}, Value: {value}");
+				Console.WriteLine($"Removed: {val}");
+				Console.WriteLine($"Split into: {n1}, {n2}");
+			}
+		}
+
 		public void Solve() {
 			ReadInput();
-			var intervals = new List<Interval>() { new Interval(1, 4000, 1, 4000, 1, 4000, 1, 4000) };
+			Dictionary<Rule.TargetFields, List<Interval>> intervals = new Dictionary<Rule.TargetFields, List<Interval>>();
+			intervals.Add(Rule.TargetFields.a, [new Interval(Rule.TargetFields.a, 1, 4000)]);
+			intervals.Add(Rule.TargetFields.x, [new Interval(Rule.TargetFields.a, 1, 4000)]);
+			intervals.Add(Rule.TargetFields.m, [new Interval(Rule.TargetFields.a, 1, 4000)]);
+			intervals.Add(Rule.TargetFields.s, [new Interval(Rule.TargetFields.a, 1, 4000)]);
 			//collect all points in a,x,m,s where a new interval is needed
 			//later run the same rule matching as day 1, but only for 1 number in all intervals
-			var temp = new List<Interval>();
 			foreach (var wf in workflows) {
-				foreach (var rule in wf.Value.Where(r =>
-					         r.Rel != Rule.Relations.Fallback && r.TargetField == Rule.TargetFields.a)) {
-					//todo: split intersecting intervals
+				foreach (var r in wf.Value.Where(r => r.Rel != Rule.Relations.Fallback)) {
+					var list = intervals[r.TargetField];
+					SplitIntervals(r.Rel, r.Value, ref list);
 				}
 			}
+			
+			Console.WriteLine("Result:");
+			foreach (var kvp in intervals) {
+				Console.WriteLine($"{kvp.Key}:");
+				foreach (var a in kvp.Value.OrderBy(x => x.from)) {
+					Console.WriteLine(a);
+				}
+			}
+			//a1 -> m1,x1,s1, a1->m2,x1,s1 etc
 
-			foreach (var i in intervals) {
-				var dummy = new Part(i.xFrom, i.mFrom, i.aFrom, i.sFrom);
-				var result = TraverseWorkflows(dummy, "in");
-				var dummy2 = new Part(i.xTo, i.mTo, i.aTo, i.sTo);
-				var result2 = TraverseWorkflows(dummy2, "in");
-				if (result != result2) {
-					throw new Exception(
-						$"{dummy}={result} does not equal {dummy2}={result2}"); //if the ranges are set correctly, both start & end of range should be the same result either A or R
+			foreach (var a in intervals[Rule.TargetFields.a]) {
+				foreach (var x in intervals[Rule.TargetFields.x]) {
+					foreach (var m in intervals[Rule.TargetFields.m]) {
+						foreach (var s in intervals[Rule.TargetFields.s]) {
+							var dummy = new Part(x.from, m.from, a.from, s.from);
+							var rDummy = TraverseWorkflows(dummy, "in");
+							var dummy2 = new Part(x.to - 1, m.to - 1, a.to - 1, s.to - 1);
+							var rDummy2 = TraverseWorkflows(dummy2, "in");
+							if (rDummy != rDummy2) {
+								throw new Exception(
+									$"{dummy}={rDummy} does not equal {dummy2}={rDummy2}"); //if the ranges are set correctly, both start & end of range should be the same result either A or R
+							}
+							//TODO: result is still not OK, even though the cross check abover works
+							if (rDummy == Results.A)
+								result += (a.to - a.from) * (m.to - m.from) * (x.to - x.from) * (s.to - s.from);
+						}
+					}
 				}
 			}
+			Console.WriteLine($"Result: {result}");
 		}
 	}
 
