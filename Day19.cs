@@ -17,11 +17,19 @@ public class Day19 {
 
 	public class SolverPart2(string inputFileName) : SolverBase(inputFileName) {
 		//TODO
-		record Interval(int aFrom, int aTo, int xFrom, int xTo, int mFrom, int mTo, int sFrom, int sTo) {
-			public string Result { get; set; }
-		}
+		record struct Interval(
+			int aFrom,
+			int aTo,
+			int xFrom,
+			int xTo,
+			int mFrom,
+			int mTo,
+			int sFrom,
+			int sTo,
+			string result) { }
 
 		private List<Interval> intervals;
+		private Queue<Interval> intervalsToProcess;
 
 		//brute force would take 243 years so that is not very feasible
 		//build up ranges from all rules, so we have a list of intervals:
@@ -29,23 +37,61 @@ public class Day19 {
 		//then count the number of values possible in all A intervals
 		public void Solve() {
 			ReadInput();
-			var i = new Interval(1, 4000, 1, 4000, 1, 4000, 1, 4000);
-			i.Result = "in";
-			SplitInterval(i);
+			intervals = new List<Interval>();
+			intervalsToProcess = new Queue<Interval>();
+			long result = 0;
+			var i = new Interval(1, 4000, 1, 4000, 1, 4000, 1, 4000, "in");
+			intervalsToProcess.Enqueue(i);
+			Interval next;
+			while (intervalsToProcess.TryDequeue(out next)) {
+				if (next.result == "A") {
+					result += (next.aTo - next.aFrom) * (next.xTo - next.xFrom) * (next.mTo - next.mFrom) *
+					          (next.sTo - next.sFrom);
+				} else if (next.result != "R") {
+					SplitInterval(next);
+				}
+			}
 		}
 
-		private void SplitInterval(Interval interval) {
-			var rules = workflows[interval.Result];
+		private void SplitInterval(Interval i) {
+			var rules = workflows[i.result];
 
 			//1. check incoming interval (example 50<a<100 ...)
 			//2. if rule[0] encompasses interval, set result and return (a < 1000)
 			//3. if rule[0] intersects interval, split and set result for intersect (a < 75)
 			//4. for input + split intervals, we check the next rule if rule[0] did not set result
-
+			foreach (var rule in rules) {
+				if (rule.Rel == Rule.Relations.Fallback) {
+					intervalsToProcess.Enqueue(new Interval(i.aFrom, i.aTo, i.xFrom, i.xTo, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));
+					return;
+				}
+				// switch (rule.TargetField) {
+				// 	case Rule.TargetFields.x:
+				// 		if (rule.Rel == Rule.Relations.GreaterThan) {
+				// 			if (i.xFrom < rule.Value) {
+				// 				//TODO: this is not correct, I need to go to the next rule for the split interval and not process the matching interval
+				// 				// intervalsToProcess.Enqueue(new Interval(i.aFrom, i.aTo, i.xFrom, rule.Value, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));
+				// 				// intervalsToProcess.Enqueue(new Interval(i.aFrom, i.aTo, i.xFrom, i.xTo, i.mFrom, i.mTo, i.sFrom, i.sTo, rule.NextStep));
+				// 				// interval.aFrom = rule.Value;
+				// 				// var split = new Interval()
+				// 			}
+				// 		}
+				// 	case Rule.TargetFields.m:
+				// 		return (rel == Rule.Relations.GreaterThan && value < part.m)
+				// 		       || (rel == Rule.Relations.LessThan && value > part.m);
+				// 	case Rule.TargetFields.a:
+				// 		return (rel == Rule.Relations.GreaterThan && value < part.a)
+				// 		       || (rel == Rule.Relations.LessThan && value > part.a);
+				// 	case Rule.TargetFields.s:
+				// 		return (rel == Rule.Relations.GreaterThan && value < part.s)
+				// 		       || (rel == Rule.Relations.LessThan && value > part.s);
+				// }
+			}
+			
 			//throw new Exception("shouldn't happen");
 		}
 
-		class RulePart2(Rule.Relations rel, Rule.TargetField targetField, int value, string nextStep) {
+		class RulePart2(Rule.Relations rel, Rule.TargetFields targetField, int value, string nextStep) {
 			
 		}
 	}
@@ -130,15 +176,18 @@ public class Day19 {
 
 		protected record struct Part(int x, int m, int a, int s);
 
-		protected class Rule(Rule.Relations rel, Rule.TargetField targetField, int value, string nextStep) {
+		protected class Rule(Rule.Relations rel, Rule.TargetFields targetField, int value, string nextStep) {
 			public string NextStep => nextStep;
+			public Relations Rel => rel;
+			public TargetFields TargetField => targetField;
+			public int Value => value;
 
 			public static Rule ParseRule(string str) {
 				if (!str.Contains("<") && !str.Contains(">")) {
-					return new Rule(Relations.Fallback, TargetField.a, 0, str);
+					return new Rule(Relations.Fallback, TargetFields.a, 0, str);
 				}
 
-				var targetField = Enum.Parse<Rule.TargetField>(str.Substring(0, 1));
+				var targetField = Enum.Parse<Rule.TargetFields>(str.Substring(0, 1));
 				var relation = str.Substring(1, 1) == "<" ? Relations.LessThan : Relations.GreaterThan;
 				var value = str.Split(':')[0].Substring(2);
 				var nextStep = str.Split(':')[1];
@@ -151,7 +200,7 @@ public class Day19 {
 				Fallback
 			}
 
-			public enum TargetField {
+			public enum TargetFields {
 				x,
 				m,
 				a,
@@ -161,16 +210,16 @@ public class Day19 {
 			public bool Match(Part part) {
 				if (rel == Relations.Fallback) return true;
 				switch (targetField) {
-					case TargetField.x:
+					case TargetFields.x:
 						return (rel == Rule.Relations.GreaterThan && value < part.x)
 						       || (rel == Rule.Relations.LessThan && value > part.x);
-					case TargetField.m:
+					case TargetFields.m:
 						return (rel == Rule.Relations.GreaterThan && value < part.m)
 						       || (rel == Rule.Relations.LessThan && value > part.m);
-					case TargetField.a:
+					case TargetFields.a:
 						return (rel == Rule.Relations.GreaterThan && value < part.a)
 						       || (rel == Rule.Relations.LessThan && value > part.a);
-					case TargetField.s:
+					case TargetFields.s:
 						return (rel == Rule.Relations.GreaterThan && value < part.s)
 						       || (rel == Rule.Relations.LessThan && value > part.s);
 				}
