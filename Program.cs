@@ -34,8 +34,9 @@
                                     //there is a fundamental error how dijkstra is implemented for this matrix
             //Day18.SolvePart1();
             //Day18.SolvePart2();
-            Day19.SolvePart1();
-            Day19.SolvePart2();
+            // Day19.SolvePart1();
+            // Day19.SolvePart2();
+            Day20.SolvePart1();
             //Day25.Main.SolvePart1();
         }
     }
