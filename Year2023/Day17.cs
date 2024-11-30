@@ -45,8 +45,12 @@ public class Day17 {
         PriorityQueue<Vertex, int> priorityQueue;
         record struct Vertex(int x, int y, int cost, Directions lastDir, int dirCount) { }
         public void Solve() {
+            //there is an error somewhere - if I check visited early, I don't get the optimal route 
+            //if I check late there are too many queued vertices but result is correct
+            //there is a fundamental error how dijkstra is implemented for this matrix
+
             //input[0][0] = '0';
-			distances = new int[input.Length, input[0].Length];
+            distances = new int[input.Length, input[0].Length];
 			visited = new Directions[input.Length, input[0].Length];
 			for (int x = 0; x < input[0].Length; x++) {
 				for (int y = 0; y < input.Length; y++) {
