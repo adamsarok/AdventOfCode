@@ -1,6 +1,9 @@
 ﻿namespace Year2024 {
     public abstract class Solver {
-        protected virtual int DayNum { get; }
+		protected int DayNum = 0;
+		public Solver(int dayNum) {
+			DayNum = dayNum;
+		}
         const int YEAR = 2024;
         public void Solve() {
             string shortInput = $"Day{DayNum}\\{YEAR}shortinput{DayNum}.txt";

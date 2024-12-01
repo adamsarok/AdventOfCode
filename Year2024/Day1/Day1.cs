@@ -6,10 +6,13 @@ using System.Threading.Tasks;
 
 namespace Year2024.Day1 {
 	public class Day1 : Solver {
-		protected override int DayNum => 1;
 		List<int> list1 = new();
 		List<int> list2 = new();
 		Dictionary<int, int> list2counts = new Dictionary<int, int>();
+
+		public Day1() : base(1) {
+		}
+
 		protected override void ReadInputPart1(string fileName) {
 			list1 = new();
 			list2 = new();

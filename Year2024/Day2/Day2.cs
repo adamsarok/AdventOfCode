@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace Year2024.Day2 {
 	public class Day2 : Solver {
+		public Day2() : base(2) {
+		}
 		protected override void ReadInputPart1(string fileName) {
 			foreach (var l in File.ReadAllLines(fileName)) {
 
