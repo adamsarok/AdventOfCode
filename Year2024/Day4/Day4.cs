@@ -9,12 +9,14 @@ namespace Year2024.Day4 {
 		public Day4() : base(4) {
 		}
 		protected override void ReadInputPart1(string fileName) {
+			//input = new();
 			foreach (var l in File.ReadAllLines(fileName)) {
 
 			}
 		}
 
 		protected override void ReadInputPart2(string fileName) {
+			//input = new();
 			foreach (var l in File.ReadAllLines(fileName)) {
 
 			}
