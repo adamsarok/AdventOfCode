@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2024.Day5 {
-	public class Day5 : Solver {
-		public Day5() : base(5) {
+namespace Year2022.Day4 {
+	public class Day4 : Solver {
+		public Day4() : base(4) {
 		}
 		protected override void ReadInputPart1(string fileName) {
 			//input = new();

@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
-namespace Year2024.Day5 {
-	public class Day5 : Solver {
-		public Day5() : base(5) {
+namespace Year2022.Day3 {
+	public class Day3 : Solver {
+		public Day3() : base(3) {
 		}
 		protected override void ReadInputPart1(string fileName) {
 			//input = new();

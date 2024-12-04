@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2024.Day5 {
+namespace Year2022.Day5 {
 	public class Day5 : Solver {
 		public Day5() : base(5) {
 		}

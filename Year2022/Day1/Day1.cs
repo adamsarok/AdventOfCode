@@ -4,34 +4,33 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2024.Day5 {
-	public class Day5 : Solver {
-		public Day5() : base(5) {
+namespace Year2022.Day1 {
+	public class Day1 : Solver {
+		public Day1() : base(1) {
 		}
+		List<long> input = new List<long>();
 		protected override void ReadInputPart1(string fileName) {
-			//input = new();
+			input = new();
+			long r = 0;
 			foreach (var l in File.ReadAllLines(fileName)) {
-
+				if (string.IsNullOrWhiteSpace(l)) {
+					input.Add(r);
+					r = 0;
+				} else r += long.Parse(l);
 			}
+			input.Add(r);
 		}
 
 		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
+			ReadInputPart1(fileName);
 		}
 
 		protected override long SolvePart1() {
-			long result = 0;
-
-			return result;
+			return input.Max();
 		}
 
 		protected override long SolvePart2() {
-			long result = 0;
-
-			return result;
+			return input.OrderByDescending(x => x).Take(3).Sum();
 		}
 	}
 }
