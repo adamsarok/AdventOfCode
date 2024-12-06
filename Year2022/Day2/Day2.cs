@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Helpers;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Year2022.Day2 {
 	public class Day2 : Solver {
-		public Day2() : base(2) {
+		public Day2() : base(2022, 2) {
 		}
 		List<(string, string)> input;
 		protected override void ReadInputPart1(string fileName) {

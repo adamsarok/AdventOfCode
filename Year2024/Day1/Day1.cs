@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace Year2024.Day1 {
 		List<int> list2 = new();
 		Dictionary<int, int> list2counts = new Dictionary<int, int>();
 
-		public Day1() : base(1) {
+		public Day1() : base(2024, 1) {
 		}
 
 		protected override void ReadInputPart1(string fileName) {

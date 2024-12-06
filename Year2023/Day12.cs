@@ -13,7 +13,7 @@ public class Day12 {
         //     result += solver.Solutions.Count;
         // });
         foreach (var line in lines) { //current best is 1590ms 
-            var solver = new Solver(line.Split(' '), 5);
+            var solver = new Day12Solver(line.Split(' '), 5);
             result += solver.Solutions.Count;
         }
         sw.Stop();
@@ -29,11 +29,11 @@ public class Day12 {
         // Console.WriteLine($"Part2 elapsed: {sw2.ElapsedMilliseconds}");
         Console.WriteLine(result);
     }
-    public class Solver {
+    private class Day12Solver {
         public HashSet<string> Solutions = new HashSet<string>();
         List<int> conditions = new List<int>();
         string line = "";
-        public Solver(string[] inputs, int repeat) {
+        public Day12Solver(string[] inputs, int repeat) {
             for (int i = 0; i < repeat; i++) {
                 line += inputs[0];
                 conditions.AddRange(GetConditions(inputs[1]));

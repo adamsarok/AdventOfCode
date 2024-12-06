@@ -26,7 +26,7 @@ public class Day8
 		ReadInput(out nodes, out lr);
         List<long> stepsToReach = new List<long>();
         foreach (var k in nodes.Keys.Where(x => x.EndsWith("A"))) {
-            var s = new Solver(k, nodes, lr);
+            var s = new Day8Solver(k, nodes, lr);
             stepsToReach.Add(s.CycleLength);
         }
 
@@ -45,14 +45,14 @@ public class Day8
         return b == 0 ? a : GCD(b, a % b);
     }
 
-    public class Solver {
+    private class Day8Solver {
         //seems brute force will not work here..
         //we are going in cycles, so we can identify for each start the number of steps it takes to reach Z 
         //we never go back to A, so we can start counting from the first step after A
         private string node { get; set; } = "";
         Dictionary<string, (string, string)> nodes;
         public int CycleLength { get; private set; }
-        public Solver(string node, Dictionary<string, (string, string)> nodes, char[] lr) {
+        public Day8Solver(string node, Dictionary<string, (string, string)> nodes, char[] lr) {
             Console.Write($"{node}:");
             this.node = node;
             this.nodes = nodes;

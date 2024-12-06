@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Helpers;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.Metrics;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Year2024.Day5 {
 	public class Day5 : Solver {
-		public Day5() : base(5) {
+		public Day5() : base(2024, 5) {
 		}
 		List<(int, int)> rules = new();
 		List<List<int>> updates = new();

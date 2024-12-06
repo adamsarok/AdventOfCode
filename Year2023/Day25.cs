@@ -7,7 +7,7 @@ namespace AdventOfCode.Day25;
 public class Day25 {
     static Dictionary<string, List<string>> connections;
 
-    public class Solver {
+    private class Day25Solver {
         List<HashSet<string>> unions = new List<HashSet<string>>();
         Dictionary<string, List<string>> input;
         HashSet<string> allComponents = new HashSet<string>();
@@ -15,7 +15,7 @@ public class Day25 {
         int connCount = 0;
         int allComponentsCount = 0;
         public bool Solved => maxSubTreeFound < allComponentsCount;
-        public Solver(Dictionary<string, List<string>> input, int allComponentsCount) {
+        public Day25Solver(Dictionary<string, List<string>> input, int allComponentsCount) {
             //Stopwatch sw = Stopwatch.StartNew();
             this.input = input;
             this.allComponentsCount = allComponentsCount;
@@ -97,7 +97,7 @@ public class Day25 {
                                     actIndex++;
                                 }
                             }
-                            var s = new Solver(copy, allComponentsCount);
+                            var s = new Day25Solver(copy, allComponentsCount);
                             iterations++;
                             if (iterations % 1000 == 0) Console.WriteLine(iterations);
                             if (a == 2 && b == 10 && c == 17) {

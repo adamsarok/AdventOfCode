@@ -1,26 +1,23 @@
-﻿using System;
+﻿using Helpers;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Year2024.Day6 {
 	public class Day6 : Solver {
-		public Day6() : base(6) {
+		public Day6() : base(2024, 6) {
 		}
 		List<char[]> input;
 		int guardX, guardY;
 		int guardStartX, guardStartY;
 		char guard, guardStart;
 		List<(int, int)> stepsTaken;
-		enum Directions { Up, Right, Down, Left }
-		Dictionary<char, Directions> guardDirs = new Dictionary<char, Directions>() {
-			{ '^', Directions.Up },
-			{ '>', Directions.Right },
-			{ 'v', Directions.Down },
-			{ '<', Directions.Left }};
+		List<char> guardDirs = new(){ '^',  '>', 'v',  '<' };
 		List<char>[,] visiteds;
 		protected override void ReadInputPart1(string fileName) {
 			input = new();
@@ -38,13 +35,14 @@ namespace Year2024.Day6 {
 			for (int y = 0; y < input.Count; y++) {
 				for (int x = 0; x < input[0].Length; x++) {
 					var i = input[y][x];
-					if (guardDirs.ContainsKey(i)) {
+					if (guardDirs.Contains(i)) {
 						guardX = x;
 						guardY = y;
 						guardStartX = x;
 						guardStartY = y;
 						guard = i;
 						guardStart = i;
+						return;
 					}
 				}
 			}
@@ -71,20 +69,20 @@ namespace Year2024.Day6 {
 
 		private void Step() {
 			int nextX = 0, nextY = 0;
-			switch (guardDirs[guard]) {
-				case Directions.Up:
+			switch (guard) {
+				case '^':
 					nextX = guardX;
 					nextY = guardY - 1;
 					break;
-				case Directions.Right:
+				case '>':
 					nextX = guardX + 1;
 					nextY = guardY;
 					break;
-				case Directions.Down:
+				case 'v':
 					nextX = guardX;
 					nextY = guardY + 1;
 					break;
-				case Directions.Left:
+				case '<':
 					nextX = guardX - 1;
 					nextY = guardY;
 					break;
@@ -112,11 +110,11 @@ namespace Year2024.Day6 {
 		}
 
 		private void Turn() {
-			int dirId = (int)guardDirs[guard] + 1;
-			if (dirId == 4) dirId = 0;
-			var nextDir = (Directions)Enum.GetValues(typeof(Directions)).GetValue(dirId);
-			foreach (var kvp in guardDirs) {
-				if (kvp.Value == nextDir) guard = kvp.Key;
+			switch (guard) {
+				case '^': guard = '>'; break;
+				case '>': guard = 'v'; break;
+				case 'v': guard = '<'; break;
+				case '<': guard = '^'; break;
 			}
 		}
 
@@ -149,20 +147,20 @@ namespace Year2024.Day6 {
 
 		private bool StepPart2() {
 			int nextX = 0, nextY = 0;
-			switch (guardDirs[guard]) {
-				case Directions.Up:
+			switch (guard) {
+				case '^':
 					nextX = guardX;
 					nextY = guardY - 1;
 					break;
-				case Directions.Right:
+				case '>':
 					nextX = guardX + 1;
 					nextY = guardY;
 					break;
-				case Directions.Down:
+				case 'v':
 					nextX = guardX;
 					nextY = guardY + 1;
 					break;
-				case Directions.Left:
+				case '<':
 					nextX = guardX - 1;
 					nextY = guardY;
 					break;

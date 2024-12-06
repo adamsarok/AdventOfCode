@@ -8,7 +8,7 @@ public class Day9
 		var inputs = ReadInput();
 		int result = 0;
         foreach (var input in inputs) {
-            var solver = new Solver(input);
+            var solver = new Day9Solver(input);
             result += solver.Result;
         }
 		Console.WriteLine(result);
@@ -22,10 +22,10 @@ public class Day9
         }
 		Console.WriteLine(result);
 	}
-    class Solver {
+    class Day9Solver {
 		private List<int> input;
         public int Result { get; private set; }
-		public Solver(List<int> input) {
+		public Day9Solver(List<int> input) {
             this.input = input;
             List<List<int>> levels = new List<List<int>>();
             List<int> actLevel = input;

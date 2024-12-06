@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Helpers;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Year2024.Day7 {
 	public class Day7 : Solver {
-		public Day7() : base(7) {
+		public Day7() : base(2024, 7) {
 		}
 	
 		protected override void ReadInputPart1(string fileName) {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace Year2022.Day3 {
 	public class Day3 : Solver {
-		public Day3() : base(3) {
+		public Day3() : base(2022, 3) {
 		}
 		protected override void ReadInputPart1(string fileName) {
 			//input = new();
