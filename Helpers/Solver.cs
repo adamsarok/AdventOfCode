@@ -45,5 +45,6 @@ namespace Helpers {
 		protected abstract long SolvePart2();
 		protected abstract void ReadInputPart1(string fileName);
 		protected abstract void ReadInputPart2(string fileName);
+		
 	}
 }
