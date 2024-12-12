@@ -18,24 +18,24 @@ namespace Year2024.Day12 {
 		record Polygon(char label, List<Point> vertices, List<Point> squaresInside) {
 			public long Area { get; set; }
 			public long Circumference { get {
-					//var sorted = GetVerticesSorted();
+					var sorted = GetVerticesSorted();
 					long c = 0;
-					for (int v = 0; v < vertices.Count - 1; v++) {
-						Point current = vertices[v];
-						Point next = vertices[v + 1];
+					for (int v = 0; v < sorted.Count - 1; v++) {
+						Point current = sorted[v];
+						Point next = sorted[v + 1];
 						c += Math.Abs(current.x - next.x) + Math.Abs(current.y - next.y);
 					}
-					Point last = vertices[vertices.Count - 1];
-					Point first = vertices[0];
+					Point last = sorted[sorted.Count - 1];
+					Point first = sorted[0];
 					c += Math.Abs(last.x - first.x) + Math.Abs(last.y - first.y);
 					return c;
 				}
 			}
-			//public List<Point> GetVerticesSorted() { //will not work for concave polygons :(
-			//	double centroidX = vertices.Average(p => p.x);
-			//	double centroidY = vertices.Average(p => p.y);
-			//	return vertices.OrderBy(p => Math.Atan2((double)p.y - centroidY, (double)p.x - centroidX)).ToList();
-			//}
+			public List<Point> GetVerticesSorted() { //will not work for concave polygons :(
+				double centroidX = vertices.Average(p => p.x);
+				double centroidY = vertices.Average(p => p.y);
+				return vertices.OrderBy(p => Math.Atan2((double)p.y - centroidY, (double)p.x - centroidX)).ToList();
+			}
 		}
 			List<Polygon> polygons;
 		//HashSet<char> ids;
@@ -74,12 +74,6 @@ namespace Year2024.Day12 {
 			//points which intersect the old polygon are removed as those would be inside the new polygon
 			var points = GetPointsOfSquare(x, y);
 			foreach (var point in points) { //we have to make this add the vertices in the correct order
-				for (int i = 0; i < points.Count; i++) {
-					if (poly.vertices[i] == point) {
-						poly.vertices.RemoveAt(i);
-						poly.vertices.Add(point);
-					}
-				}
 				if (poly.vertices.Contains(point)) {
 					poly.vertices.Remove(point);
 				} else {
