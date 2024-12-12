@@ -17,27 +17,9 @@ namespace Year2024.Day12 {
 		char[,] input;
 		record Polygon(char label, List<Point> vertices, List<Point> squaresInside) {
 			public long Area { get; set; }
-			public long Circumference { get {
-					var sorted = GetVerticesSorted();
-					long c = 0;
-					for (int v = 0; v < sorted.Count - 1; v++) {
-						Point current = sorted[v];
-						Point next = sorted[v + 1];
-						c += Math.Abs(current.x - next.x) + Math.Abs(current.y - next.y);
-					}
-					Point last = sorted[sorted.Count - 1];
-					Point first = sorted[0];
-					c += Math.Abs(last.x - first.x) + Math.Abs(last.y - first.y);
-					return c;
-				}
-			}
-			public List<Point> GetVerticesSorted() { //will not work for concave polygons :(
-				double centroidX = vertices.Average(p => p.x);
-				double centroidY = vertices.Average(p => p.y);
-				return vertices.OrderBy(p => Math.Atan2((double)p.y - centroidY, (double)p.x - centroidX)).ToList();
-			}
+			public long Circumference { get; set; }
 		}
-			List<Polygon> polygons;
+		List<Polygon> polygons;
 		//HashSet<char> ids;
 		int height, width;
 		protected override void ReadInputPart1(string fileName) {
@@ -53,6 +35,7 @@ namespace Year2024.Day12 {
 					input[y, x] = c;
 					var sq = GetPointsOfSquare(x, y);
 					var poly = polygons.FirstOrDefault(p => p.label == c && p.vertices.Any(v => sq.Contains(v)));
+					//TODO: OXO example is still not expanding correctly
 					if (poly != null) {
 						ExpandPoly(y, x, poly);
 					} else {
@@ -73,7 +56,15 @@ namespace Year2024.Day12 {
 			//when we extend a polygon, generate a list of points for the new square x,y
 			//points which intersect the old polygon are removed as those would be inside the new polygon
 			var points = GetPointsOfSquare(x, y);
-			foreach (var point in points) { //we have to make this add the vertices in the correct order
+
+			int adjacencies = poly.squaresInside.Where(sq =>
+				sq.x == x - 1 && sq.y == y ||
+				sq.x == x + 1 && sq.y == y ||
+				sq.x == x && sq.y == y - 1 ||
+				sq.x == x && sq.y == y + 1).Count();
+			if (adjacencies == 1) poly.Circumference += 2;
+
+			foreach (var point in points) {
 				if (poly.vertices.Contains(point)) {
 					poly.vertices.Remove(point);
 				} else {
@@ -84,7 +75,9 @@ namespace Year2024.Day12 {
 		}
 
 		private void NewPoly(int y, int x, char c) {
-			polygons.Add(new Polygon(c, GetPointsOfSquare(x, y), new() { new Point(x, y) }));
+			var poly = new Polygon(c, GetPointsOfSquare(x, y), new() { new Point(x, y) });
+			polygons.Add(poly);
+			poly.Circumference = 4;
 		}
 
 		protected override long SolvePart1() {
