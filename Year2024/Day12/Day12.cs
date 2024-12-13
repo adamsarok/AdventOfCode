@@ -72,7 +72,7 @@ namespace Year2024.Day12 {
 		protected override long SolvePart1() {
 			long result = 0;
 			//1. build polygons from input
-			//2. calculate area and circum with shoelace - we don't even need shoelace just count square inside
+			//2. calculate area don't even need shoelace just count squares inside
 			//3. remove areas of polygons that are inside other polygons
 			foreach (var poly in polygons) {
 				poly.Area = poly.squaresInside.Count;
@@ -96,11 +96,68 @@ namespace Year2024.Day12 {
 			ReadInputPart1(fileName);
 		}
 
+		/// <summary>
+		/// XO
+		/// OO - 1 vertex
+		/// 
+		/// XX XO
+		/// OO XO - 0 vertex
+		/// 
+		/// XO
+		/// OX - 1 vertex or 2 vertex if X-es are connected
+		/// 
+		/// XX
+		/// XO - 1 vertex
+		/// 
+		/// XX
+		/// XX - 0 vertex
+		/// 
+		/// </summary>
+		private void CountVertices() {
+			//if we have 1 cell of a poly -> 1 vertex
+			//if we have 2 cells of a poly -> vertical or horizontal = 0 vertex, diagonal = 2 vertices
+			//if we have 3 cells of a poly -> 1 vertex
+			//if we have 4 cells of a poly -> 0 vertex
+			for (int y = 0; y <= input.Length; y++) {
+				for (int x = 0; x <= input.Length; x++) {
+					var ul = GetPolyContaining(x - 1, y - 1);
+					var ur = GetPolyContaining(x, y - 1);
+					var dl = GetPolyContaining(x - 1, y);
+					var dr = GetPolyContaining(x, y);
+					var all = new[] { ul, ur, dl, dr };
+					var groups = all.GroupBy(p => p)
+						 .Select(g => new { Polygon = g.Key, Count = g.Count() })
+						 .ToList();
+					if (groups.Count == 1) continue;				//4 cells of a poly -> 0 vertex
+					foreach (var group in groups) {
+						if (group.Count == 1 || group.Count == 3) { //1 or 3 cells of a poly -> 1 vertex
+							group.Polygon.VerticesCount++;
+						}
+					}
+					if (ul != ur && dl != dr) {                     
+						if (ul == dr) {
+							ul.VerticesCount += 2;                  //diagonal -> 2 vertices
+						}
+						if (ur == dl) {
+							ur.VerticesCount += 2;
+						}
+					} 
+				}
+			}
+		}
+		Polygon dummy = new Polygon('#', new HashSet<Point>());
+		private Polygon GetPolyContaining(int x, int y) {
+			if (x < 0 || x >= width || y < 0 || y >= height) return dummy;
+			//TODO: would be faster by storing point -> polygon dictionary
+			return polygons.First(p => p.squaresInside.Contains(new Point(x, y)));
+		}
+
 		protected override long SolvePart2() {
 			long result = 0;
 			foreach (var poly in polygons) {
 				poly.Area = poly.squaresInside.Count;
 			}
+			CountVertices();
 			for (int p1 = 0; p1 < polygons.Count; p1++) {
 				var poly1 = polygons[p1];
 				for (int p2 = 0; p2 < polygons.Count; p2++) {
@@ -110,7 +167,7 @@ namespace Year2024.Day12 {
 						poly1.Area--;
 					}
 				}
-				result += poly1.Area * poly1.VerticesCount; //TODO: count vertices
+				result += poly1.Area * poly1.VerticesCount;
 				//Console.WriteLine($"{poly1.label} area: {poly1.Area} sides: {poly1.VerticesCount}");
 			}
 			return result;
