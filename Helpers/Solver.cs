@@ -2,6 +2,10 @@
 
 namespace Helpers {
 	public abstract class Solver(int year, int day) {
+		public class Oopsie : Exception {
+			public Oopsie() : base("Shouldn't happen") { } //the classic shouldn't happen exception
+		}
+
 		public void Solve() {
 			string shortInput = $"Day{day}\\{year}shortinput{day}.txt";
 			string input = $"Day{day}\\{year}input{day}.txt";
@@ -45,6 +49,6 @@ namespace Helpers {
 		protected abstract long SolvePart2();
 		protected abstract void ReadInputPart1(string fileName);
 		protected abstract void ReadInputPart2(string fileName);
-		
+
 	}
 }
