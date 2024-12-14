@@ -1,5 +1,5 @@
-﻿//var s1 = new Year2022.Day3.Day3();
-//s1.Solve();
+﻿var s1 = new Year2022.Day5.Day5();
+s1.Solve();
 
-var s = new Year2024.Day20.Day20();
-s.Solve();
+//var s = new Year2024.Day15.Day15();
+//s.Solve();

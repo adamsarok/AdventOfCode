@@ -7,6 +7,18 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Helpers\Helpers.csproj" />
+    <None Update="Day04\2022input4.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Day04\2022shortinput4.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Day05\2022input5.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Day05\2022shortinput5.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Day06\2022shortinput06.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
