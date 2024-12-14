@@ -4,6 +4,7 @@ namespace Helpers {
 	public abstract class Solver(int year, int day) {
 		public class Oopsie : Exception {
 			public Oopsie() : base("Shouldn't happen") { } //the classic shouldn't happen exception
+			public Oopsie(string msg) : base($"Shouldn't happen: {msg}") { } //the detailed shouldn't happen exception
 		}
 
 		public void Solve() {
