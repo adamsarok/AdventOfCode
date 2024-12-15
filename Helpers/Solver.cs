@@ -9,8 +9,8 @@ namespace Helpers {
 
 		public void Solve() {
 			string daystr = day.ToString("00");
-			string shortInput = $"Day{daystr}\\{year}shortinput{day}.txt";
-			string input = $"Day{daystr}\\{year}input{day}.txt";
+			string shortInput = $"Day{daystr}\\{year}shortinput{daystr}.txt";
+			string input = $"Day{daystr}\\{year}input{daystr}.txt";
 			Measure(() => {
 				ReadInputPart1(shortInput);
 				var r = SolvePart1();

@@ -4,7 +4,7 @@ namespace Tests {
 	public class CodeGen {
 		[Fact]
 		public void GenerateYear() {
-			int year = 2022;
+			int year = 2020;
 			for (int i = 1; i <= 25; i++) {
 				string baseDir = AppContext.BaseDirectory;
 				string sourceDir = Path.Combine(baseDir, "..", "..", "..", "..");
