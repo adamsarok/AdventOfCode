@@ -9,32 +9,39 @@ namespace Year2024.Day15 {
 	public class Day15 : Solver {
 		public Day15() : base(2024, 15) {
 		}
-		char[,] warehouses;
 		List<char> moves;
+		public enum Types { Robot, Wall, Box }
+		class WhObj(Types type) {
+			public XY Pos { get; set; }
+			public Types Type => type;
+		}
 		int height, width;
-		XY robot;
+		WhObj robot;
+		List<WhObj> walls;
+		List<WhObj> boxes;
 		protected override void ReadInputPart1(string fileName) {
 			var f = File.ReadAllLines(fileName);
-			List<char[]> whtemp = new();
+			moves = new();
+			walls = new();
+			boxes = new();
+			bool readingWh = true;
 			for (int y = 0; y < f.Length; y++) {
 				var l = f[y];
 				if (string.IsNullOrWhiteSpace(l)) {
 					height = y;
-					width = whtemp[0].Length;
-					break;
+					readingWh = false;
+				} else if (readingWh) {
+					width = l.Length;
+					for (int x = 0; x < l.Length; x++) {
+						switch (l[x]) {
+							case '@': robot = new WhObj(Types.Robot) { Pos = new XY(x, y) }; break;
+							case '#': walls.Add(new WhObj(Types.Wall) { Pos = new XY(x, y) }); break;
+							case 'O': boxes.Add(new WhObj(Types.Box) { Pos = new XY(x, y) }); break;
+						}
+					}
+				} else {
+					moves.AddRange(f[y].ToCharArray());
 				}
-				whtemp.Add(l.ToCharArray());
-			}
-			warehouses = new char[height, width];
-			for (int y = 0; y < height; y++) {
-				for (int x = 0; x < width; x++) {
-					if (whtemp[y][x] == '@') robot = new XY(x, y);
-					warehouses[y, x] = whtemp[y][x];
-				}
-			}
-			moves = new();
-			for (int y = height + 1; y < f.Length; y++) {
-				moves.AddRange(f[y].ToCharArray());
 			}
 		}
 
@@ -44,43 +51,53 @@ namespace Year2024.Day15 {
 
 		protected override long SolvePart1() {
 			long result = 0;
-			foreach (var move in moves) {
-				var r = Move(move);
-				if (r.isValid) warehouses = r.newState;
-			}
+			foreach (var move in moves) Move(move);
+			//Debug();
+			foreach (var box in boxes) result += box.Pos.x + box.Pos.y * 100;
 			return result;
 		}
 
-		record MoveResult(bool isValid, char[,]? newState);
-
-		private MoveResult Move(char move) {
-			char[,] next = new char[height, width];
-			Array.Copy(warehouses, next, warehouses.Length);
+		private void Move(char move) {
+			//Debug();
 			switch (move) {
 				case '<':
-					return Push(robot, new XY(-1, 0), next);
+					Push(robot, new XY(-1, 0)); break;
 				case '>':
-					return Push(robot, new XY(1, 0), next);
+					Push(robot, new XY(1, 0)); break;
 				case '^':
-					return Push(robot, new XY(0, -1), next);
+					Push(robot, new XY(0, -1)); break;
 				case 'v':
-					return Push(robot, new XY(0, 1), next);
+					Push(robot, new XY(0, 1)); break;
 				default:
 					throw new Oopsie("Invalid move");
 			}
 		}
 
-		private MoveResult Push(char pushChar, XY pushAt, XY vector, char[,] next) {
-			char destination = next[pushAt.y + vector.y, pushAt.x + vector.x];
-			switch (destination) {
-				case '#':
-					return new MoveResult(false, null);
-				case '.':
-					next[pushAt.y + vector.y, pushAt.x + vector.x] = pushChar;
-					next[pushAt.y, pushAt.x] = '.';
-					robot += vector;
-					return new MoveResult(true, next);
+		private void Debug() {
+			Console.Clear();
+			for (int y = 0; y < height; y++) {
+				for (int x = 0; x < width; x++) {
+					var pos = new XY(x, y);
+					if (walls.Any(w => w.Pos == pos)) Console.Write('#');
+					else if (robot.Pos == pos) Console.Write('@');
+					else if (boxes.Any(b => b.Pos == pos)) Console.Write('O');
+					else Console.Write('.');
+				}
+				Console.WriteLine();
 			}
+		}
+
+		//TODO: these searches can be much faster if I maintain a dictionary of what obj is at what position
+		//Dictionary<XY, WhObj> map = new(); //536 ms
+
+		private bool Push(WhObj toPush, XY vector) { 
+			XY dest = new(toPush.Pos.x + vector.x, toPush.Pos.y + vector.y);
+			if (walls.Any(w => w.Pos == dest)) return false; 
+			bool canPush = true;
+			var box = boxes.FirstOrDefault(b => b.Pos == dest);
+			if (box != null) canPush = Push(box, vector); 
+			if (canPush) toPush.Pos = dest;
+			return canPush;
 		}
 
 		protected override long SolvePart2() {
