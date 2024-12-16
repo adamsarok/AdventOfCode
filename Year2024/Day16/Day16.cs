@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -28,10 +29,17 @@ namespace Year2024.Day16 {
 			result = long.MaxValue;
 			iter = 0;
 			sw.Restart();
+			costs = new long[input.Length, input[0].Length];
 			for (int y = 0; y < input.Length; y++) {
-				for (int x = 0; x < input.Length; x++) {
+				for (int x = 0; x < input[0].Length; x++) {
+					costs[x, y] = long.MaxValue;
+				}
+			}
+			for (int y = 0; y < input.Length; y++) {
+				for (int x = 0; x < input[0].Length; x++) {
 					if (input[y][x] == 'S') {
-						GoFrom(new Point(x, y), Direction.Right, 0, new bool[input.Length, input[0].Length]);
+						costs[y,x] = -1;
+						GoFrom(new Point(x, y), Direction.Right, 0, 0);
 					}
 				}
 			}
@@ -52,25 +60,31 @@ namespace Year2024.Day16 {
 			Left,
 			Right
 		}
-		private void Debug(HashSet<Point> visited) {
+		private void Debug() {
 			Console.Clear();
 			for (int y = 0; y < input.Length; y++) {
 				for (int x = 0; x < input.Length; x++) {
-					var p = new Point(x, y);
-					if (visited.Contains(p)) Console.Write("X");
+					if (costs[y, x] < long.MaxValue) Console.Write("X");
 					else Console.Write(input[y][x]);
 				}
 				Console.WriteLine();
 			}
 		}
-		//long[,] costs
-		private void GoFrom(Point point, Direction facing, long currentScore, bool[,] visited) {
+		long[,] costs;
+		private void GoFrom(Point point, Direction facing, long currentScore, int steps) {
 			iter++;
-			visited[point.x, point.y] = true;
-			var clone = visited.Clone() as bool[,];
-			Go(point, facing, facing, currentScore, clone); //first try straight line
-			foreach (var dir in new[]{ Direction.Right, Direction.Up, Direction.Down, Direction.Left }) {
-				if (dir != facing) Go(point, facing, dir, currentScore, clone);
+			Go(point, facing, facing, currentScore, steps + 1); //first try straight line
+			switch (facing) {
+				case Direction.Up:
+				case Direction.Down:
+					Go(point, facing, Direction.Left, currentScore, steps + 1);
+					Go(point, facing, Direction.Right, currentScore, steps + 1);
+					break;
+				case Direction.Left:
+				case Direction.Right:
+					Go(point, facing, Direction.Up, currentScore, steps + 1);
+					Go(point, facing, Direction.Down, currentScore, steps + 1);
+					break;
 			}
 		}
 		private int GetTurns(Direction currentFacing, Direction dirToGo) {
@@ -126,7 +140,8 @@ namespace Year2024.Day16 {
 			}
 			throw new Exception("shouldn't happen");
 		}
-		private void Go(Point from, Direction currentFacing, Direction dirToGo, long currentScore, bool[,] visited) {
+		private void Go(Point from, Direction currentFacing, Direction dirToGo, long currentScore, int steps) {
+			//Debug();
 			Point dest;
 			switch (dirToGo) {
 				case Direction.Up:
@@ -146,21 +161,96 @@ namespace Year2024.Day16 {
 			}
 			if (dest.y < 0 || dest.y >= input.Length || dest.x < 0 || dest.x >= input.Length) return;
 			if (input[dest.y][dest.x] == '#') return;
-			if (visited[dest.x, dest.y]) return;
 			long nextScore = currentScore + (GetTurns(currentFacing, dirToGo) * 1000) + 1;
-			if (nextScore >= result) return;
+			if (costs[dest.y, dest.x] < nextScore) return;
+			costs[dest.y, dest.x] = nextScore;
+			//if (nextScore >= result) return;
 			if (input[dest.y][dest.x] == 'E') {
-				//Debug(visited);
-				Console.WriteLine($"{nextScore} in {iter} iterations in {sw.ElapsedMilliseconds / 1000} seconds");
+				//Debug();
+				//Console.WriteLine($"{nextScore} in {iter} iterations in {sw.ElapsedMilliseconds / 1000} seconds");
+				//if (nextScore == target) {
+				//	part2result += steps;
+				//}
 				result = Math.Min(nextScore, result);
 			}
-			GoFrom(dest, dirToGo, nextScore, visited);
+			GoFrom(dest, dirToGo, nextScore, steps);
+		}
+		private void PrintCosts() {
+			Console.Clear();
+			for (int y = 0; y < input.Length; y++) {
+				for (int x = 0; x < input.Length; x++) {
+					if (costs[y, x] < long.MaxValue) {
+						Console.Write(costs[y, x].ToString().PadRight(5));
+					} else Console.Write($"  {input[y][x]}  ");
+				}
+				Console.WriteLine();
+			}
 		}
 
-		protected override long SolvePart2() {
-			long result = 0;
+//We can find one best path with this logic, but not all best paths
+//3008 4009 3010 -> here the path through 4009 is skipped even though its the same cost as through 3009
+//#    #    #    #    #    #    #    #    #    #    #    #    #    #    #
+//#  5016 6017 6018 6019 6020 6021 6022   #  8040 8039 8038 8037 7036   #
+//#  5015   #  7017   #    #    #  7023   #  9023   #    #    #  7035   #
+//#  5014 6015 6016 6017 6018   #  7024   #  8022 8021 7020   #  7034   #
+//#  5013   #    #    #  7019   #    #    #    #    #  7019   #  7033   #
+//#  5012   #  3010   #  6020 6019 6018 6017 5016 6017 6018   #  7032   #
+//#  5011   #  3009   #    #    #    #    #  5015   #    #    #  7031   #
+//#  4010 4009 3008 4009 3010 4011 4012 4013 4014 4015 4016   #  7030   #
+//#    #    #  3007   #  3009   #    #    #    #    #  5017   #  7029   #
+//#  1004 2005 2006   #  3008 4009 4010 4011 4012   #  5018   #  7028   #
+//#  1003   #  3005   #  3007   #    #    #  5013   #  5019   #  7027   #
+//#  1002 2003 2004 2005 2006   #  5012 6013 5014   #  5020   #  7026   #
+//#  1001   #    #    #  3007   #  5011   #  5013   #  5021   #  7025   #
+//#   -1    1    2    #  3008 4009 4010 4011 4012   #  5022 6023 6024   #
+//#    #    #    #    #    #    #    #    #    #    #    #    #    #    #
 
-			return result;
+
+		long part2result;
+		long target = long.MinValue;
+		protected override long SolvePart2() {
+			part2result = 0;
+			SolvePart1();
+			target = result; //hacky
+			SolvePart1();
+			//PrintCosts();
+			//for (int y = 0; y < input.Length; y++) {
+			//	for (int x = 0; x < input[0].Length; x++) {
+			//		if (input[y][x] == 'E') {
+			//			CountBack(new Point(x, y));
+			//		}
+			//	}
+			//}
+			return part2result;
+		}
+		private long GetCost(long y, long x) {
+			if (x < 0 || x >= input[0].Length || y < 0 || y >= input.Length) return long.MaxValue;
+			return costs[y, x];
+		}
+		private void CountBack(Point point) {
+			long min = new long[]{
+				GetCost(point.y + 1, point.x),
+				GetCost(point.y - 1, point.x),
+				GetCost(point.y, point.x + 1),
+				GetCost(point.y, point.x - 1)
+			}.Min();
+			if (min < 0) return;
+			if (GetCost(point.y + 1, point.x) == min) {
+				part2result++;
+				CountBack(new Point(point.x, point.y + 1));
+			}
+			if (GetCost(point.y - 1, point.x) == min) {
+				part2result++;
+				CountBack(new Point(point.x, point.y - 1));
+			}
+			if (GetCost(point.y, point.x + 1) == min) {
+				part2result++;
+				CountBack(new Point(point.x + 1, point.y));
+			}
+			if (GetCost(point.y, point.x - 1) == min) {
+				part2result++;
+				CountBack(new Point(point.x - 1, point.y + 1));
+			}
 		}
 	}
 }
