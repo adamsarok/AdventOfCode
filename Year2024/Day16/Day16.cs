@@ -39,7 +39,7 @@ namespace Year2024.Day16 {
 				for (int x = 0; x < input[0].Length; x++) {
 					if (input[y][x] == 'S') {
 						costs[y,x] = -1;
-						GoFrom(new Point(x, y), Direction.Right, 0, 0);
+						GoFrom(new Point(x, y), Direction.Right, 0);
 					}
 				}
 			}
@@ -71,19 +71,19 @@ namespace Year2024.Day16 {
 			}
 		}
 		long[,] costs;
-		private void GoFrom(Point point, Direction facing, long currentScore, int steps) {
+		private void GoFrom(Point point, Direction facing, long currentScore) {
 			iter++;
-			Go(point, facing, facing, currentScore, steps + 1); //first try straight line
+			Go(point, facing, facing, currentScore); //first try straight line
 			switch (facing) {
 				case Direction.Up:
 				case Direction.Down:
-					Go(point, facing, Direction.Left, currentScore, steps + 1);
-					Go(point, facing, Direction.Right, currentScore, steps + 1);
+					Go(point, facing, Direction.Left, currentScore);
+					Go(point, facing, Direction.Right, currentScore);
 					break;
 				case Direction.Left:
 				case Direction.Right:
-					Go(point, facing, Direction.Up, currentScore, steps + 1);
-					Go(point, facing, Direction.Down, currentScore, steps + 1);
+					Go(point, facing, Direction.Up, currentScore);
+					Go(point, facing, Direction.Down, currentScore);
 					break;
 			}
 		}
@@ -140,7 +140,7 @@ namespace Year2024.Day16 {
 			}
 			throw new Exception("shouldn't happen");
 		}
-		private void Go(Point from, Direction currentFacing, Direction dirToGo, long currentScore, int steps) {
+		private void Go(Point from, Direction currentFacing, Direction dirToGo, long currentScore) {
 			//Debug();
 			Point dest;
 			switch (dirToGo) {
@@ -164,16 +164,10 @@ namespace Year2024.Day16 {
 			long nextScore = currentScore + (GetTurns(currentFacing, dirToGo) * 1000) + 1;
 			if (costs[dest.y, dest.x] < nextScore) return;
 			costs[dest.y, dest.x] = nextScore;
-			//if (nextScore >= result) return;
 			if (input[dest.y][dest.x] == 'E') {
-				//Debug();
-				//Console.WriteLine($"{nextScore} in {iter} iterations in {sw.ElapsedMilliseconds / 1000} seconds");
-				//if (nextScore == target) {
-				//	part2result += steps;
-				//}
 				result = Math.Min(nextScore, result);
 			}
-			GoFrom(dest, dirToGo, nextScore, steps);
+			GoFrom(dest, dirToGo, nextScore);
 		}
 		private void PrintCosts() {
 			Console.Clear();
