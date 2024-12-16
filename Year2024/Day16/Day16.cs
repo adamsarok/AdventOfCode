@@ -1,6 +1,8 @@
 using Helpers;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,17 +22,28 @@ namespace Year2024.Day16 {
 		}
 		long result;
 		long iter;
+		Stopwatch sw = new Stopwatch();
+
 		protected override long SolvePart1() {
 			result = long.MaxValue;
+			iter = 0;
+			sw.Restart();
 			for (int y = 0; y < input.Length; y++) {
 				for (int x = 0; x < input.Length; x++) {
 					if (input[y][x] == 'S') {
-						GoFrom(new Point(x, y), Direction.Right, 0, new List<Point>());
+						GoFrom(new Point(x, y), Direction.Right, 0, new bool[input.Length, input[0].Length]);
 					}
 				}
 			}
+
 			Console.WriteLine($"Solved in {iter} iterations");
-			//3999 6352
+
+			//211800 in 2521857 iterations in 86 seconds
+			//211800 in 2521857 iterations in 26 seconds
+			//211800 in 2454094 iterations in 6 seconds
+
+			//min until now: 157568
+
 			return result;
 		}
 		enum Direction {
@@ -39,7 +52,7 @@ namespace Year2024.Day16 {
 			Left,
 			Right
 		}
-		private void Debug(List<Point> visited) {
+		private void Debug(HashSet<Point> visited) {
 			Console.Clear();
 			for (int y = 0; y < input.Length; y++) {
 				for (int x = 0; x < input.Length; x++) {
@@ -50,12 +63,14 @@ namespace Year2024.Day16 {
 				Console.WriteLine();
 			}
 		}
-		private void GoFrom(Point point, Direction facing, long currentScore, List<Point> visited) {
+		//long[,] costs
+		private void GoFrom(Point point, Direction facing, long currentScore, bool[,] visited) {
 			iter++;
-			visited.Add(point);
-			Go(point, facing, facing, currentScore, new List<Point>(visited)); //first try straight line
-			foreach (var dir in new[]{Direction.Left, Direction.Right, Direction.Up, Direction.Down }) {
-				if (dir != facing) Go(point, facing, dir, currentScore, new List<Point>(visited));
+			visited[point.x, point.y] = true;
+			var clone = visited.Clone() as bool[,];
+			Go(point, facing, facing, currentScore, clone); //first try straight line
+			foreach (var dir in new[]{ Direction.Right, Direction.Up, Direction.Down, Direction.Left }) {
+				if (dir != facing) Go(point, facing, dir, currentScore, clone);
 			}
 		}
 		private int GetTurns(Direction currentFacing, Direction dirToGo) {
@@ -111,7 +126,7 @@ namespace Year2024.Day16 {
 			}
 			throw new Exception("shouldn't happen");
 		}
-		private void Go(Point from, Direction currentFacing, Direction dirToGo, long currentScore, List<Point> visited) {
+		private void Go(Point from, Direction currentFacing, Direction dirToGo, long currentScore, bool[,] visited) {
 			Point dest;
 			switch (dirToGo) {
 				case Direction.Up:
@@ -131,11 +146,12 @@ namespace Year2024.Day16 {
 			}
 			if (dest.y < 0 || dest.y >= input.Length || dest.x < 0 || dest.x >= input.Length) return;
 			if (input[dest.y][dest.x] == '#') return;
-			if (visited.Contains(dest)) return;
+			if (visited[dest.x, dest.y]) return;
 			long nextScore = currentScore + (GetTurns(currentFacing, dirToGo) * 1000) + 1;
 			if (nextScore >= result) return;
 			if (input[dest.y][dest.x] == 'E') {
 				//Debug(visited);
+				Console.WriteLine($"{nextScore} in {iter} iterations in {sw.ElapsedMilliseconds / 1000} seconds");
 				result = Math.Min(nextScore, result);
 			}
 			GoFrom(dest, dirToGo, nextScore, visited);
