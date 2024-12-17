@@ -22,10 +22,12 @@ namespace Year2024.Day17 {
 			var ccc = To3bits(9);
 			commands = new List<long>();
 			var f = File.ReadAllLines(fileName);
-			A = GetRegister(f[0]);
-			B = GetRegister(f[1]);
-			C = GetRegister(f[2]);
-			Binit = B; Cinit = C;
+			registers[0] = 0; registers[1] = 1; registers[2] = 2; registers[3] = 3;
+
+			registers[4] = GetRegister(f[0]);
+			registers[5] = GetRegister(f[1]);
+			registers[6] = GetRegister(f[2]);
+			Binit = registers[5]; Cinit = registers[6];
 			foreach (var c in f[4].Split(':')[1].Split(",")) {
 				commands.Add(int.Parse(c));
 			}
@@ -33,18 +35,21 @@ namespace Year2024.Day17 {
 		private int GetRegister(string r) {
 			return int.Parse(r.Split(':')[1]);
 		}
-		long A, B, C;
+		//long A, B, C;
 		long Binit, Cinit;
 		int instructionPointer = 0;
-		private long GetComboOperandValue(long operand) {
-			if (operand <= 3) return operand;
-			switch (operand) {
-				case 4: return A;
-				case 5: return B;
-				case 6: return C;
-				default: throw new Exception("Invalid operand");
-			}
-		}
+
+		long[] registers = new long[7];
+
+		//private long GetComboOperandValue(long operand) {
+		//	if (operand <= 3) return operand;
+		//	switch (operand) {
+		//		case 4: return A;
+		//		case 5: return B;
+		//		case 6: return C;
+		//		default: throw new Exception("Invalid operand");
+		//	}
+		//}
 
 
 		protected override void ReadInputPart2(string fileName) {
@@ -79,60 +84,53 @@ namespace Year2024.Day17 {
 			}
 			return result;
 		}
-		enum Opcodes {
-			adv, //divide A by 2^B, truncate to int and write to A
-			bxl, //bitwise XOR of B and literal, stores in B
-			bst, //combo operand % 8 (lowest 3 bits), writes it to B
-			jnz, //nothing if A 0, else jumps to literal
-				 //if jumps, instruction pointer is not increased
-			bxc, //bitwise XOR of B and C, stores in B
-			out_,//combo % 8 outputs value
-			bdv, //same as adv but store in B
-			cdv, //same as adv but store in C
-		}
-		//0, 5, 3 is tested, the error lies somewhere else
+        enum Opcodes {
+            adv = 0, //divide A by 2^B, truncate to int and write to A
+            bxl = 1, //bitwise XOR of B and literal, stores in B
+            bst = 2, //combo operand % 8 (lowest 3 bits), writes it to B
+            jnz = 3, //nothing if A 0, else jumps to literal
+                 //if jumps, instruction pointer is not increased
+            bxc = 4, //bitwise XOR of B and C, stores in B
+            out_ = 5,//combo % 8 outputs value
+            bdv = 6, //same as adv but store in B
+            cdv = 7, //same as adv but store in C
+        }
+
+
 		private void ProcessCommand(long opcode, long operand) {
 			var operation = (Opcodes)opcode;
 			//Console.WriteLine($"Executing {operation} {operand}, A={A} B={B} C={C}");
 			switch (operation) {
-				case Opcodes.adv: //OK!
-					A = (int)(A / Math.Pow(2, GetComboOperandValue(operand)));
+				case Opcodes.adv:
+					registers[4] = registers[4] >> (int)registers[operand];
 					instructionPointer += 2;
 					break;
-				case Opcodes.bxl: //seems OK?
-					//var op1 = To3bits(B);
-					//var op2 = To3bits(operand);
-					//B = XOR(op1, op2);
-					B = B ^ operand;
+				case Opcodes.bxl:
+					registers[5] = registers[5] ^ operand;
 					instructionPointer += 2;
 					break;
-				case Opcodes.bst: //seems OK?
-					var op = GetComboOperandValue(operand);
-					B = op % 8;
+				case Opcodes.bst:
+					registers[5] = registers[operand] % 8;
 					instructionPointer += 2;
 					break;
-				case Opcodes.jnz: //OK!
-					if (A != 0) instructionPointer = (int)operand;
+				case Opcodes.jnz:
+					if (registers[4] != 0) instructionPointer = (int)operand;
 					else instructionPointer += 2;
 					break;
 				case Opcodes.bxc:
-					//var op4 = To3bits(B);
-					//var op5 = To3bits(C);
-					//B = XOR(op4, op5);
-					B = B ^ C;
+					registers[5] = registers[5] ^ registers[6];
 					instructionPointer += 2;
 					break;
-				case Opcodes.out_: //OK!
-					var opO = GetComboOperandValue(operand);
-					output.Add(opO % 8);
+				case Opcodes.out_:
+					output.Add(registers[operand] % 8);
 					instructionPointer += 2;
 					break;
 				case Opcodes.bdv:
-					B = (int)(A / Math.Pow(2, GetComboOperandValue(operand)));
+					registers[5] = registers[4] >> (int)registers[operand];
 					instructionPointer += 2;
 					break;
 				case Opcodes.cdv:
-					C = (int)(A / Math.Pow(2, GetComboOperandValue(operand)));
+					registers[6] = registers[4] >> (int)registers[operand];
 					instructionPointer += 2;
 					break;
 				default:
@@ -141,9 +139,9 @@ namespace Year2024.Day17 {
 		}
 		private void Reset(long a) {
 			output = new();
-			A = a;
-			B = Binit;
-			C = Cinit;
+			registers[4] = a;
+			registers[5] = Binit;
+			registers[6] = Cinit;
 			instructionPointer = 0;
 		}
 		Stopwatch sw = new();
@@ -183,23 +181,52 @@ namespace Year2024.Day17 {
 			//Output length 8 at 2097152
 			//Output length 9 at 16777216
 			//Output length 10 at 134217728
+			//to get 16 length output 8 ^ 15 = 35184372088832
+
+			//Program: 2,4	1,3	 7,5  0,3  1,5  4,4  5,5  3,0
+			//5,5 = out -> B % 8
+			//mod 8 means only the lowest 3 bits are relevant
+			//we only care about the LSB of B - still not sure how to generate : (
+
+
 			matchedBits = 1;
-			long aTry = 0;
-			//if (commands.Count > 10) aTry = (long)Math.Pow(8, 10);
+			long aTry = 1;
+			if (commands.Count == 16) aTry = (long)Math.Pow(8, 15);
 			int outputCnts = 0;
 			sw.Restart();
 			while (true) {
 				Reset(aTry);
 				SolvePart1();
 				if (Enumerable.SequenceEqual(output, commands)) return aTry;
-				Log(aTry);
+				//if (output.Count >= 16 && output[15] == 0) {
+				//	Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
+				//	Console.WriteLine($"Output: {string.Join(",", output)}");
+				//}
+				//if (commands.Count == 16 && output.Skip(output.Count - 1).First() == 0) {
+				//	Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
+				//	Console.WriteLine($"Output: {string.Join(",", output)}");
+				//}
+				if (aTry % 1000000 == 0) {  //2226 ms per 1m
+					Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
+					Console.WriteLine($"Output: {string.Join(",", output)}");
+					sw.Restart();
+				}
+				//Log(aTry);
 				//if (outputCnts < output.Count) {
 				//	outputCnts = output.Count;
 				//	Console.WriteLine($"Output length {outputCnts} at {aTry}");
 				//}
+
+				//if (commands.Count == 16) {
+				//	Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
+				//	Console.WriteLine($"Output: {string.Join(",", output)}");
+				//	if (output.Count == 16) {
+				//		Console.WriteLine($"Gotcha 16 length output!");
+				//	}
+				//	aTry *= 8;
+				//} else
 				aTry++;
-				//Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
-				//Console.WriteLine($"Output: {string.Join(",", output)}");
+
 			}
 		}
 	}
