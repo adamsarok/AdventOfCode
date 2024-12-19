@@ -32,20 +32,33 @@ namespace Year2024.Day19 {
 			ReadInputPart1(fileName);
 		}
 
-		//naive: 7ms
-		//with trie: fail
-		//memoization?: works but oh so slow
 		protected override long SolvePart1() {
 			long result = 0;
 			for (int i = 0; i < designs.Count; i++) {
 				var design = designs[i];
-				int acc;
+				long acc;
 				Stopwatch sw = Stopwatch.StartNew();
-				if (Match(design, out acc)) {
-					Console.WriteLine($"Found {acc} ways in {sw.ElapsedMilliseconds} ms: {design}");
+				if (Match2(design, out acc)) {
+					//Console.WriteLine($"Found {acc} ways in {sw.ElapsedMilliseconds} ms: {design}");
 					result++;
 				} else {
-					Console.WriteLine($"Failed in {sw.ElapsedMilliseconds} ms: {design}");
+					//Console.WriteLine($"Failed in {sw.ElapsedMilliseconds} ms: {design}");
+				}
+			}
+			return result;
+		}
+		protected override long SolvePart2() {
+
+			long result = 0;
+			for (int i = 0; i < designs.Count; i++) {
+				var design = designs[i];
+				long acc;
+				Stopwatch sw = Stopwatch.StartNew();
+				if (Match2(design, out acc)) {
+					//Console.WriteLine($"Found {acc} ways in {sw.ElapsedMilliseconds} ms: {design}");
+					result += acc;
+				} else {
+					//Console.WriteLine($"Failed in {sw.ElapsedMilliseconds} ms: {design}");
 				}
 			}
 			return result;
@@ -57,38 +70,32 @@ namespace Year2024.Day19 {
 				Console.WriteLine($"{kvp.Key}: {kvp.Value}");
 			} 
 		}
-		//TODO: slowwwwwwwwwwww and acc does not show correct amount
-		private bool Match(string design, out int acc) {
-			Dictionary<string, int> cache = towels.ToDictionary(k => k, v => 1);
-			acc = 0;
-			while (true) {
-				if (cache.TryGetValue(design, out acc)) {
-					return true;
-				}
-				var keys = cache.Keys.ToList();
-				bool added = false;
-				foreach (var key in keys) {
-					foreach (var towel in towels) {
-						var add = key + towel;
-						if (design.StartsWith(add)) {
-							if (!cache.ContainsKey(add)) {
-								cache.Add(add, cache[key]);
-								added = true;
-							} else {
-								cache[add]++;
-							}
-							//Debug(cache, add);
-						}
-					}
-				}
-				if (!added) return false;
+		
+		private bool Match2(string design, out long acc) {
+			Dictionary<string, long> memo = new Dictionary<string, long>();
+			acc = CountWays(design, memo);
+			return acc > 0;
+		}
+
+		private long CountWays(string design, Dictionary<string, long> memo) {
+			//Console.WriteLine(design);
+			if (string.IsNullOrEmpty(design)) {
+				return 1;
 			}
+			if (memo.ContainsKey(design)) return memo[design];
+
+			long totalWays = 0;
+			foreach (var towel in towels) {
+				if (design.StartsWith(towel)) {
+					string remainingDesign = design.Substring(towel.Length);
+					totalWays += CountWays(remainingDesign, memo);
+				}
+			}
+
+			memo[design] = totalWays;
+			return totalWays;
 		}
 
-		protected override long SolvePart2() {
-			long result = 0;
 
-			return result;
-		}
 	}
 }

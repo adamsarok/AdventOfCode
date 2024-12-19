@@ -220,6 +220,8 @@ namespace Year2024.Day16 {
 		//#   -1    1    2    #  3008 4009 4010 4011 4012   #  5022 6023 6024   #
 		//#    #    #    #    #    #    #    #    #    #    #    #    #    #    #
 
+		//maybe we can go back along the path and "fix" the gaps we see here?
+
 
 		long part2result;
 		long target = long.MinValue;
@@ -229,7 +231,7 @@ namespace Year2024.Day16 {
 			target = result; //hacky
 			optimalPaths = new bool[input.Length, input[0].Length];
 			SolvePart1();
-			PrintOptimalPaths();
+			//PrintOptimalPaths();
 			//PrintCosts();
 			//for (int y = 0; y < input.Length; y++) {
 			//	for (int x = 0; x < input[0].Length; x++) {
