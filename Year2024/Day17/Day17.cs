@@ -185,8 +185,6 @@ namespace Year2024.Day17 {
 			A = a;
 			B = Binit;
 			C = Cinit;
-			actOut = target.Length - 1;
-			//instructionPointer = 0;
 		}
 
 		private void HandCoded() {
@@ -215,110 +213,59 @@ namespace Year2024.Day17 {
 
 				output.Add(B % 8); //5,5
 
-				if (B % 8 != target[actOut--]) {
-					return false;
-				}
-				if (actOut < 0) {
-					return true;
-				}
+				//if (B % 8 != target[actOut--]) {
+				//	return false;
+				//}
+				//if (actOut < 0) {
+				//	return true;
+				//}
 
-				bool wtf = true;
+				//bool wtf = true;
 			}
 			return false;
 		}
 
+		private void HandCoded3() {
+			//while (A != 0) {
+				B = ((A % 8) ^ 3); //2,4 1,3
+				C = A >> (int)B; //7,5 
+				A = A >> 3; //0,3
+				B = B ^ 5; //1,5
+				B = B ^ C; //4,4
+				output.Add(B % 8);
+			//}
+		}
+
 
 		protected override long SolvePart2() {
-			//Program: 2,4	1,3	 7,5  0,3  1,5  4,4  5,5  3,0
-			actOut = 0;
-			target = new long[]{ 2,4,  1,3,  7,5,  0,3,  1,5, 4,4,  5,5 , 3,0 };
-			//long result = 0;
-			//change register A, so the program produces a copy of itself
-
-			//both input programs get a new output at multiples of 8
-			//Output length 1 at 0
-			//Output length 2 at 8
-			//Output length 3 at 64
-			//Output length 4 at 512
-			//Output length 5 at 4096
-			//Output length 6 at 32768
-			//Output length 7 at 262144
-			//Output length 8 at 2097152
-			//Output length 9 at 16777216
-			//Output length 10 at 134217728
-			//to get 16 length output 8 ^ 15 =
-			//35184372088832
-			//5120000000000
-
-
-			//5,5 = out -> B % 8
-			//mod 8 means only the lowest 3 bits are relevant
-			//we only care about the LSB of B - still not sure how to generate : (
-
-
-			matchedBits = 1;
-			long aTry = 1;
-			//if (commands.Count == 16) aTry = (long)Math.Pow(8, 15);
-			aTry = 0;
-			int outputCnts = 0;
-			sw.Restart();
-			target = new long[] { 7, 5, 5, 3, 0 };
-			while (true) {
-				ResetPart2(aTry);
-				//0 0 2 0
-				//long[] test = new long[output.Count];
-				//output.CopyTo(test);
-				//Reset(aTry);
-				if (HandCoded2()) {
-
-					//HandCoded2(); //6 3 0
-					//6 3 0
-					instructionPointer = 0;
-					registers[4] = aTry;
-					registers[5] = 0;
-					registers[6] = 0;
-					output = new List<long>();
-					SolvePart1();
-					return aTry;
+			target = new long[] { 5, 0 };
+			target = new long[] { 2, 4, 1, 3, 7, 5, 0, 3, 1, 5, 4, 4, 5, 5, 3, 0 };
+			//ResetPart2(5104);
+			//HandCoded2();
+			int[] aForDigit = new int[8];
+			for (int i = 0; i < 8; i++) {
+				int a = 0;
+				while (true) {
+					ResetPart2(a);
+					HandCoded3();
+					if (output[0] == i) {
+						aForDigit[i] = a;
+						break;
+					}
+					a++;
 				}
-				//}
-				//if (actOut < 3) {
-				//	Console.WriteLine("Gotcha!");
-				//}
-				//Trying A = 10000000  1324 ms
-				//Output: 6,4,1,6,5,3,1,2
-
-				//if (Enumerable.SequenceEqual(output, commands)) return aTry;
-				//if (output.Count >= 16 && output[15] == 0) {
-				//	Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
-				//	Console.WriteLine($"Output: {string.Join(",", output)}");
-				//}
-				//if (commands.Count == 16 && output.Skip(output.Count - 1).First() == 0) {
-				//	Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
-				//	Console.WriteLine($"Output: {string.Join(",", output)}");
-				//}
-				if (aTry % 1000000000 == 0) {  //2226 ms per 1m
-					Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
-					Console.WriteLine($"Output: {string.Join(",", output)}");
-					sw.Restart();
-				}
-				//Log(aTry);
-				//if (outputCnts < output.Count) {
-				//	outputCnts = output.Count;
-				//	Console.WriteLine($"Output length {outputCnts} at {aTry}");
-				//}
-
-				//if (commands.Count == 16) {
-				//	Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
-				//	Console.WriteLine($"Output: {string.Join(",", output)}");
-				//	if (output.Count == 16) {
-				//		Console.WriteLine($"Gotcha 16 length output!");
-				//	}
-				//	aTry *= 8;
-				//} else
-				aTry++;
-
 			}
+			long result = 0;
+			int pow = 0;
+			for (int i = target.Length - 1; i >= 0; i--) {
+				result += (long)(aForDigit[target[i]] * Math.Pow(8, pow));
+				pow++;
+			}
+			//int[] target = new int[] { 7, 5, 5, 3, 0 }; //5104
+			//5, 0 = 22
+
+			//for (int )
+			return result;
 		}
 	}
 }

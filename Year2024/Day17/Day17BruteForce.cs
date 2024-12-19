@@ -13,7 +13,9 @@ namespace Year2024.Day17 {
 		}
 		class Brute(long from, long to) {
 			long A, B, C;
-			int[] target = new int[] { 2, 4, 1, 3, 7, 5, 0, 3, 1, 5, 4, 4, 5, 5, 3, 0 };
+			//int[] target = new int[] { 2, 4, 1, 3, 7, 5, 0, 3, 1, 5, 4, 4, 5, 5, 3, 0 };
+			//int[] target = new int[] { 7, 5, 5, 3, 0 }; //5104
+			int[] target = new int[] { 5, 0 }; //5104
 			int actOut;
 			private bool HandCoded2() {
 				while (A != 0) {
@@ -59,6 +61,10 @@ namespace Year2024.Day17 {
 
 			var path = @"C:\Users\sarok\source\repos\AdventOfCode\Year2024\Day17\chunks.txt";
 
+			Brute b = new Brute(0, 100000);
+			var r = b.Solve();
+			return -1;
+
 			if (!File.Exists(path)) {
 				File.WriteAllText(path, ((long)Math.Pow(8, 15) - 1).ToString());
 			}
@@ -66,7 +72,7 @@ namespace Year2024.Day17 {
 			for (int dum = 0; dum < 100; dum++) {
 				Stopwatch sw = Stopwatch.StartNew();
 
-				long start = File.ReadAllLines(path).Select(l => long.Parse(l)).Max();
+				long start = 0; //File.ReadAllLines(path).Select(l => long.Parse(l)).Max();
 				long step = (long)Math.Pow(10, 10);
 				long end = start + step * 32;
 
