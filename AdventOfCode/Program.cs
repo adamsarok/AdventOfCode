@@ -3,3 +3,6 @@
 
 var s = new Year2024.Day17.Day17();
 s.Solve();
+
+var s2 = new Year2024.Day17.Day17BruteForce();
+s2.Solve();

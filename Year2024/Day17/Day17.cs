@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Year2024.Day17 {
 	public class Day17 : Solver {
@@ -25,6 +26,8 @@ namespace Year2024.Day17 {
 			registers[0] = 0; registers[1] = 1; registers[2] = 2; registers[3] = 3;
 
 			registers[4] = GetRegister(f[0]);
+
+
 			registers[5] = GetRegister(f[1]);
 			registers[6] = GetRegister(f[2]);
 			Binit = registers[5]; Cinit = registers[6];
@@ -59,6 +62,11 @@ namespace Year2024.Day17 {
 		protected override long SolvePart1() {
 			long result = 0;
 			output = new List<long>();
+
+			//test!!!
+			//registers[4] = (long)Math.Pow(8, 15) - 1;
+			//16
+
 			while (instructionPointer < commands.Count - 1) {
 				ProcessCommand(commands[instructionPointer], commands[instructionPointer + 1]);
 			}
@@ -137,13 +145,7 @@ namespace Year2024.Day17 {
 					throw new Exception("Unknown opcode {instruction}");
 			}
 		}
-		private void Reset(long a) {
-			output = new();
-			registers[4] = a;
-			registers[5] = Binit;
-			registers[6] = Cinit;
-			instructionPointer = 0;
-		}
+
 		Stopwatch sw = new();
 		int matchedBits = 1;
 
@@ -166,7 +168,70 @@ namespace Year2024.Day17 {
 				}
 			}
 		}
+
+		//Program: 2,4	1,3	 7,5  0,3  1,5  4,4  5,5  3,0
+		//2,4: B = A % 8
+		//1,3: B = B xor 3
+		//7,5: C = A >> B
+		//0,3: A = A >> 3
+		//1,5: B = B xor 5
+		//4,4: B = B xor C
+		//5,5: out -> B % 8
+		//3,0: while A != 0 jump to 0
+
+		long A, B, C;
+		private void ResetPart2(long a) {
+			output = new();
+			A = a;
+			B = Binit;
+			C = Cinit;
+			actOut = target.Length - 1;
+			//instructionPointer = 0;
+		}
+
+		private void HandCoded() {
+			while (registers[4] != 0) {
+				registers[5] = registers[4] % 8; //2,4
+				registers[5] = registers[5] ^ 3; //1,3
+				registers[6] = registers[4] >> (int)registers[5]; //7,5 
+				registers[4] = registers[4] >> 3; //0,3
+				registers[5] = registers[5] ^ 5; //1,5
+				registers[5] = registers[5] ^ registers[6]; //4,4
+				output.Add(registers[5] % 8); //5,5
+			}
+		}
+
+		//Program: 2,4	1,3	 7,5  0,3  1,5  4,4  5,5  3,0
+
+		long[] target;
+		int actOut;
+		private bool HandCoded2() {
+			while (A != 0) {
+				B = ((A % 8) ^ 3); //2,4 1,3
+				C = A >> (int)B; //7,5 
+				A = A >> 3; //0,3
+				B = B ^ 5; //1,5
+				B = B ^ C; //4,4
+
+				output.Add(B % 8); //5,5
+
+				if (B % 8 != target[actOut--]) {
+					return false;
+				}
+				if (actOut < 0) {
+					return true;
+				}
+
+				bool wtf = true;
+			}
+			return false;
+		}
+
+
 		protected override long SolvePart2() {
+			//Program: 2,4	1,3	 7,5  0,3  1,5  4,4  5,5  3,0
+			actOut = 0;
+			target = new long[]{ 2,4,  1,3,  7,5,  0,3,  1,5, 4,4,  5,5 , 3,0 };
 			//long result = 0;
 			//change register A, so the program produces a copy of itself
 
@@ -181,9 +246,11 @@ namespace Year2024.Day17 {
 			//Output length 8 at 2097152
 			//Output length 9 at 16777216
 			//Output length 10 at 134217728
-			//to get 16 length output 8 ^ 15 = 35184372088832
+			//to get 16 length output 8 ^ 15 =
+			//35184372088832
+			//5120000000000
 
-			//Program: 2,4	1,3	 7,5  0,3  1,5  4,4  5,5  3,0
+
 			//5,5 = out -> B % 8
 			//mod 8 means only the lowest 3 bits are relevant
 			//we only care about the LSB of B - still not sure how to generate : (
@@ -191,13 +258,37 @@ namespace Year2024.Day17 {
 
 			matchedBits = 1;
 			long aTry = 1;
-			if (commands.Count == 16) aTry = (long)Math.Pow(8, 15);
+			//if (commands.Count == 16) aTry = (long)Math.Pow(8, 15);
+			aTry = 0;
 			int outputCnts = 0;
 			sw.Restart();
+			target = new long[] { 7, 5, 5, 3, 0 };
 			while (true) {
-				Reset(aTry);
-				SolvePart1();
-				if (Enumerable.SequenceEqual(output, commands)) return aTry;
+				ResetPart2(aTry);
+				//0 0 2 0
+				//long[] test = new long[output.Count];
+				//output.CopyTo(test);
+				//Reset(aTry);
+				if (HandCoded2()) {
+
+					//HandCoded2(); //6 3 0
+					//6 3 0
+					instructionPointer = 0;
+					registers[4] = aTry;
+					registers[5] = 0;
+					registers[6] = 0;
+					output = new List<long>();
+					SolvePart1();
+					return aTry;
+				}
+				//}
+				//if (actOut < 3) {
+				//	Console.WriteLine("Gotcha!");
+				//}
+				//Trying A = 10000000  1324 ms
+				//Output: 6,4,1,6,5,3,1,2
+
+				//if (Enumerable.SequenceEqual(output, commands)) return aTry;
 				//if (output.Count >= 16 && output[15] == 0) {
 				//	Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
 				//	Console.WriteLine($"Output: {string.Join(",", output)}");
@@ -206,7 +297,7 @@ namespace Year2024.Day17 {
 				//	Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
 				//	Console.WriteLine($"Output: {string.Join(",", output)}");
 				//}
-				if (aTry % 1000000 == 0) {  //2226 ms per 1m
+				if (aTry % 1000000000 == 0) {  //2226 ms per 1m
 					Console.WriteLine($"Trying A={aTry}  {sw.ElapsedMilliseconds} ms");
 					Console.WriteLine($"Output: {string.Join(",", output)}");
 					sw.Restart();
