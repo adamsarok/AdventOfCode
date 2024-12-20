@@ -17,6 +17,8 @@ namespace Helpers {
 
 		public static bool operator <=(Point a, Point b) =>
 			a.x <= b.x && a.y <= b.y;
+		public static Point operator *(Point a, int v) =>
+			new Point(a.x * v, a.y * v);
 
 		public int CompareTo(Point? other) {
 			if (other == null) return 1;
