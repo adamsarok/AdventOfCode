@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 using Point = Helpers.Point;
 
 namespace Year2024.Day20 {
@@ -28,8 +29,7 @@ namespace Year2024.Day20 {
 			ReadInputPart1(fileName);
 		}
 
-
-		override protected long SolvePart1() {
+		private void SetCosts() {
 			dirty = new bool[height, width];
 			costs = new long[height, width];
 			for (int x = 0; x < width; x++) {
@@ -63,11 +63,14 @@ namespace Year2024.Day20 {
 						}
 					}
 				}
-				if (!wasDirty) {
-					//Debug();
-					return FindCheats();
-				}
+				if (!wasDirty) return;
 			}
+		}
+
+		override protected long SolvePart1() {
+			SetCosts();
+			//Debug();
+			return FindCheats();
 		}
 
 		private long FindCheats() {
@@ -139,21 +142,76 @@ namespace Year2024.Day20 {
 			dirty[x, y] = true;
 		}
 
-		private void Debug() {
+		private void Debug(List<Point> blue = null, List<Point> red = null) {
 			Console.Clear();
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
-					if (input[y][x] == '#') Console.Write("  #  ");
-					else Console.Write(costs[x, y] == long.MaxValue ? " 000 " : $" {costs[x, y].ToString("000")} ");
+					if (blue != null && blue.Any(p => p.x == x && p.y == y)) {
+						Console.ForegroundColor = ConsoleColor.Blue;
+					}
+					if (red != null && red.Any(p => p.x == x && p.y == y)) {
+						Console.ForegroundColor = ConsoleColor.Red;
+					}
+					if (input[y][x] == '#') Console.Write(height > 20 ? "#" : "  #  ");
+					else {
+						if (height > 20) Console.Write(input[y][x]);
+						else Console.Write(costs[x, y] == long.MaxValue ? " 000 " : $" {costs[x, y].ToString("000")} ");
+					}
+					Console.ResetColor();
 				}
 				Console.WriteLine();
 			}
+			//Thread.Sleep(1000);
+		}
+
+		private long FindCheatsPart2() {
+			Point next = end;
+			cheats = new Dictionary<long, long>();
+			while (next != start) {
+				//Debug(new List<Point>() { next });
+				long cost = costs[next.x, next.y];
+				var cheatables = GetCheatables(next, 20);
+				foreach (var c in cheatables) {
+					GetSavedPart2(next, c);
+				}
+				next = FindNext(next, cost - 1);
+			}
+			//foreach (var s in cheats.Where(x => x.Key>=50)) {
+			//	Console.WriteLine($"There are {s.Value} cheats that save {s.Key} picoseconds.");
+			//}
+			return cheats.Where(x => x.Key >= 100).Sum(x => x.Value);
+		}
+
+		private void GetSavedPart2(Point from, Point to) {
+			var cDest = GetCost(to);
+			var cFrom = GetCost(from);
+			if (cDest == long.MaxValue) return;			//previously unreachable cell, should not mater?
+			int walls = from.ManhattanDistance(to) - 1; //Manhattan distance should be the number of walls here
+			var saved = cFrom - cDest - walls - 1;
+			if (saved > 0) {
+				if (cheats.ContainsKey(saved)) cheats[saved]++;
+				else cheats.Add(saved, 1);
+			}
+		}
+
+		List<char> cheatTargets = new List<char>() { '.', 'S' };
+		public List<Point> GetCheatables(Point center, int maxDistance) {
+			var cheatables = new List<Point>();
+			for (int dx = -maxDistance; dx <= maxDistance; dx++) {
+				for (int dy = -maxDistance; dy <= maxDistance; dy++) {
+					if (Math.Abs(dx) + Math.Abs(dy) <= maxDistance) {
+						var p = new Point(center.x + dx, center.y + dy);
+						if (cheatTargets.Contains(Get(p))) cheatables.Add(p);
+					}
+				}
+			}
+			//Debug(cheatables.ToList(), new List<Point>() { center });
+			return cheatables;
 		}
 
 		protected override long SolvePart2() {
-			long result = 0;
-
-			return result;
+			SetCosts();
+			return FindCheatsPart2();
 		}
 	}
 }

@@ -20,6 +20,9 @@ namespace Helpers {
 		public static Point operator *(Point a, int v) =>
 			new Point(a.x * v, a.y * v);
 
+		public int ManhattanDistance(Point b) =>
+			Math.Abs(x - b.x) + Math.Abs(y - b.y);
+
 		public int CompareTo(Point? other) {
 			if (other == null) return 1;
 			if (x == other.x && y == other.y) return 0;
