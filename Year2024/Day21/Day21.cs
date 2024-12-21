@@ -20,103 +20,132 @@ namespace Year2024.Day21 {
 			ReadInputPart1(fileName);
 		}
 
-		abstract class Keypad {
-			public string Output;
-			public void Reset() {
-				Output = "";
-				CurrentPos = startingPosition;
-				if (target != null) target.Reset();
+		State start = new State(new Point(2, 0), new Point(2, 0), new Point(2, 3), "");
+		class Machines {
+
+			public Machines(State s) {
+				robot1Pos = s.robot1Pos;
+				robot2Pos = s.robot2Pos;
+				numericKeypadPos = s.numericKeypadPos;
+				output = s.output;
 			}
-			protected char[,] inputs;
-			protected int height, width;
-			public virtual Point CurrentPos { get; set; }
-			protected Keypad target;
-			protected Point startingPosition;
-			public abstract void Press(Point button);
-		}
+			public State State => new State(robot1Pos, robot2Pos, numericKeypadPos, output);
+			private static DirectionalInput up = new DirectionalInput(Type.Move, new Point(0, -1));
+			private static DirectionalInput down = new DirectionalInput(Type.Move, new Point(0, 1));
+			private static DirectionalInput left = new DirectionalInput(Type.Move, new Point(-1, 0));
+			private static DirectionalInput right = new DirectionalInput(Type.Move, new Point(1, 0));
+			private static DirectionalInput a = new DirectionalInput(Type.PressA, new Point(0, 0));
+			private static DirectionalInput none = new DirectionalInput(Type.None, new Point(0, 0));
+			private static Dictionary<char, DirectionalInput> directionalInputs = new Dictionary<char, DirectionalInput>() {
+				{ '^', up },
+				{ 'v', down },
+				{ '<', left },
+				{ '>', right },
+				{ 'A', a }
+			};
+			//		{ ' ', '^', 'A' },
+			//		{ '<', 'v', '>' },
+			//};
 
-		class DirectionalKeypad : Keypad {
-			public DirectionalKeypad(Keypad target) {
-				inputs = new char[,] {
-					{ ' ', '^', 'A' },
-					{ '<', 'v', '>' },
-				};
-				startingPosition = new Point(2, 0); //this is actually the current position on the TARGET
-				CurrentPos = startingPosition;
-				this.target = target;
-				height = inputs.GetLength(0);
-				width = inputs.GetLength(1);
-			}
-
-			public override void Press(Point p) {
-
-				if (p.x >= width || p.x < 0 || p.y >= height || p.y < 0) return;
-				var button = inputs[p.y, p.x];
-				switch (button) {
-					case '^':
-						target.CurrentPos += new Point(0, -1);
-						//if target is the numeric keypad, we can bubble up the direction. in the first keypad, we will know which substring input caused the move
-						if (target is NumericKeypad) Console.WriteLine("up");
-						break;
-					case 'v':
-						target.CurrentPos += new Point(0, 1);
-						if (target is NumericKeypad) Console.WriteLine("down");
-						break;
-					case '<':
-						target.CurrentPos += new Point(-1, 0);
-						if (target is NumericKeypad) Console.WriteLine("left");
-						break;
-					case '>':
-						target.CurrentPos += new Point(1, 0);
-						if (target is NumericKeypad) Console.WriteLine("right");
-						break;
-					case 'A': //I know this is terrible OOP but its too early in the morning to think
-						target.Press(target.CurrentPos);
-						break;
+			//"<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A"
+			//actually there are not that many valid combinations - we move to different position and press A between 1 and 3 times
+			public List<string> GetValidInputs() { //assume we are alwayy starting from A
+				switch (robot1Pos) {
+					case { x: 0, y: 0 }: return new List<string>(); //empty button
+					case { x: 1, y: 0 }: return new List<string>() {
+						">A", ">AA", ">AAA",
+						"vA", "vAA", "vAAA",
+						"v>A", "v>AA", "v>AAA",
+						"v<A", "v<AA", "v<AAA",
+					};
+					case { x: 2, y: 0 }:
+						return new List<string>() {
+						"<A", "<AA", "<AAA",
+						"vA", "vAA", "vAAA",
+						"v<A", "v<AA", "v<AAA",
+						"v<<A", "v<<AA", "v<<AAA",
+					};
+					case { x: 0, y: 1 }:
+						return new List<string>() {
+						">A", ">AA", ">AAA",
+						">>A", ">>AA", ">>AAA",
+						">>^A", ">>^AA", ">>^AAA",
+						">^A", ">^AA", ">^AAA",
+					};
+					case { x: 1, y: 1 }:
+						return new List<string>() {
+						"<A", "<AA", "<AAA",
+						">A", ">AA", ">AAA",
+						"^A", "^AA", "^AAA",
+						">^A", ">^AA", ">^AAA",
+					};
+					case { x: 2, y: 1 }:
+						return new List<string>() {
+						"<A", "<AA", "<AAA",
+						"<<A", "<<AA", "<<AAA",
+						"^A", "^AA", "^AAA",
+						"<^A", "<^AA", "<^AAA",
+					};
 				}
+				return new List<string>();
 			}
-
-			public void Press(string input) {
-				for (int i = 0; i < input.Length; i++) {
-					switch (input[i]) {
-						case '^':
-							Press(new Point(1, 0));
-							break;
-						case 'v':
-							Press(new Point(1, 1));
-							break;
-						case '<':
-							Press(new Point(0, 1));
-							break;
-						case '>':
-							Press(new Point(2, 1));
-							break;
-						case 'A':
-							Press(new Point(2, 0));
-							break;
-						default:
-							throw new Oopsie("Invalid input");
-					}
-				}
+			enum Type { None, Move, PressA }
+			record DirectionalInput(Type type, Point vec);
+			private static DirectionalInput[,] directionalKeypad = new DirectionalInput[,] {
+					{ none, up, a },
+					{ left, down, right },
+			};
+			private DirectionalInput GetDir(Point p) {
+				if (p.x >= 3 || p.x < 0 || p.y >= 2 || p.y < 0) return none;
+				return directionalKeypad[p.y, p.x];
 			}
-		}
-
-		class NumericKeypad : Keypad {
-			public NumericKeypad() {
-				inputs = new char[,] {
+			private static char[,] numericInputs = new char[,] {
 					{ '7', '8', '9' },
 					{ '4', '5', '6' },
 					{ '1', '2', '3' },
 					{ ' ', '0', 'A' }
 				};
-				startingPosition = new Point(2, 3); //A
-				CurrentPos = startingPosition;
-				height = inputs.GetLength(0);
-				width = inputs.GetLength(1);
-			}
-			public override void Press(Point p) {
-				if (p.x >= width || p.x < 0 || p.y >= height || p.y < 0) return;
-				Output += inputs[p.y, p.x];
+			protected int height, width;
+			//private Point robot1Pos;
+			private Point robot1Pos;
+			private Point robot2Pos;
+			private Point numericKeypadPos;
+			private string output;
+			//private List<char> steps;
+			public string Output => output;
+			public bool Press(char c) {
+				var m1 = directionalInputs[c];
+				if (m1.type == Type.Move) {
+					robot1Pos += m1.vec;
+					if (robot1Pos.x >= 3 || robot1Pos.x < 0 || robot1Pos.y >= 2 || robot1Pos.y < 0) return false;
+				} else if (m1.type == Type.PressA) {
+						var m2 = GetDir(robot1Pos);
+						switch (m2.type) {
+							case Type.None:
+								return false; //empty button pressed
+							case Type.Move:
+								robot2Pos += m2.vec;
+								if (robot2Pos.x >= 3 || robot2Pos.x < 0 || robot2Pos.y >= 2 || robot2Pos.y < 0) return false;
+								break;
+							case Type.PressA:
+								var m3 = GetDir(robot2Pos);
+								switch (m3.type) {
+									case Type.None:
+										return false; //empty button pressed
+									case Type.Move:
+										numericKeypadPos += m3.vec;
+										if (numericKeypadPos.x >= 3 || numericKeypadPos.x < 0 || numericKeypadPos.y >= 4 || numericKeypadPos.y < 0) {
+											return false;
+										}
+										break;
+									case Type.PressA:
+										output += numericInputs[numericKeypadPos.y, numericKeypadPos.x];
+										break;
+								}
+								break;
+						}
+					}
+				return true;
 			}
 		}
 
@@ -180,28 +209,29 @@ namespace Year2024.Day21 {
 			//029A -> this means on the numeric: [ left , press ], [ up, press ], ???
 			//980A -> this means on the numeric: ???
 			//179A -> 
+			Machines m = new Machines(start);
 
 			foreach (var i in testinputs) {
 				Console.WriteLine(i.expected);
-				robot1.Press(i.input);
-				Console.WriteLine(numericKeypad.Output);
-				robot1.Reset();
+				foreach (var c in i.input) {
+					if (!m.Press(c)) throw new Oopsie("Failed for test input something is wrong");
+				}
+				Console.WriteLine(m.Output);
+				m = new Machines(start);
 			}
 		}
 		record TestInput(string expected, string input) { }
+		record State(Point robot1Pos, Point robot2Pos, Point numericKeypadPos, string output) { }
 		protected override long SolvePart1() {
 			if (input.Length == 0) return 0;
 			long result = 0;
 
-			numericKeypad = new NumericKeypad();
-			robot3 = new DirectionalKeypad(numericKeypad);
-			robot2 = new DirectionalKeypad(robot3);
-			robot1 = new DirectionalKeypad(robot2);
+			//numericKeypad = new NumericKeypad();
+			//robot3 = new DirectionalKeypad(numericKeypad);
+			//robot2 = new DirectionalKeypad(robot3);
+			//robot1 = new DirectionalKeypad(robot2);
 
-			Test();
-
-			int length = 0;
-			bool found = false;
+			//Test();
 
 			//this is not feasible even with memoization
 			//if we need 18 button presses for 0, the combinations are immense
@@ -218,8 +248,10 @@ namespace Year2024.Day21 {
 			//	found = Combinations(length, combinations, "0");
 			//}
 
-			//foreach (var o in outputs) {
-			//	//Console.WriteLine(o);
+			var found = Traverse(new Machines(start), null, "A");
+
+			//foreach (var i in inputs) {
+			//	found = Combinations(length, combinations, "");
 			//}
 
 			return result;
@@ -227,26 +259,29 @@ namespace Year2024.Day21 {
 
 		char[] combinations = new char[] { '^', 'A', '<', 'v', '>' };
 		//maybe recursive?
-		//private bool Combinations(DirectionalKeypad robot, NumericKeypad output, List<char> values, string nextStep, string target) {
-		//	robot.Press(nextStep);
-		//	for (int i = 0; i < output.Output.Length; i++) {
-		//		if (robot.Output[i] != target[i]) return false;
-		//		if (i == output.Output.Length - 1) return true;
-		//	}
-		//	foreach (var c in combinations) {
-		//		//oh this OOP robot think is great, but here I would have to copy the whole structure :-(
-		//		//return Combinations(robot, output, values, nextStep + c, target);
-		//	}
-		//}
+		private bool Traverse(Machines machines, string nextStep, string target) {
+			if (nextStep != null) {
+				foreach (var c in nextStep) {
+					if (!machines.Press(c)) return false;
+				}
+				for (int i = 0; i < machines.Output.Length; i++) {
+					if (machines.Output[i] != target[i]) return false;
+					if (i == machines.Output.Length - 1) return true;
+				}
+			}
+			//this is a good stack overflow generator but not a solution. Since we are pressing the same input 4000 times first
+			//not sure this is possible without some kind of intelligence, eg. trying inputs that can reasonably get us to the target
+			foreach (var c in machines.GetValidInputs()) {
+				if (Traverse(new Machines(machines.State), c, target)) return true;
+			}
+			return false;
+		}
 
 
 
 		//HashSet<string> outputs = new HashSet<string>();
 		//Dictionary<string, Memo> memos = new Dictionary<string, Memo>();
-		private NumericKeypad numericKeypad;
-		private DirectionalKeypad robot3;
-		private DirectionalKeypad robot2;
-		private DirectionalKeypad robot1;
+
 		//record Memo(Point robot1Pos, Point robot2Pos, Point robot3Pos, Point numericKeypadPos, string output);
 
 		//private bool Combinations(int length, char[] values, string target) {
