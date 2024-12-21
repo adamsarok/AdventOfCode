@@ -29,12 +29,10 @@ namespace Year2024.Day21 {
 			}
 			protected char[,] inputs;
 			protected int height, width;
-			public Point CurrentPos;
+			public virtual Point CurrentPos { get; set; }
 			protected Keypad target;
 			protected Point startingPosition;
-
-			//public abstract List<Point> Translate(List<Point> input);
-			public abstract void Press(List<Point> buttons);
+			public abstract void Press(Point button);
 		}
 
 		class DirectionalKeypad : Keypad {
@@ -49,58 +47,57 @@ namespace Year2024.Day21 {
 				height = inputs.GetLength(0);
 				width = inputs.GetLength(1);
 			}
-		
-			public override void Press(List<Point> buttons) {
-				List<Point> output = new List<Point>();
-				foreach (var p in buttons) {
-					if (p.x >= width || p.x < 0 || p.y >= height || p.y < 0) return;
-					var button = inputs[p.y, p.x];
-					switch (button) {
-						case '^':
-							target.CurrentPos += new Point(0, -1);
-							break;
-						case 'v':
-							target.CurrentPos += new Point(0, 1);
-							break;
-						case '<':
-							target.CurrentPos += new Point(-1, 0);
-							break;
-						case '>':
-							target.CurrentPos += new Point(1, 0);
-							break;
-						case 'A': //I know this is terrible OOP but its too early in the morning to think
-							target.Press(new List<Point>() { target.CurrentPos });
-							break;
-						default: //empty button pressed, wrong input
-							return;
-					}
+
+			public override void Press(Point p) {
+
+				if (p.x >= width || p.x < 0 || p.y >= height || p.y < 0) return;
+				var button = inputs[p.y, p.x];
+				switch (button) {
+					case '^':
+						target.CurrentPos += new Point(0, -1);
+						//if target is the numeric keypad, we can bubble up the direction. in the first keypad, we will know which substring input caused the move
+						if (target is NumericKeypad) Console.WriteLine("up");
+						break;
+					case 'v':
+						target.CurrentPos += new Point(0, 1);
+						if (target is NumericKeypad) Console.WriteLine("down");
+						break;
+					case '<':
+						target.CurrentPos += new Point(-1, 0);
+						if (target is NumericKeypad) Console.WriteLine("left");
+						break;
+					case '>':
+						target.CurrentPos += new Point(1, 0);
+						if (target is NumericKeypad) Console.WriteLine("right");
+						break;
+					case 'A': //I know this is terrible OOP but its too early in the morning to think
+						target.Press(target.CurrentPos);
+						break;
 				}
 			}
-			public List<Point> Translate(char[] input) {
-				var result = new List<Point>();
-				//Point pos = startingPos;
-				foreach (var c in input) {
-					switch (c) {
+
+			public void Press(string input) {
+				for (int i = 0; i < input.Length; i++) {
+					switch (input[i]) {
 						case '^':
-							result.Add(new Point(1, 0));
+							Press(new Point(1, 0));
 							break;
 						case 'v':
-							result.Add(new Point(1, 1));
+							Press(new Point(1, 1));
 							break;
 						case '<':
-							result.Add(new Point(0, 1));
+							Press(new Point(0, 1));
 							break;
 						case '>':
-							result.Add(new Point(2, 1));
+							Press(new Point(2, 1));
 							break;
 						case 'A':
-							result.Add(new Point(2, 0));
+							Press(new Point(2, 0));
 							break;
 						default:
 							throw new Oopsie("Invalid input");
 					}
 				}
-				return result;
 			}
 		}
 
@@ -117,28 +114,63 @@ namespace Year2024.Day21 {
 				height = inputs.GetLength(0);
 				width = inputs.GetLength(1);
 			}
-			public override void Press(List<Point> buttons) {
-				foreach (var p in buttons) {
-					//Console.Write(inputs[p.y, p.x]);
-					if (p.x >= width || p.x < 0 || p.y >= height || p.y < 0) return;
-					Output += inputs[p.y, p.x];
-				}
+			public override void Press(Point p) {
+				if (p.x >= width || p.x < 0 || p.y >= height || p.y < 0) return;
+				Output += inputs[p.y, p.x];
 			}
 		}
+
+		//029A:
+		//17: L
+		//29: U
+		//49: R U U
+		//67: D D D
+
+		//980A:
+		//13: U U U 
+		//31: L
+		//49: D D D 
+		//59: R
+
+		//the last A must be an A press so in order to go a direction twice, we have to copy a previous A
+		private const string U = "<v<A>>^AvA^A";
+		private const string UU = "<v<A>>^AAvA^A";
+		private const string UUU = "<v<A>>^AAAvA^A";
+		private const string D = "<v<A>A>^AvA<^A>";
+		private const string DD = "<v<A>A>^AAvA<^A>";
+		private const string DDD = "<v<A>A>^AAAvA<^A>";
+		private const string L = "<vA<AA>>^AvAA<^A>A";
+		private const string LL = "<vA<AA>>^AAvAA<^A>A";
+		private const string LLL = "<vA<AA>>^AAAvAA<^A>A";
+		private const string R = "<vA>^A<A>A";
+		private const string RR = "<vA>^AA<A>A";
+		private const string RRR = "<vA>^AAA<A>A";
+		//ahhhh this is also not enough, since we need a combination of directions to get to a certain number and it is not as simple as concating these...
+
 		private void Test() {
 			List<TestInput> testinputs = new List<TestInput> {
-				new TestInput("029A", "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A"),
-				new TestInput("980A", "<v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A"),
-				new TestInput("179A", "<v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"),
-				new TestInput("456A", "<v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A"),
-				new TestInput("379A", "<v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"),
-				new TestInput("0", "<vA<AA>>^AvAA<^A>A"),
+				//new TestInput("029A", "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A"),
+				//new TestInput("980A", "<v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A"),
+				//new TestInput("179A", "<v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"),
+				//new TestInput("456A", "<v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A"),
+				//new TestInput("379A", "<v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"),
+				//new TestInput("9", RRR),
+				//new TestInput("0", "<vA<AA>>^AvAA<^A>A"), //= [ L, press ] //gotten by debugging the test inputs, could write something clever to automate but...
+				//new TestInput("3", "<v<A>>^AvA^A"), //= [ U, press ]
+				//new TestInput(" ", "<vA>^A<v<A>^A>AAvA"), //= [ R, U, U, press ] should be invalid
+				//new TestInput(" ", "<vA>^A<v<A>^A>AvA"), //= [ R, U, press ] should be invalid
+				//new TestInput(" ", "<v<A>A>^AAAvA<^A>"), //= [ D, D, D, press ] should be invalid
+				//new TestInput(" ", "<v<A>A>^AvA<^A>"), //= [ D press ] should be invalid
+				//new TestInput(" ", "<vA>^A<A>A") // [ R, press ] should be invalid
 			};
+
+			//029A -> this means on the numeric: [ left , press ], [ up, press ], ???
+			//980A -> this means on the numeric: ???
+			//179A -> 
 
 			foreach (var i in testinputs) {
 				Console.WriteLine(i.expected);
-				var t = robot1.Translate(i.input.ToCharArray());
-				robot1.Press(t);
+				robot1.Press(i.input);
 				Console.WriteLine(numericKeypad.Output);
 				robot1.Reset();
 			}
@@ -152,8 +184,8 @@ namespace Year2024.Day21 {
 			robot3 = new DirectionalKeypad(numericKeypad);
 			robot2 = new DirectionalKeypad(robot3);
 			robot1 = new DirectionalKeypad(robot2);
-			
-			//Test();
+
+			Test();
 
 			int length = 0;
 			var combinations = new char[] { '^', 'A', '<', 'v', '>' };
