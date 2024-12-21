@@ -149,66 +149,15 @@ namespace Year2024.Day21 {
 			}
 		}
 
-		//029A:
-		//17: L
-		//29: U
-		//49: R U U
-		//67: D D D
+		//what if we start working backwards?
+		//eg for 3 -> we need U,A -> L, A, R, A -> etc.
 
-		//980A:
-		//13: U U U 
-		//31: L
-		//49: D D D 
-		//59: R
-
-		//179A: LLU, UU, RR, DDD
-		//456A: LLUU, R, R, DD
-		//379A: U, LLUU, RR, DDD
-
-		//the input is not covered by what we know from the test input
-		//879A -- LUU, L, RR, DDD
-		//508A -- LU, DD, UU, RDDD
-		//463A -- 
-		//593A
-		//189A
-
-		//the last A must be an A press so in order to go a direction twice, we have to copy a previous A
-		Dictionary<string, string> inputs = new Dictionary<string, string>() {
-			{ "U", "<v<A>>^AvA^A" },
-			{ "UU" , "<v<A>>^AAvA^A" },
-			{ "UUU" , "<v<A>>^AAAvA^A" },
-			{ "D" , "<v<A>A>^AvA<^A>" },
-			{ "DD" , "<v<A>A>^AAvA<^A>" },
-			{ "DDD" , "<v<A>A>^AAAvA<^A>" },
-			{ "L" , "<vA<AA>>^AvAA<^A>A" },
-			{ "LL" , "<vA<AA>>^AAvAA<^A>A" },
-			{ "LLL" , "<vA<AA>>^AAAvAA<^A>A" },
-			{ "R" , "<vA>^A<A>A" },
-			{ "RR" , "<vA>^AA<A>A" },
-			{ "RRR" , "<vA>^AAA<A>A" }
-		};
-		//ahhhh this is also not enough, since we need a combination of directions to get to a certain number and it is not as simple as concating these...
 
 		private void Test() {
 			List<TestInput> testinputs = new List<TestInput> {
-				new TestInput("029A", "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A"),
-				new TestInput("980A", "<v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A"),
-				new TestInput("179A", "<v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"),
-				new TestInput("456A", "<v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A"),
-				new TestInput("379A", "<v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"),
-				//new TestInput("9", RRR),
-				//new TestInput("0", "<vA<AA>>^AvAA<^A>A"), //= [ L, press ] //gotten by debugging the test inputs, could write something clever to automate but...
-				//new TestInput("3", "<v<A>>^AvA^A"), //= [ U, press ]
-				//new TestInput(" ", "<vA>^A<v<A>^A>AAvA"), //= [ R, U, U, press ] should be invalid
-				//new TestInput(" ", "<vA>^A<v<A>^A>AvA"), //= [ R, U, press ] should be invalid
-				//new TestInput(" ", "<v<A>A>^AAAvA<^A>"), //= [ D, D, D, press ] should be invalid
-				//new TestInput(" ", "<v<A>A>^AvA<^A>"), //= [ D press ] should be invalid
-				//new TestInput(" ", "<vA>^A<A>A") // [ R, press ] should be invalid
+			
 			};
 
-			//029A -> this means on the numeric: [ left , press ], [ up, press ], ???
-			//980A -> this means on the numeric: ???
-			//179A -> 
 			Machines m = new Machines(start);
 
 			foreach (var i in testinputs) {
@@ -248,7 +197,7 @@ namespace Year2024.Day21 {
 			//	found = Combinations(length, combinations, "0");
 			//}
 
-			var found = Traverse(new Machines(start), null, "A");
+			//var found = Traverse(new Machines(start), null, "A");
 
 			//foreach (var i in inputs) {
 			//	found = Combinations(length, combinations, "");
@@ -257,7 +206,7 @@ namespace Year2024.Day21 {
 			return result;
 		}
 
-		char[] combinations = new char[] { '^', 'A', '<', 'v', '>' };
+		//char[] combinations = new char[] { '^', 'A', '<', 'v', '>' };
 		//maybe recursive?
 		private bool Traverse(Machines machines, string nextStep, string target) {
 			if (nextStep != null) {
@@ -278,46 +227,6 @@ namespace Year2024.Day21 {
 		}
 
 
-
-		//HashSet<string> outputs = new HashSet<string>();
-		//Dictionary<string, Memo> memos = new Dictionary<string, Memo>();
-
-		//record Memo(Point robot1Pos, Point robot2Pos, Point robot3Pos, Point numericKeypadPos, string output);
-
-		//private bool Combinations(int length, char[] values, string target) {
-		//	if (length < 1 || values.Length < 1) return false;
-		//	char[] input = new char[length];
-		//	int combinations = values.Length;
-		//	long all = (long)Math.Pow(combinations, length);
-		//	for (long i = 0; i < all; i++) {
-		//		long temp = i;
-		//		for (int pos = 0; pos < length; pos++) {
-		//			input[pos] = values[temp % combinations];
-		//			temp /= combinations;
-		//		}
-		//		Memo m;
-		//		var s = new string(input);
-		//		if (memos.ContainsKey(s)) continue;
-		//		if (memos.TryGetValue(s.Substring(0, s.Length - 1), out m)) {
-		//			numericKeypad.Reset();
-		//			robot1.CurrentPos = m.robot1Pos;
-		//			robot2.CurrentPos = m.robot2Pos;
-		//			robot3.CurrentPos = m.robot3Pos;
-		//			numericKeypad.CurrentPos = m.numericKeypadPos;
-		//			var t = robot1.Translate(new char[] { input.Last() });
-		//			robot1.Press(t);
-		//		} else {
-		//			robot1.Reset();
-		//			var t = robot1.Translate(input);
-		//			robot1.Press(t);
-		//			memos.Add(s, new Memo(robot1.CurrentPos, robot2.CurrentPos, robot3.CurrentPos, numericKeypad.CurrentPos, numericKeypad.Output));
-		//		}
-		//		//Console.WriteLine($"{s} -> {numericKeypad.Output}");
-		//		outputs.Add(numericKeypad.Output);
-		//		if (numericKeypad.Output == target) return true;
-		//	}
-		//	return false;
-		//}
 
 		protected override long SolvePart2() {
 			long result = 0;
