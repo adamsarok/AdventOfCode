@@ -132,28 +132,41 @@ namespace Year2024.Day21 {
 		//49: D D D 
 		//59: R
 
+		//179A: LLU, UU, RR, DDD
+		//456A: LLUU, R, R, DD
+		//379A: U, LLUU, RR, DDD
+
+		//the input is not covered by what we know from the test input
+		//879A -- LUU, L, RR, DDD
+		//508A -- LU, DD, UU, RDDD
+		//463A -- 
+		//593A
+		//189A
+
 		//the last A must be an A press so in order to go a direction twice, we have to copy a previous A
-		private const string U = "<v<A>>^AvA^A";
-		private const string UU = "<v<A>>^AAvA^A";
-		private const string UUU = "<v<A>>^AAAvA^A";
-		private const string D = "<v<A>A>^AvA<^A>";
-		private const string DD = "<v<A>A>^AAvA<^A>";
-		private const string DDD = "<v<A>A>^AAAvA<^A>";
-		private const string L = "<vA<AA>>^AvAA<^A>A";
-		private const string LL = "<vA<AA>>^AAvAA<^A>A";
-		private const string LLL = "<vA<AA>>^AAAvAA<^A>A";
-		private const string R = "<vA>^A<A>A";
-		private const string RR = "<vA>^AA<A>A";
-		private const string RRR = "<vA>^AAA<A>A";
+		Dictionary<string, string> inputs = new Dictionary<string, string>() {
+			{ "U", "<v<A>>^AvA^A" },
+			{ "UU" , "<v<A>>^AAvA^A" },
+			{ "UUU" , "<v<A>>^AAAvA^A" },
+			{ "D" , "<v<A>A>^AvA<^A>" },
+			{ "DD" , "<v<A>A>^AAvA<^A>" },
+			{ "DDD" , "<v<A>A>^AAAvA<^A>" },
+			{ "L" , "<vA<AA>>^AvAA<^A>A" },
+			{ "LL" , "<vA<AA>>^AAvAA<^A>A" },
+			{ "LLL" , "<vA<AA>>^AAAvAA<^A>A" },
+			{ "R" , "<vA>^A<A>A" },
+			{ "RR" , "<vA>^AA<A>A" },
+			{ "RRR" , "<vA>^AAA<A>A" }
+		};
 		//ahhhh this is also not enough, since we need a combination of directions to get to a certain number and it is not as simple as concating these...
 
 		private void Test() {
 			List<TestInput> testinputs = new List<TestInput> {
-				//new TestInput("029A", "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A"),
-				//new TestInput("980A", "<v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A"),
-				//new TestInput("179A", "<v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"),
-				//new TestInput("456A", "<v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A"),
-				//new TestInput("379A", "<v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"),
+				new TestInput("029A", "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A"),
+				new TestInput("980A", "<v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A"),
+				new TestInput("179A", "<v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"),
+				new TestInput("456A", "<v<A>>^AA<vA<A>>^AAvAA<^A>A<vA>^A<A>A<vA>^A<A>A<v<A>A>^AAvA<^A>A"),
+				new TestInput("379A", "<v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"),
 				//new TestInput("9", RRR),
 				//new TestInput("0", "<vA<AA>>^AvAA<^A>A"), //= [ L, press ] //gotten by debugging the test inputs, could write something clever to automate but...
 				//new TestInput("3", "<v<A>>^AvA^A"), //= [ U, press ]
@@ -188,7 +201,6 @@ namespace Year2024.Day21 {
 			Test();
 
 			int length = 0;
-			var combinations = new char[] { '^', 'A', '<', 'v', '>' };
 			bool found = false;
 
 			//this is not feasible even with memoization
@@ -212,6 +224,21 @@ namespace Year2024.Day21 {
 
 			return result;
 		}
+
+		char[] combinations = new char[] { '^', 'A', '<', 'v', '>' };
+		//maybe recursive?
+		//private bool Combinations(DirectionalKeypad robot, NumericKeypad output, List<char> values, string nextStep, string target) {
+		//	robot.Press(nextStep);
+		//	for (int i = 0; i < output.Output.Length; i++) {
+		//		if (robot.Output[i] != target[i]) return false;
+		//		if (i == output.Output.Length - 1) return true;
+		//	}
+		//	foreach (var c in combinations) {
+		//		//oh this OOP robot think is great, but here I would have to copy the whole structure :-(
+		//		//return Combinations(robot, output, values, nextStep + c, target);
+		//	}
+		//}
+
 
 
 		//HashSet<string> outputs = new HashSet<string>();
