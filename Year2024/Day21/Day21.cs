@@ -169,16 +169,28 @@ namespace Year2024.Day21 {
 			result.Add('A');
 			return result;
 		}
-		private List<char> DirectionalToDirectional(char from, char to) {
-			if (from == to) return new List<char> { 'A' };
-			List<char> result = new List<char>();
+		private List<List<char>> DirectionalToDirectional(char from, char to) {
+			if (from == to) return new List<List<char>> { new List<char> { 'A' } };
+			List<List<char>> result = new List<List<char>>();
 			var vec = directionalInputs[to] - directionalInputs[from];
-			if (vec.y > 0) for (int i = 0; i < Math.Abs(vec.y); i++) result.Add('v');
-			if (vec.x > 0) for (int i = 0; i < Math.Abs(vec.x); i++) result.Add('>');
-			if (vec.y < 0) for (int i = 0; i < Math.Abs(vec.y); i++) result.Add('^');
-			if (vec.x < 0) for (int i = 0; i < Math.Abs(vec.x); i++) result.Add('<');
-			if (CheckIncorrect(from, result)) throw new Oopsie();
-			result.Add('A');
+			List<char> permutation1 = new List<char>();
+			if (vec.y > 0) for (int i = 0; i < Math.Abs(vec.y); i++) permutation1.Add('v');
+			if (vec.x > 0) for (int i = 0; i < Math.Abs(vec.x); i++) permutation1.Add('>');
+			if (vec.y < 0) for (int i = 0; i < Math.Abs(vec.y); i++) permutation1.Add('^');
+			if (vec.x < 0) for (int i = 0; i < Math.Abs(vec.x); i++) permutation1.Add('<');
+			permutation1.Add('A');
+			if (!CheckIncorrect(from, permutation1)) result.Add(permutation1);
+			if (vec.x != 0 && vec.y != 0) { //generate second permutation, would this solve 379A?
+				List<char> permutation2 = new List<char>();
+				if (vec.y < 0) for (int i = 0; i < Math.Abs(vec.y); i++) permutation2.Add('^');
+				if (vec.x < 0) for (int i = 0; i < Math.Abs(vec.x); i++) permutation2.Add('<');
+				if (vec.y > 0) for (int i = 0; i < Math.Abs(vec.y); i++) permutation2.Add('v');
+				if (vec.x > 0) for (int i = 0; i < Math.Abs(vec.x); i++) permutation2.Add('>');
+				permutation2.Add('A');
+				if (!CheckIncorrect(from, permutation2)) {
+					result.Add(permutation2);
+				}
+			}
 			return result;
 		}
 
@@ -238,10 +250,12 @@ namespace Year2024.Day21 {
 				foreach (var inputChar in inp) {
 					List<char> last = NumericToDirectional(lastNumeric, inputChar);
 					for (int i = 0; i < layers; i++) {
+
 						List<char> acc = new List<char>();
 						char lastChar = 'A';
 						foreach (var c in last) {
-							acc.AddRange(DirectionalToDirectional(lastChar, c));
+							var p = DirectionalToDirectional(lastChar, c);
+							acc.AddRange(p[0]);
 							lastChar = c;
 						}
 						last = acc;
