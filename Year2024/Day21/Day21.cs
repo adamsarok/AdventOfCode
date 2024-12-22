@@ -170,6 +170,7 @@ namespace Year2024.Day21 {
 			return result;
 		}
 		private List<char> DirectionalToDirectional(char from, char to) {
+			if (from == to) return new List<char> { 'A' };
 			List<char> result = new List<char>();
 			var vec = directionalInputs[to] - directionalInputs[from];
 			if (vec.y > 0) for (int i = 0; i < Math.Abs(vec.y); i++) result.Add('v');
