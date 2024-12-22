@@ -176,48 +176,47 @@ namespace Year2024.Day21 {
 			if (vec.x > 0) for (int i = 0; i < Math.Abs(vec.x); i++) result.Add('>');
 			if (vec.y < 0) for (int i = 0; i < Math.Abs(vec.y); i++) result.Add('^');
 			if (vec.x < 0) for (int i = 0; i < Math.Abs(vec.x); i++) result.Add('<');
-			//TODO: we have to make sure we don't go through the empty space!
-			//if (CheckIncorrect(from, result)) throw new Oopsie();
+			if (CheckIncorrect(from, result)) throw new Oopsie();
 			result.Add('A');
 			return result;
 		}
 
-		//Point invalidDirectional = new Point(0, 0);
-		//private bool CheckIncorrect(char from, List<char> steps) {
-		//	Point pos = directionalInputs[from];
-		//	foreach (var c in steps) {
-		//		switch (c) {
-		//			case '^':
-		//				pos += new Point(0, -1);
-		//				if (CheckInvalidPos(pos)) {
-		//					return true;
-		//				}
-		//				break;
-		//			case 'v':
-		//				pos += new Point(0, 1);
-		//				if (CheckInvalidPos(pos)) {
-		//					return true;
-		//				}
-		//				break;
-		//			case '<':
-		//				pos += new Point(-1, 0);
-		//				if (CheckInvalidPos(pos)) {
-		//					return true;
-		//				}
-		//				break;
-		//			case '>':
-		//				pos += new Point(1, 0);
-		//				if (CheckInvalidPos(pos)) {
-		//					return true;
-		//				}
-		//				break;
-		//		}
-		//	}
-		//	return false;
-		//}
-		//private bool CheckInvalidPos(Point pos) {
-		//	return pos == invalidDirectional || pos.x < 0 || pos.y < 0 || pos.x >= 3 || pos.y >= 2;
-		//}
+		Point invalidDirectional = new Point(0, 0);
+		private bool CheckIncorrect(char from, List<char> steps) {
+			Point pos = directionalInputs[from];
+			foreach (var c in steps) {
+				switch (c) {
+					case '^':
+						pos += new Point(0, -1);
+						if (CheckInvalidPos(pos)) {
+							return true;
+						}
+						break;
+					case 'v':
+						pos += new Point(0, 1);
+						if (CheckInvalidPos(pos)) {
+							return true;
+						}
+						break;
+					case '<':
+						pos += new Point(-1, 0);
+						if (CheckInvalidPos(pos)) {
+							return true;
+						}
+						break;
+					case '>':
+						pos += new Point(1, 0);
+						if (CheckInvalidPos(pos)) {
+							return true;
+						}
+						break;
+				}
+			}
+			return false;
+		}
+		private bool CheckInvalidPos(Point pos) {
+			return pos == invalidDirectional || pos.x < 0 || pos.y < 0 || pos.x >= 3 || pos.y >= 2;
+		}
 
 		//private void Test2() {
 		//	foreach (var n in numericInputs.Keys) {
@@ -231,21 +230,6 @@ namespace Year2024.Day21 {
 		protected override long SolvePart1() {
 			if (input.Length == 0) return 0;
 			long result = 0;
-
-			//we have ever increasing move costs. we can calc move costs for each out char
-			//0
-			//<		A
-			//v<<A	>>^A
-			//...
-			//Test2();
-
-			/*
-			<vA <AA >>^A vAA <^A >A		<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
-			v<<A >>^A					<A>AvA<^AA>A<vAAA>^A
-			<A							^A>^^AvvvA
-			029A
-			*/
-
 			int layers = 2;
 			foreach (var inp in input) {
 				List<char> res = new List<char>();
@@ -261,26 +245,22 @@ namespace Year2024.Day21 {
 						}
 						last = acc;
 						//Console.WriteLine(string.Join("", last));
-						//almost...
+						//TODO: almost. if we get back >>^A in a layer, we need to test ^>>A as well, as that can be shorter in the upper layer?
+						//all test ok, except 379A :(
 					}
 					lastNumeric = inputChar;
 					res.AddRange(last);
 				}
 				//crosscheck:
 				Console.WriteLine($"{inp} : {res.Count} : {string.Join("", res)}");
-
-				//i = 52
-
 				Machines m = new Machines(start);
 				for (int i = 0; i < res.Count; i++) { 
 					if (!m.Press(res[i])) throw new Oopsie($"Failed at {i} for test input something is wrong");
 				}
 				Console.WriteLine(m.Output);
-				//m = new Machines(start);
+
 				result += long.Parse(inp.Substring(0,3)) * res.Count; 
 			}
-
-			//all test ok, except 379A :(
 
 			return result;
 		}
