@@ -1,6 +1,7 @@
 using Helpers;
 using System;
 using System.Collections.Generic;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -73,7 +74,9 @@ namespace Year2024.Day21 {
 				var m1 = directionalInputs[c];
 				if (m1.type == Type.Move) {
 					robot1Pos += m1.vec;
-					if (robot1Pos.x >= 3 || robot1Pos.x < 0 || robot1Pos.y >= 2 || robot1Pos.y < 0) return false;
+					if (robot1Pos.x >= 3 || robot1Pos.x < 0 || robot1Pos.y >= 2 || robot1Pos.y < 0) {
+						return false;
+					}
 				} else if (m1.type == Type.PressA) {
 					var m2 = GetDir(robot1Pos);
 					switch (m2.type) {
@@ -81,7 +84,9 @@ namespace Year2024.Day21 {
 							return false; //empty button pressed
 						case Type.Move:
 							robot2Pos += m2.vec;
-							if (robot2Pos.x >= 3 || robot2Pos.x < 0 || robot2Pos.y >= 2 || robot2Pos.y < 0) return false;
+							if (robot2Pos.x >= 3 || robot2Pos.x < 0 || robot2Pos.y >= 2 || robot2Pos.y < 0) {
+								return false;
+							}
 							break;
 						case Type.PressA:
 							var m3 = GetDir(robot2Pos);
@@ -126,12 +131,12 @@ namespace Year2024.Day21 {
 		record TestInput(string expected, string input) { }
 		record State(Point robot1Pos, Point robot2Pos, Point numericKeypadPos, string output) { }
 
-		private Dictionary<char, Point> directionalInputs = new Dictionary<char, Point>() { 
-			{ '^', new Point(1, 0) }, 
-			{ 'v', new Point(1, 1) }, 
+		private Dictionary<char, Point> directionalInputs = new Dictionary<char, Point>() {
+			{ '^', new Point(1, 0) },
+			{ 'v', new Point(1, 1) },
 			{ '<', new Point(0, 1) },
 			{ '>', new Point(2, 1) },
-			{ 'A', new Point(2, 0) } 
+			{ 'A', new Point(2, 0) }
 		};
 		private Dictionary<char, Point> numericInputs = new Dictionary<char, Point>() {
 			{ '7', new Point(0, 0) },
@@ -156,9 +161,9 @@ namespace Year2024.Day21 {
 		//		{ '1', '2', '3' },
 		//		{ ' ', '0', 'A' }
 		//};
-		private List<char> NumericToDirectional(char numeric) {
+		private List<char> NumericToDirectional(char from, char to) {
 			List<char> result = new List<char>();
-			var vec = numericInputs[numeric] - numericInputs['A'];
+			var vec = numericInputs[to] - numericInputs[from];
 			for (int i = 0; i < Math.Abs(vec.y); i++) result.Add(vec.y < 0 ? '^' : 'v');
 			for (int i = 0; i < Math.Abs(vec.x); i++) result.Add(vec.x < 0 ? '<' : '>');
 			result.Add('A');
@@ -172,18 +177,56 @@ namespace Year2024.Day21 {
 			if (vec.y < 0) for (int i = 0; i < Math.Abs(vec.y); i++) result.Add('^');
 			if (vec.x < 0) for (int i = 0; i < Math.Abs(vec.x); i++) result.Add('<');
 			//TODO: we have to make sure we don't go through the empty space!
+			//if (CheckIncorrect(from, result)) throw new Oopsie();
 			result.Add('A');
 			return result;
 		}
 
-		private void Test2() {
-			foreach (var n in numericInputs.Keys) {
-				Console.WriteLine(n + " -> " + string.Join("", NumericToDirectional(n)));
-			}
-			foreach (var d in directionalInputs.Keys) {
-				Console.WriteLine(d + " -> " + string.Join("", DirectionalToDirectional(d, 'A')));
-			}
-		}
+		//Point invalidDirectional = new Point(0, 0);
+		//private bool CheckIncorrect(char from, List<char> steps) {
+		//	Point pos = directionalInputs[from];
+		//	foreach (var c in steps) {
+		//		switch (c) {
+		//			case '^':
+		//				pos += new Point(0, -1);
+		//				if (CheckInvalidPos(pos)) {
+		//					return true;
+		//				}
+		//				break;
+		//			case 'v':
+		//				pos += new Point(0, 1);
+		//				if (CheckInvalidPos(pos)) {
+		//					return true;
+		//				}
+		//				break;
+		//			case '<':
+		//				pos += new Point(-1, 0);
+		//				if (CheckInvalidPos(pos)) {
+		//					return true;
+		//				}
+		//				break;
+		//			case '>':
+		//				pos += new Point(1, 0);
+		//				if (CheckInvalidPos(pos)) {
+		//					return true;
+		//				}
+		//				break;
+		//		}
+		//	}
+		//	return false;
+		//}
+		//private bool CheckInvalidPos(Point pos) {
+		//	return pos == invalidDirectional || pos.x < 0 || pos.y < 0 || pos.x >= 3 || pos.y >= 2;
+		//}
+
+		//private void Test2() {
+		//	foreach (var n in numericInputs.Keys) {
+		//		Console.WriteLine(n + " -> " + string.Join("", NumericToDirectional(n)));
+		//	}
+		//	foreach (var d in directionalInputs.Keys) {
+		//		Console.WriteLine(d + " -> " + string.Join("", DirectionalToDirectional(d, 'A')));
+		//	}
+		//}
 
 		protected override long SolvePart1() {
 			if (input.Length == 0) return 0;
@@ -196,12 +239,19 @@ namespace Year2024.Day21 {
 			//...
 			//Test2();
 
+			/*
+			<vA <AA >>^A vAA <^A >A		<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
+			v<<A >>^A					<A>AvA<^AA>A<vAAA>^A
+			<A							^A>^^AvvvA
+			029A
+			*/
 
-
-			int layers = 3;
+			int layers = 2;
 			foreach (var inp in input) {
+				List<char> res = new List<char>();
+				char lastNumeric = 'A';
 				foreach (var inputChar in inp) {
-					List<char> last = NumericToDirectional(inputChar);
+					List<char> last = NumericToDirectional(lastNumeric, inputChar);
 					for (int i = 0; i < layers; i++) {
 						List<char> acc = new List<char>();
 						char lastChar = 'A';
@@ -210,11 +260,27 @@ namespace Year2024.Day21 {
 							lastChar = c;
 						}
 						last = acc;
-						Console.WriteLine(string.Join("", last));
+						//Console.WriteLine(string.Join("", last));
 						//almost...
 					}
+					lastNumeric = inputChar;
+					res.AddRange(last);
 				}
+				//crosscheck:
+				Console.WriteLine($"{inp} : {res.Count} : {string.Join("", res)}");
+
+				//i = 52
+
+				Machines m = new Machines(start);
+				for (int i = 0; i < res.Count; i++) { 
+					if (!m.Press(res[i])) throw new Oopsie($"Failed at {i} for test input something is wrong");
+				}
+				Console.WriteLine(m.Output);
+				//m = new Machines(start);
+				result += long.Parse(inp.Substring(0,3)) * res.Count; 
 			}
+
+			//all test ok, except 379A :(
 
 			return result;
 		}
