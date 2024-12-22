@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Year2024.Day21 {
 	public class Day21 : Solver {
@@ -46,49 +45,6 @@ namespace Year2024.Day21 {
 			//		{ ' ', '^', 'A' },
 			//		{ '<', 'v', '>' },
 			//};
-
-			//"<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A"
-			//actually there are not that many valid combinations - we move to different position and press A between 1 and 3 times
-			public List<string> GetValidInputs() { //assume we are alwayy starting from A
-				switch (robot1Pos) {
-					case { x: 0, y: 0 }: return new List<string>(); //empty button
-					case { x: 1, y: 0 }: return new List<string>() {
-						">A", ">AA", ">AAA",
-						"vA", "vAA", "vAAA",
-						"v>A", "v>AA", "v>AAA",
-						"v<A", "v<AA", "v<AAA",
-					};
-					case { x: 2, y: 0 }:
-						return new List<string>() {
-						"<A", "<AA", "<AAA",
-						"vA", "vAA", "vAAA",
-						"v<A", "v<AA", "v<AAA",
-						"v<<A", "v<<AA", "v<<AAA",
-					};
-					case { x: 0, y: 1 }:
-						return new List<string>() {
-						">A", ">AA", ">AAA",
-						">>A", ">>AA", ">>AAA",
-						">>^A", ">>^AA", ">>^AAA",
-						">^A", ">^AA", ">^AAA",
-					};
-					case { x: 1, y: 1 }:
-						return new List<string>() {
-						"<A", "<AA", "<AAA",
-						">A", ">AA", ">AAA",
-						"^A", "^AA", "^AAA",
-						">^A", ">^AA", ">^AAA",
-					};
-					case { x: 2, y: 1 }:
-						return new List<string>() {
-						"<A", "<AA", "<AAA",
-						"<<A", "<<AA", "<<AAA",
-						"^A", "^AA", "^AAA",
-						"<^A", "<^AA", "<^AAA",
-					};
-				}
-				return new List<string>();
-			}
 			enum Type { None, Move, PressA }
 			record DirectionalInput(Type type, Point vec);
 			private static DirectionalInput[,] directionalKeypad = new DirectionalInput[,] {
@@ -119,43 +75,41 @@ namespace Year2024.Day21 {
 					robot1Pos += m1.vec;
 					if (robot1Pos.x >= 3 || robot1Pos.x < 0 || robot1Pos.y >= 2 || robot1Pos.y < 0) return false;
 				} else if (m1.type == Type.PressA) {
-						var m2 = GetDir(robot1Pos);
-						switch (m2.type) {
-							case Type.None:
-								return false; //empty button pressed
-							case Type.Move:
-								robot2Pos += m2.vec;
-								if (robot2Pos.x >= 3 || robot2Pos.x < 0 || robot2Pos.y >= 2 || robot2Pos.y < 0) return false;
-								break;
-							case Type.PressA:
-								var m3 = GetDir(robot2Pos);
-								switch (m3.type) {
-									case Type.None:
-										return false; //empty button pressed
-									case Type.Move:
-										numericKeypadPos += m3.vec;
-										if (numericKeypadPos.x >= 3 || numericKeypadPos.x < 0 || numericKeypadPos.y >= 4 || numericKeypadPos.y < 0) {
-											return false;
-										}
-										break;
-									case Type.PressA:
-										output += numericInputs[numericKeypadPos.y, numericKeypadPos.x];
-										break;
-								}
-								break;
-						}
+					var m2 = GetDir(robot1Pos);
+					switch (m2.type) {
+						case Type.None:
+							return false; //empty button pressed
+						case Type.Move:
+							robot2Pos += m2.vec;
+							if (robot2Pos.x >= 3 || robot2Pos.x < 0 || robot2Pos.y >= 2 || robot2Pos.y < 0) return false;
+							break;
+						case Type.PressA:
+							var m3 = GetDir(robot2Pos);
+							switch (m3.type) {
+								case Type.None:
+									return false; //empty button pressed
+								case Type.Move:
+									numericKeypadPos += m3.vec;
+									if (numericKeypadPos.x >= 3 || numericKeypadPos.x < 0 || numericKeypadPos.y >= 4 || numericKeypadPos.y < 0) {
+										return false;
+									}
+									break;
+								case Type.PressA:
+									output += numericInputs[numericKeypadPos.y, numericKeypadPos.x];
+									break;
+							}
+							break;
 					}
+				}
 				return true;
 			}
 		}
 
-		//what if we start working backwards?
-		//eg for 3 -> we need U,A -> L, A, R, A -> etc.
 
 
 		private void Test() {
 			List<TestInput> testinputs = new List<TestInput> {
-			
+
 			};
 
 			Machines m = new Machines(start);
@@ -171,43 +125,100 @@ namespace Year2024.Day21 {
 		}
 		record TestInput(string expected, string input) { }
 		record State(Point robot1Pos, Point robot2Pos, Point numericKeypadPos, string output) { }
+
+		private Dictionary<char, Point> directionalInputs = new Dictionary<char, Point>() { 
+			{ '^', new Point(1, 0) }, 
+			{ 'v', new Point(1, 1) }, 
+			{ '<', new Point(0, 1) },
+			{ '>', new Point(2, 1) },
+			{ 'A', new Point(2, 0) } 
+		};
+		private Dictionary<char, Point> numericInputs = new Dictionary<char, Point>() {
+			{ '7', new Point(0, 0) },
+			{ '8', new Point(1, 0) },
+			{ '9', new Point(2, 0) },
+			{ '4', new Point(0, 1) },
+			{ '5', new Point(1, 1) },
+			{ '6', new Point(2, 1) },
+			{ '1', new Point(0, 2) },
+			{ '2', new Point(1, 2) },
+			{ '3', new Point(2, 2) },
+			{ '0', new Point(1, 3) },
+			{ 'A', new Point(2, 3) },
+		};
+		//private char[,] directionalInputs = new char[,] {
+		//		{ ' ', '^', 'A' },
+		//		{ '<', 'v', '>' },
+		//};
+		//private char[,] numericInputs = new char[,] {
+		//		{ '7', '8', '9' },
+		//		{ '4', '5', '6' },
+		//		{ '1', '2', '3' },
+		//		{ ' ', '0', 'A' }
+		//};
+		private List<char> NumericToDirectional(char numeric) {
+			List<char> result = new List<char>();
+			var vec = numericInputs[numeric] - numericInputs['A'];
+			for (int i = 0; i < Math.Abs(vec.y); i++) result.Add(vec.y < 0 ? '^' : 'v');
+			for (int i = 0; i < Math.Abs(vec.x); i++) result.Add(vec.x < 0 ? '<' : '>');
+			result.Add('A');
+			return result;
+		}
+		private List<char> DirectionalToDirectional(char from, char to) {
+			List<char> result = new List<char>();
+			var vec = directionalInputs[to] - directionalInputs[from];
+			if (vec.y > 0) for (int i = 0; i < Math.Abs(vec.y); i++) result.Add('v');
+			if (vec.x > 0) for (int i = 0; i < Math.Abs(vec.x); i++) result.Add('>');
+			if (vec.y < 0) for (int i = 0; i < Math.Abs(vec.y); i++) result.Add('^');
+			if (vec.x < 0) for (int i = 0; i < Math.Abs(vec.x); i++) result.Add('<');
+			//TODO: we have to make sure we don't go through the empty space!
+			result.Add('A');
+			return result;
+		}
+
+		private void Test2() {
+			foreach (var n in numericInputs.Keys) {
+				Console.WriteLine(n + " -> " + string.Join("", NumericToDirectional(n)));
+			}
+			foreach (var d in directionalInputs.Keys) {
+				Console.WriteLine(d + " -> " + string.Join("", DirectionalToDirectional(d, 'A')));
+			}
+		}
+
 		protected override long SolvePart1() {
 			if (input.Length == 0) return 0;
 			long result = 0;
 
-			//numericKeypad = new NumericKeypad();
-			//robot3 = new DirectionalKeypad(numericKeypad);
-			//robot2 = new DirectionalKeypad(robot3);
-			//robot1 = new DirectionalKeypad(robot2);
+			//we have ever increasing move costs. we can calc move costs for each out char
+			//0
+			//<		A
+			//v<<A	>>^A
+			//...
+			//Test2();
 
-			//Test();
 
-			//this is not feasible even with memoization
-			//if we need 18 button presses for 0, the combinations are immense
-			//we can figure out how to get a certain number when all robots are in the starting position
-			//however during a run, the robots will not be in a starting position, so we need to figure out a transition between each output?
-			//eg. to get 0 is easy
-			//however getting 09 vs 19 is different ->
-			//when trying to get to 9 all robots are in a different position when coming from 1 vs coming from 0
-			//when a numeric output is generated, that means robot1, robot2 and robot3 are in A position, only numeric position is changed
-			//we need to figure out a shortest path to get between numeric positions however
 
-			//while (!found && length <= 9) { 
-			//	length++;
-			//	found = Combinations(length, combinations, "0");
-			//}
-
-			//var found = Traverse(new Machines(start), null, "A");
-
-			//foreach (var i in inputs) {
-			//	found = Combinations(length, combinations, "");
-			//}
+			int layers = 3;
+			foreach (var inp in input) {
+				foreach (var inputChar in inp) {
+					List<char> last = NumericToDirectional(inputChar);
+					for (int i = 0; i < layers; i++) {
+						List<char> acc = new List<char>();
+						char lastChar = 'A';
+						foreach (var c in last) {
+							acc.AddRange(DirectionalToDirectional(lastChar, c));
+							lastChar = c;
+						}
+						last = acc;
+						Console.WriteLine(string.Join("", last));
+						//almost...
+					}
+				}
+			}
 
 			return result;
 		}
 
-		//char[] combinations = new char[] { '^', 'A', '<', 'v', '>' };
-		//maybe recursive?
 		private bool Traverse(Machines machines, string nextStep, string target) {
 			if (nextStep != null) {
 				foreach (var c in nextStep) {
@@ -220,9 +231,9 @@ namespace Year2024.Day21 {
 			}
 			//this is a good stack overflow generator but not a solution. Since we are pressing the same input 4000 times first
 			//not sure this is possible without some kind of intelligence, eg. trying inputs that can reasonably get us to the target
-			foreach (var c in machines.GetValidInputs()) {
-				if (Traverse(new Machines(machines.State), c, target)) return true;
-			}
+			//foreach (var c in machines.GetValidInputs()) {
+			//	if (Traverse(new Machines(machines.State), c, target)) return true;
+			//}
 			return false;
 		}
 
