@@ -161,14 +161,61 @@ namespace Year2024.Day21 {
 		//		{ '1', '2', '3' },
 		//		{ ' ', '0', 'A' }
 		//};
-		private List<char> NumericToDirectional(char from, char to) {
-			List<char> result = new List<char>();
+		private List<List<char>> NumericToDirectional(char from, char to) {
+			List<List<char>> result = new List<List<char>>();
+			var permutation1 = new List<char>();
 			var vec = numericInputs[to] - numericInputs[from];
-			for (int i = 0; i < Math.Abs(vec.y); i++) result.Add(vec.y < 0 ? '^' : 'v');
-			for (int i = 0; i < Math.Abs(vec.x); i++) result.Add(vec.x < 0 ? '<' : '>');
-			result.Add('A');
+			for (int i = 0; i < Math.Abs(vec.y); i++) permutation1.Add(vec.y < 0 ? '^' : 'v');
+			for (int i = 0; i < Math.Abs(vec.x); i++) permutation1.Add(vec.x < 0 ? '<' : '>');
+			if (vec.x != 0 && vec.y != 0) { //generate second permutation, would this solve 379A?
+				List<char> permutation2 = new List<char>();
+				var first = permutation1.First();
+				var firstCnt = permutation1.Where(x => x == first).Count();
+				var second = permutation1.Last();
+				var secondcnt = permutation1.Where(x => x == second).Count();
+				for (int i = 0; i < secondcnt; i++) permutation2.Add(second);
+				for (int i = 0; i < firstCnt; i++) permutation2.Add(first);
+				permutation2.Add('A');
+				if (!CheckIncorrectNumeric(from, permutation2)) result.Add(permutation2);
+			}
+			permutation1.Add('A');
+			if (!CheckIncorrectNumeric(from, permutation1)) result.Add(permutation1);
 			return result;
 		}
+
+		private bool CheckIncorrectNumeric(char from, List<char> steps) {
+			Point pos = numericInputs[from];
+			foreach (var c in steps) {
+				switch (c) {
+					case '^':
+						pos += new Point(0, -1);
+						if (CheckInvalidPosNumeric(pos)) {
+							return true;
+						}
+						break;
+					case 'v':
+						pos += new Point(0, 1);
+						if (CheckInvalidPosNumeric(pos)) {
+							return true;
+						}
+						break;
+					case '<':
+						pos += new Point(-1, 0);
+						if (CheckInvalidPosNumeric(pos)) {
+							return true;
+						}
+						break;
+					case '>':
+						pos += new Point(1, 0);
+						if (CheckInvalidPosNumeric(pos)) {
+							return true;
+						}
+						break;
+				}
+			}
+			return false;
+		}
+
 		private List<List<char>> DirectionalToDirectional(char from, char to) {
 			if (from == to) return new List<List<char>> { new List<char> { 'A' } };
 			List<List<char>> result = new List<List<char>>();
@@ -178,22 +225,22 @@ namespace Year2024.Day21 {
 			if (vec.x > 0) for (int i = 0; i < Math.Abs(vec.x); i++) permutation1.Add('>');
 			if (vec.y < 0) for (int i = 0; i < Math.Abs(vec.y); i++) permutation1.Add('^');
 			if (vec.x < 0) for (int i = 0; i < Math.Abs(vec.x); i++) permutation1.Add('<');
-			permutation1.Add('A');
-			if (!CheckIncorrect(from, permutation1)) result.Add(permutation1);
 			if (vec.x != 0 && vec.y != 0) { //generate second permutation, would this solve 379A?
 				List<char> permutation2 = new List<char>();
-				if (vec.y < 0) for (int i = 0; i < Math.Abs(vec.y); i++) permutation2.Add('^');
-				if (vec.x < 0) for (int i = 0; i < Math.Abs(vec.x); i++) permutation2.Add('<');
-				if (vec.y > 0) for (int i = 0; i < Math.Abs(vec.y); i++) permutation2.Add('v');
-				if (vec.x > 0) for (int i = 0; i < Math.Abs(vec.x); i++) permutation2.Add('>');
+				var first = permutation1.First();
+				var firstCnt = permutation1.Where(x => x == first).Count();
+				var second = permutation1.Last();
+				var secondcnt = permutation1.Where(x => x == second).Count();
+				for (int i = 0; i < secondcnt; i++) permutation2.Add(second);
+				for (int i = 0; i < firstCnt; i++) permutation2.Add(first);
 				permutation2.Add('A');
-				if (!CheckIncorrect(from, permutation2)) {
-					result.Add(permutation2);
-				}
+				if (!CheckIncorrect(from, permutation2)) result.Add(permutation2);
 			}
+			permutation1.Add('A');
+			if (!CheckIncorrect(from, permutation1)) result.Add(permutation1);
 			return result;
 		}
-
+		Point invalidNumeric = new Point(0, 3);
 		Point invalidDirectional = new Point(0, 0);
 		private bool CheckIncorrect(char from, List<char> steps) {
 			Point pos = directionalInputs[from];
@@ -230,16 +277,9 @@ namespace Year2024.Day21 {
 		private bool CheckInvalidPos(Point pos) {
 			return pos == invalidDirectional || pos.x < 0 || pos.y < 0 || pos.x >= 3 || pos.y >= 2;
 		}
-
-		//private void Test2() {
-		//	foreach (var n in numericInputs.Keys) {
-		//		Console.WriteLine(n + " -> " + string.Join("", NumericToDirectional(n)));
-		//	}
-		//	foreach (var d in directionalInputs.Keys) {
-		//		Console.WriteLine(d + " -> " + string.Join("", DirectionalToDirectional(d, 'A')));
-		//	}
-		//}
-
+		private bool CheckInvalidPosNumeric(Point pos) {
+			return pos == invalidNumeric || pos.x < 0 || pos.y < 0 || pos.x >= 3 || pos.y >= 4;
+		}
 		protected override long SolvePart1() {
 			if (input.Length == 0) return 0;
 			long result = 0;
@@ -248,23 +288,18 @@ namespace Year2024.Day21 {
 				List<char> res = new List<char>();
 				char lastNumeric = 'A';
 				foreach (var inputChar in inp) {
-					List<char> last = NumericToDirectional(lastNumeric, inputChar);
+					List<List<char>> last = NumericToDirectional(lastNumeric, inputChar);
 					for (int i = 0; i < layers; i++) {
-
-						List<char> acc = new List<char>();
-						char lastChar = 'A';
-						foreach (var c in last) {
-							var p = DirectionalToDirectional(lastChar, c);
-							acc.AddRange(p[0]);
-							lastChar = c;
+						List<List<char>> accs = new List<List<char>>();
+						foreach (var l in last) {
+							accs.AddRange(TranslateLayer(l));
 						}
-						last = acc;
-						//Console.WriteLine(string.Join("", last));
-						//TODO: almost. if we get back >>^A in a layer, we need to test ^>>A as well, as that can be shorter in the upper layer?
-						//all test ok, except 379A :(
+						last = new List<List<char>>(accs);
 					}
 					lastNumeric = inputChar;
-					res.AddRange(last);
+					foreach (var r in last) Console.WriteLine(string.Join("", r));
+					res.AddRange(last.OrderByDescending(x => x.Count).First());
+					//379A is still even though I am now generating all iterations?
 				}
 				//crosscheck:
 				Console.WriteLine($"{inp} : {res.Count} : {string.Join("", res)}");
@@ -280,25 +315,25 @@ namespace Year2024.Day21 {
 			return result;
 		}
 
-		private bool Traverse(Machines machines, string nextStep, string target) {
-			if (nextStep != null) {
-				foreach (var c in nextStep) {
-					if (!machines.Press(c)) return false;
+		private List<List<char>> TranslateLayer(List<char> l) {
+			List<List<char>> accs = new List<List<char>>() { new List<char>() };
+			char lastChar = 'A';
+			foreach (var c in l) {
+				var p = DirectionalToDirectional(lastChar, c);
+				List<List<char>> newAccs = new List<List<char>>();
+				foreach (var acc in accs) {
+					if (p.Count > 1) {
+						var copy = new List<char>(acc);
+						copy.AddRange(p[1]);
+						newAccs.Add(copy);
+					}
+					acc.AddRange(p[0]);
 				}
-				for (int i = 0; i < machines.Output.Length; i++) {
-					if (machines.Output[i] != target[i]) return false;
-					if (i == machines.Output.Length - 1) return true;
-				}
+				accs.AddRange(newAccs);
+				lastChar = c;
 			}
-			//this is a good stack overflow generator but not a solution. Since we are pressing the same input 4000 times first
-			//not sure this is possible without some kind of intelligence, eg. trying inputs that can reasonably get us to the target
-			//foreach (var c in machines.GetValidInputs()) {
-			//	if (Traverse(new Machines(machines.State), c, target)) return true;
-			//}
-			return false;
+			return accs;
 		}
-
-
 
 		protected override long SolvePart2() {
 			long result = 0;
