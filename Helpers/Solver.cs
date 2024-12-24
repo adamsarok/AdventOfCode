@@ -6,7 +6,7 @@ namespace Helpers {
 			public Oopsie() : base("Shouldn't happen") { } //the classic shouldn't happen exception
 			public Oopsie(string msg) : base($"Shouldn't happen: {msg}") { } //the detailed shouldn't happen exception
 		}
-
+		protected bool IsShort { get; set; }
 		public void Solve() {
 			string daystr = day.ToString("00");
 			string shortInput = $"Day{daystr}\\{year}shortinput{daystr}.txt";
