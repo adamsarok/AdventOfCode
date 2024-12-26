@@ -36,10 +36,7 @@ namespace Year2023.Day17 {
 
 		// we have to store visited as visited FROM a direction, otherwose we would mark the 2nd row as visited
 		// starting from the left and we could not turn back (from example input)
-		// 456467998645v
-		// 12246868655<v
-		// 25465488877v5
-		// 43226746555v>
+
 		Directions[,] visited;
 
 		[Flags]
@@ -94,7 +91,7 @@ namespace Year2023.Day17 {
 			return cnt;
 		}
 
-		private void Debug( List<Point> blue = null, List<Point> red = null) {
+		private void Debug( List<Vec> blue = null, List<Vec> red = null) {
 			Console.Clear();
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {

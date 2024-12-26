@@ -36,7 +36,7 @@ namespace Year2024.Day10 {
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
 					if (input[y, x] == 0) {
-						HashSet<Point> ninesReachable = new HashSet<Point>();
+						HashSet<Vec> ninesReachable = new HashSet<Vec>();
 						RunTrail(x, y, 1, ninesReachable);
 						result += ninesReachable.Count;
 					}
@@ -45,9 +45,9 @@ namespace Year2024.Day10 {
 			return result;
 		}
 
-		private void RunTrail(int x, int y, int next, HashSet<Point> ninesReachable) {
+		private void RunTrail(int x, int y, int next, HashSet<Vec> ninesReachable) {
 			if (input[y, x] == 9) {
-				ninesReachable.Add(new Point(x, y));
+				ninesReachable.Add(new Vec(x, y));
 				return;
 			}
 			RunNextStep(x + 1, y, next, ninesReachable);
@@ -56,7 +56,7 @@ namespace Year2024.Day10 {
 			RunNextStep(x, y - 1, next, ninesReachable);
 		}
 
-		private void RunNextStep(int x, int y, int next, HashSet<Point> ninesReachable) {
+		private void RunNextStep(int x, int y, int next, HashSet<Vec> ninesReachable) {
 			if (x < 0 || x >= width || y < 0 || y >= height) return;
 			if (input[y, x] == next) RunTrail(x, y, next + 1, ninesReachable);
 		}

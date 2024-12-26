@@ -10,7 +10,7 @@ namespace Year2022.Day4 {
 	public class Day4 : Solver {
 		public Day4() : base(2022, 4) {
 		}
-		List<(XY, XY)> pairs;
+		List<(LVec, LVec)> pairs;
 		protected override void ReadInputPart1(string fileName) {
 			pairs = new();
 			foreach (var l in File.ReadAllLines(fileName)) {
@@ -23,19 +23,19 @@ namespace Year2022.Day4 {
 			ReadInputPart1(fileName);	
 		}
 		
-		private bool FullyContains(XY a, XY b) {
+		private bool FullyContains(LVec a, LVec b) {
 			return 
 				(a.x <= b.x && a.y >= b.y)
 				|| (b.x <= a.x && b.y >= a.y);
 		}
 
-		private bool Overlaps(XY a, XY b) {
+		private bool Overlaps(LVec a, LVec b) {
 			return  a.x <= b.y && b.x <= a.y;
 		}
 
-		private XY Split(string s) {
+		private LVec Split(string s) {
 			var p = s.Split("-");
-			return new XY(long.Parse(p[0]), long.Parse(p[1]));
+			return new LVec(long.Parse(p[0]), long.Parse(p[1]));
 		}
 
 		protected override long SolvePart1() {

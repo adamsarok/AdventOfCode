@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
-using Point = Helpers.Point;
+using Vec = Helpers.Vec;
 
 namespace Year2024.Day20 {
 	public class Day20 : Solver {
@@ -14,8 +14,8 @@ namespace Year2024.Day20 {
 		bool[,] dirty;
 		private string[] input;
 		long height, width;
-		Point start;
-		private Point end;
+		Vec start;
+		private Vec end;
 
 		public Day20() : base(2024, 20) {
 		}
@@ -35,12 +35,12 @@ namespace Year2024.Day20 {
 			for (int x = 0; x < width; x++) {
 				for (int y = 0; y < height; y++) {
 					if (input[y][x] == 'S') {
-						start = new Point(x, y);
+						start = new Vec(x, y);
 						costs[x, y] = 0;
 						dirty[x, y] = true;
 					} else if (input[y][x] == 'E') {
 						costs[x, y] = long.MaxValue;
-						end = new Point(x, y);
+						end = new Vec(x, y);
 					} else {
 						costs[x, y] = long.MaxValue;
 					}
@@ -74,14 +74,14 @@ namespace Year2024.Day20 {
 		}
 
 		private long FindCheats() {
-			Point next = end;
+			Vec next = end;
 			cheats = new Dictionary<long, long>();
 			while (next != start) {
 				long cost = costs[next.x, next.y];
-				GetSaved(next, new Point(1, 0));
-				GetSaved(next, new Point(-1, 0));
-				GetSaved(next, new Point(0, 1));
-				GetSaved(next, new Point(0, -1));
+				GetSaved(next, new Vec(1, 0));
+				GetSaved(next, new Vec(-1, 0));
+				GetSaved(next, new Vec(0, 1));
+				GetSaved(next, new Vec(0, -1));
 				next = FindNext(next, cost - 1);
 			}
 			//foreach (var s in cheats) {
@@ -92,20 +92,20 @@ namespace Year2024.Day20 {
 
 		Dictionary<long, long> cheats;
 
-		private char Get(Point point) {
+		private char Get(Vec point) {
 			if (point.x < 0 || point.y < 0 || point.x >= width || point.y >= height) return ' ';
 			return input[point.y][point.x];
 		}
-		private long GetCost(Point point) {
+		private long GetCost(Vec point) {
 			if (point.x < 0 || point.y < 0 || point.x >= width || point.y >= height) return long.MaxValue;
 			return costs[point.x, point.y];
 		}
 
-		private void GetSaved(Point from, Point vector) {
+		private void GetSaved(Vec from, Vec vector) {
 			var cheat1 = Get(from + vector);
 			if (cheat1 == '#') {
 				long walls = 1;
-				Point dest;
+				Vec dest;
 				var cheat2 = Get(from + vector * 2);
 				if (cheat2 == '#') {
 					walls = 2;
@@ -122,14 +122,14 @@ namespace Year2024.Day20 {
 			}
 		}
 
-		private Point FindNext(Point next, long nextCost) {
-			var xy = new Point(next.x + 1, next.y);
+		private Vec FindNext(Vec next, long nextCost) {
+			var xy = new Vec(next.x + 1, next.y);
 			if (costs[xy.x, xy.y] == nextCost) return xy;
-			xy = new Point(next.x - 1, next.y);
+			xy = new Vec(next.x - 1, next.y);
 			if (costs[xy.x, xy.y] == nextCost) return xy;
-			xy = new Point(next.x, next.y + 1);
+			xy = new Vec(next.x, next.y + 1);
 			if (costs[xy.x, xy.y] == nextCost) return xy;
-			xy = new Point(next.x, next.y - 1);
+			xy = new Vec(next.x, next.y - 1);
 			if (costs[xy.x, xy.y] == nextCost) return xy;
 			throw new Oopsie("Path broken");
 		}
@@ -142,7 +142,7 @@ namespace Year2024.Day20 {
 			dirty[x, y] = true;
 		}
 
-		private void Debug(List<Point> blue = null, List<Point> red = null) {
+		private void Debug(List<Vec> blue = null, List<Vec> red = null) {
 			Console.Clear();
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
@@ -165,7 +165,7 @@ namespace Year2024.Day20 {
 		}
 
 		private long FindCheatsPart2() {
-			Point next = end;
+			Vec next = end;
 			cheats = new Dictionary<long, long>();
 			while (next != start) {
 				//Debug(new List<Point>() { next });
@@ -182,7 +182,7 @@ namespace Year2024.Day20 {
 			return cheats.Where(x => x.Key >= 100).Sum(x => x.Value);
 		}
 
-		private void GetSavedPart2(Point from, Point to) {
+		private void GetSavedPart2(Vec from, Vec to) {
 			var cDest = GetCost(to);
 			var cFrom = GetCost(from);
 			if (cDest == long.MaxValue) return;			//previously unreachable cell, should not mater?
@@ -195,12 +195,12 @@ namespace Year2024.Day20 {
 		}
 
 		List<char> cheatTargets = new List<char>() { '.', 'S' };
-		public List<Point> GetCheatables(Point center, int maxDistance) {
-			var cheatables = new List<Point>();
+		public List<Vec> GetCheatables(Vec center, int maxDistance) {
+			var cheatables = new List<Vec>();
 			for (int dx = -maxDistance; dx <= maxDistance; dx++) {
 				for (int dy = -maxDistance; dy <= maxDistance; dy++) {
 					if (Math.Abs(dx) + Math.Abs(dy) <= maxDistance) {
-						var p = new Point(center.x + dx, center.y + dy);
+						var p = new Vec(center.x + dx, center.y + dy);
 						if (cheatTargets.Contains(Get(p))) cheatables.Add(p);
 					}
 				}

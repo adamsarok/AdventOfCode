@@ -15,8 +15,8 @@ namespace Year2024.Day12 {
 		public Day12() : base(2024, 12) {
 		}
 		string[] input;
-		HashSet<Point> processed;
-		record Polygon(char label, HashSet<Point> squaresInside) {
+		HashSet<Vec> processed;
+		record Polygon(char label, HashSet<Vec> squaresInside) {
 			public long Area { get; set; }
 			public long Circumference {
 				get {
@@ -41,12 +41,12 @@ namespace Year2024.Day12 {
 		protected override void ReadInputPart1(string fileName) {
 			input = File.ReadAllLines(fileName);
 			polygons = new List<Polygon>();
-			processed = new HashSet<Point>();
+			processed = new HashSet<Vec>();
 			height = input.Length;
 			width = input[0].Length;
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
-					var p = new Point(x, y);
+					var p = new Vec(x, y);
 					if (processed.Contains(p)) continue;
 					var poly = new Polygon(input[y][x],
 						new()
@@ -57,16 +57,16 @@ namespace Year2024.Day12 {
 			}
 		}
 
-		private void FloodFill(Point p, Polygon poly) {
+		private void FloodFill(Vec p, Polygon poly) {
 			if (p.x < 0 || p.x >= width || p.y < 0 || p.y >= height) return;
 			if (poly.squaresInside.Contains(p) || processed.Contains(p)) return;
 			if (input[p.y][p.x] != poly.label) return;
 			poly.squaresInside.Add(p);
 			processed.Add(p);
-			FloodFill(new Point(p.x + 1, p.y), poly);
-			FloodFill(new Point(p.x - 1, p.y), poly);
-			FloodFill(new Point(p.x, p.y + 1), poly);
-			FloodFill(new Point(p.x, p.y - 1), poly);
+			FloodFill(new Vec(p.x + 1, p.y), poly);
+			FloodFill(new Vec(p.x - 1, p.y), poly);
+			FloodFill(new Vec(p.x, p.y + 1), poly);
+			FloodFill(new Vec(p.x, p.y - 1), poly);
 		}
 
 		protected override long SolvePart1() {
@@ -145,11 +145,11 @@ namespace Year2024.Day12 {
 				}
 			}
 		}
-		Polygon dummy = new Polygon('#', new HashSet<Point>());
+		Polygon dummy = new Polygon('#', new HashSet<Vec>());
 		private Polygon GetPolyContaining(int x, int y) {
 			if (x < 0 || x >= width || y < 0 || y >= height) return dummy;
 			//TODO: would be faster by storing point -> polygon dictionary
-			return polygons.First(p => p.squaresInside.Contains(new Point(x, y)));
+			return polygons.First(p => p.squaresInside.Contains(new Vec(x, y)));
 		}
 
 		protected override long SolvePart2() {

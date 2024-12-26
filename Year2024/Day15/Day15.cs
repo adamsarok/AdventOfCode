@@ -13,9 +13,9 @@ namespace Year2024.Day15 {
 		List<char> moves;
 		public enum Types { Robot, Wall, Box }
 		class WhObj(Types type) {
-			public XY Pos { get; set; }
-			public XY Pos2 { get; set; }
-			public XY? PushVector { get; set; }
+			public LVec Pos { get; set; }
+			public LVec Pos2 { get; set; }
+			public LVec? PushVector { get; set; }
 			public Types Type => type;
 		}
 		int height, width;
@@ -37,9 +37,9 @@ namespace Year2024.Day15 {
 					width = l.Length;
 					for (int x = 0; x < l.Length; x++) {
 						switch (l[x]) {
-							case '@': robot = new WhObj(Types.Robot) { Pos = new XY(x, y) }; break;
-							case '#': walls.Add(new WhObj(Types.Wall) { Pos = new XY(x, y) }); break;
-							case 'O': boxes.Add(new WhObj(Types.Box) { Pos = new XY(x, y) }); break;
+							case '@': robot = new WhObj(Types.Robot) { Pos = new LVec(x, y) }; break;
+							case '#': walls.Add(new WhObj(Types.Wall) { Pos = new LVec(x, y) }); break;
+							case 'O': boxes.Add(new WhObj(Types.Box) { Pos = new LVec(x, y) }); break;
 						}
 					}
 				} else {
@@ -64,9 +64,9 @@ namespace Year2024.Day15 {
 					int actX = 0;
 					for (int x = 0; x < l.Length; x++) {
 						switch (l[x]) {
-							case '@': robot = new WhObj(Types.Robot) { Pos = new XY(actX, y) }; break;
-							case '#': walls.Add(new WhObj(Types.Wall) { Pos = new XY(actX, y), Pos2 = new XY(actX + 1, y) }); break;
-							case 'O': boxes.Add(new WhObj(Types.Box) { Pos = new XY(actX, y), Pos2 = new XY(actX + 1, y) }); break;
+							case '@': robot = new WhObj(Types.Robot) { Pos = new LVec(actX, y) }; break;
+							case '#': walls.Add(new WhObj(Types.Wall) { Pos = new LVec(actX, y), Pos2 = new LVec(actX + 1, y) }); break;
+							case 'O': boxes.Add(new WhObj(Types.Box) { Pos = new LVec(actX, y), Pos2 = new LVec(actX + 1, y) }); break;
 						}
 						actX += 2;
 					}
@@ -90,7 +90,7 @@ namespace Year2024.Day15 {
 			Console.Clear();
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
-					var pos = new XY(x, y);
+					var pos = new LVec(x, y);
 					if (walls.Any(w => w.Pos == pos)) Console.Write('#');
 					else if (robot.Pos == pos) Console.Write('@');
 					else if (boxes.Any(b => b.Pos == pos)) Console.Write('O');
@@ -103,8 +103,8 @@ namespace Year2024.Day15 {
 		//TODO: these searches can be much faster if I maintain a dictionary of what obj is at what position
 		//Dictionary<XY, WhObj> map = new(); //536 ms
 
-		private bool Push(WhObj toPush, XY vector) {
-			XY dest = new(toPush.Pos.x + vector.x, toPush.Pos.y + vector.y);
+		private bool Push(WhObj toPush, LVec vector) {
+			LVec dest = new(toPush.Pos.x + vector.x, toPush.Pos.y + vector.y);
 			if (walls.Any(w => w.Pos == dest)) return false;
 			bool canPush = true;
 			var box = boxes.FirstOrDefault(b => b.Pos == dest);
@@ -113,9 +113,9 @@ namespace Year2024.Day15 {
 			return canPush;
 		}
 
-		private bool PushPart2(WhObj toPush, XY vector) {
-			XY dest = new(toPush.Pos.x + vector.x, toPush.Pos.y + vector.y);
-			XY? dest2 = toPush.Pos2 == null ? null : new(toPush.Pos2.x + vector.x, toPush.Pos2.y + vector.y);
+		private bool PushPart2(WhObj toPush, LVec vector) {
+			LVec dest = new(toPush.Pos.x + vector.x, toPush.Pos.y + vector.y);
+			LVec? dest2 = toPush.Pos2 == null ? null : new(toPush.Pos2.x + vector.x, toPush.Pos2.y + vector.y);
 			if (walls.Any(w => w.Pos == dest || w.Pos2 == dest)
 				|| (dest2 != null && walls.Any(w => w.Pos == dest2 || w.Pos2 == dest2))) {
 				return false;
@@ -138,7 +138,7 @@ namespace Year2024.Day15 {
 			Console.Clear();
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width * 2; x++) {
-					var pos = new XY(x, y);
+					var pos = new LVec(x, y);
 					if (walls.Any(w => w.Pos == pos || w.Pos2 == pos)) Console.Write('#');
 					else if (robot.Pos == pos) Console.Write('@');
 					else if (boxes.Any(b => b.Pos == pos)) Console.Write('[');
@@ -161,13 +161,13 @@ namespace Year2024.Day15 {
 			bool canPush;
 			switch (move) {
 				case '<':
-					canPush = PushPart2(robot, new XY(-1, 0)); break;
+					canPush = PushPart2(robot, new LVec(-1, 0)); break;
 				case '>':
-					canPush = PushPart2(robot, new XY(1, 0)); break;
+					canPush = PushPart2(robot, new LVec(1, 0)); break;
 				case '^':
-					canPush = PushPart2(robot, new XY(0, -1)); break;
+					canPush = PushPart2(robot, new LVec(0, -1)); break;
 				case 'v':
-					canPush = PushPart2(robot, new XY(0, 1)); break;
+					canPush = PushPart2(robot, new LVec(0, 1)); break;
 				default:
 					throw new Oopsie("Invalid move");
 			}
@@ -186,13 +186,13 @@ namespace Year2024.Day15 {
 			//Debug();
 			switch (move) {
 				case '<':
-					Push(robot, new XY(-1, 0)); break;
+					Push(robot, new LVec(-1, 0)); break;
 				case '>':
-					Push(robot, new XY(1, 0)); break;
+					Push(robot, new LVec(1, 0)); break;
 				case '^':
-					Push(robot, new XY(0, -1)); break;
+					Push(robot, new LVec(0, -1)); break;
 				case 'v':
-					Push(robot, new XY(0, 1)); break;
+					Push(robot, new LVec(0, 1)); break;
 				default:
 					throw new Oopsie("Invalid move");
 			}

@@ -41,7 +41,7 @@ namespace Year2024.Day18 {
 			ReadInputPart1(fileName);
 		}
 
-		PriorityQueue<int, Point> queue;
+		PriorityQueue<int, Vec> queue;
 		//works on short input but way too long queue on final input
 		protected long SolvePriorityQueue() {
 			long result = 0;
@@ -52,20 +52,20 @@ namespace Year2024.Day18 {
 				}
 			}
 			costs[0, 0] = 0;
-			queue = new PriorityQueue<int, Point>();
-			queue.Enqueue(0, new Point(0, 0));
-			Point next;
+			queue = new PriorityQueue<int, Vec>();
+			queue.Enqueue(0, new Vec(0, 0));
+			Vec next;
 			int prio;
 			while (queue.TryDequeue(out prio, out next)) {
-				TryQueue(new Point(next.x - 1, next.y), prio + 1);
-				TryQueue(new Point(next.x + 1, next.y), prio + 1);
-				TryQueue(new Point(next.x, next.y - 1), prio + 1);
-				TryQueue(new Point(next.x, next.y + 1), prio + 1);
+				TryQueue(new Vec(next.x - 1, next.y), prio + 1);
+				TryQueue(new Vec(next.x + 1, next.y), prio + 1);
+				TryQueue(new Vec(next.x, next.y - 1), prio + 1);
+				TryQueue(new Vec(next.x, next.y + 1), prio + 1);
 			}
 			return costs[size-1, size-1];
 		}
 
-		private void TryQueue(Point point, int prio) {
+		private void TryQueue(Vec point, int prio) {
 			if (point.x < 0 || point.y < 0 || point.x >= size || point.y >= size) return;
 			if (corruptedMemory[point.x, point.y]) return;
 			if (costs[point.x, point.y] < prio) return;

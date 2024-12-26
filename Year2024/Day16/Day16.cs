@@ -40,7 +40,7 @@ namespace Year2024.Day16 {
 				for (int x = 0; x < input[0].Length; x++) {
 					if (input[y][x] == 'S') {
 						costs[y,x] = -1;
-						GoFrom(new Point(x, y), Direction.Right, 0);
+						GoFrom(new Vec(x, y), Direction.Right, 0);
 					}
 				}
 			}
@@ -73,7 +73,7 @@ namespace Year2024.Day16 {
 		}
 		long[,] costs;
 		bool[,] optimalPaths;
-		private bool GoFrom(Point point, Direction facing, long currentScore) {
+		private bool GoFrom(Vec point, Direction facing, long currentScore) {
 			iter++;
 			if (Go(point, facing, facing, currentScore)) return true; //first try straight line
 			switch (facing) {
@@ -143,21 +143,21 @@ namespace Year2024.Day16 {
 			}
 			throw new Exception("shouldn't happen");
 		}
-		private bool Go(Point from, Direction currentFacing, Direction dirToGo, long currentScore) {
+		private bool Go(Vec from, Direction currentFacing, Direction dirToGo, long currentScore) {
 			//Debug();
-			Point dest;
+			Vec dest;
 			switch (dirToGo) {
 				case Direction.Up:
-					dest = new Point(from.x, from.y - 1);
+					dest = new Vec(from.x, from.y - 1);
 					break;
 				case Direction.Down:
-					dest = new Point(from.x, from.y + 1);
+					dest = new Vec(from.x, from.y + 1);
 					break;
 				case Direction.Left:
-					dest = new Point(from.x - 1, from.y);
+					dest = new Vec(from.x - 1, from.y);
 					break;
 				case Direction.Right:
-					dest = new Point(from.x + 1, from.y);
+					dest = new Vec(from.x + 1, from.y);
 					break;
 				default:
 					throw new Exception("shouldn't happen");
@@ -246,7 +246,7 @@ namespace Year2024.Day16 {
 			if (x < 0 || x >= input[0].Length || y < 0 || y >= input.Length) return long.MaxValue;
 			return costs[y, x];
 		}
-		private void CountBack(Point point) {
+		private void CountBack(Vec point) {
 			long min = new long[]{
 				GetCost(point.y + 1, point.x),
 				GetCost(point.y - 1, point.x),
@@ -256,19 +256,19 @@ namespace Year2024.Day16 {
 			if (min < 0) return;
 			if (GetCost(point.y + 1, point.x) == min) {
 				part2result++;
-				CountBack(new Point(point.x, point.y + 1));
+				CountBack(new Vec(point.x, point.y + 1));
 			}
 			if (GetCost(point.y - 1, point.x) == min) {
 				part2result++;
-				CountBack(new Point(point.x, point.y - 1));
+				CountBack(new Vec(point.x, point.y - 1));
 			}
 			if (GetCost(point.y, point.x + 1) == min) {
 				part2result++;
-				CountBack(new Point(point.x + 1, point.y));
+				CountBack(new Vec(point.x + 1, point.y));
 			}
 			if (GetCost(point.y, point.x - 1) == min) {
 				part2result++;
-				CountBack(new Point(point.x - 1, point.y + 1));
+				CountBack(new Vec(point.x - 1, point.y + 1));
 			}
 		}
 	}

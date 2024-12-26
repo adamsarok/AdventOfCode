@@ -66,7 +66,7 @@ namespace Year2023.Day03 {
 		protected override long SolvePart2() {
 			int part2 = 0;
 			var lines = File.ReadAllLines("day3input.txt");
-			Dictionary<Point, List<int>> numbersForGears = new Dictionary<Point, List<int>>();
+			Dictionary<Vec, List<int>> numbersForGears = new Dictionary<Vec, List<int>>();
 			Dictionary<int, int> numbersByID = new Dictionary<int, int>();
 			using (StreamWriter outputFile = new StreamWriter("day3output.txt")) {
 				for (int i = 0; i < lines.Length; i++) {
@@ -78,7 +78,7 @@ namespace Year2023.Day03 {
 					if (lines.Length > i + 1) lineAfter = lines[i + 1];
 					string actNumber = "";
 					int actID = 0;
-					List<Point> gearCharsForThisNum = new List<Point>();
+					List<Vec> gearCharsForThisNum = new List<Vec>();
 					for (int j = 0; j < line.Length; j++) {
 						char c = line[j];
 						if (char.IsNumber(c)) {
@@ -124,11 +124,11 @@ namespace Year2023.Day03 {
 			actNumber = "";
 		}
 
-		private static void AssignGearChar(string line, int i, int j, int numID, Dictionary<Point, List<int>> numbersForGears) {
+		private static void AssignGearChar(string line, int i, int j, int numID, Dictionary<Vec, List<int>> numbersForGears) {
 			if (string.IsNullOrEmpty(line) || j < 0 || j >= line.Length) return;
 			var c = line[j];
 			if (c == '*') {
-				var p = new Point(i, j);
+				var p = new Vec(i, j);
 				List<int> numIdsForThisGear;
 				if (!numbersForGears.TryGetValue(p, out numIdsForThisGear)) {
 					numIdsForThisGear = new List<int>();

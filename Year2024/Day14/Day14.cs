@@ -19,23 +19,23 @@ namespace Year2024.Day14 {
 		public const int WIDTH = 101;
 
 		List<Robot> input;
-		class Robot(Point pos, Point vector) {
+		class Robot(Vec pos, Vec vector) {
 
 			public void Step() {
 				pos += vector;
 				if (pos.x >= WIDTH) {
-					pos = new Point(pos.x - WIDTH, pos.y);
+					pos = new Vec(pos.x - WIDTH, pos.y);
 				} else if (pos.x < 0) {
-					pos = new Point(pos.x + WIDTH, pos.y);
+					pos = new Vec(pos.x + WIDTH, pos.y);
 				}
 				if (pos.y >= HEIGHT) {
-					pos = new Point(pos.x, pos.y - HEIGHT);
+					pos = new Vec(pos.x, pos.y - HEIGHT);
 				} else if (pos.y < 0) {
-					pos = new Point(pos.x, pos.y + HEIGHT);
+					pos = new Vec(pos.x, pos.y + HEIGHT);
 				}
 			}
-			public Point Pos => pos;
-			public Point Vector => vector;
+			public Vec Pos => pos;
+			public Vec Vector => vector;
 		}
 
 
@@ -51,7 +51,7 @@ namespace Year2024.Day14 {
 				var v = f[i].Split(' ')[1].Split('=');
 				var vx = int.Parse(v[1].Split(',')[0]);
 				var vy = int.Parse(v[1].Split(',')[1]);
-				input.Add(new Robot(new Point(px, py), new Point(vx, vy)));
+				input.Add(new Robot(new Vec(px, py), new Vec(vx, vy)));
 			}
 		}
 
@@ -63,7 +63,7 @@ namespace Year2024.Day14 {
 			Console.Clear();
 			for (int y = 0; y < HEIGHT; y++) {
 				for (int x = 0; x < WIDTH; x++) {
-					var c = input.Where(r => r.Pos == new Point(x, y)).Count();
+					var c = input.Where(r => r.Pos == new Vec(x, y)).Count();
 					Console.Write(c == 0 ? "." : c.ToString());
 				}
 				Console.WriteLine();
@@ -75,14 +75,14 @@ namespace Year2024.Day14 {
 				//Debug();
 				foreach (var r in input) r.Step();
 			}
-			var q1s = new Point(0, 0);
-			var q1e = new Point(WIDTH / 2 - 1, HEIGHT / 2 - 1);
-			var q2s = new Point(WIDTH / 2 + 1, 0);
-			var q2e = new Point(WIDTH - 1, HEIGHT / 2 - 1);
-			var q3s = new Point(0, HEIGHT / 2 + 1);
-			var q3e = new Point(WIDTH / 2 - 1, HEIGHT - 1);
-			var q4s = new Point(WIDTH / 2 + 1, HEIGHT / 2 + 1);
-			var q4e = new Point(WIDTH - 1, HEIGHT - 1);
+			var q1s = new Vec(0, 0);
+			var q1e = new Vec(WIDTH / 2 - 1, HEIGHT / 2 - 1);
+			var q2s = new Vec(WIDTH / 2 + 1, 0);
+			var q2e = new Vec(WIDTH - 1, HEIGHT / 2 - 1);
+			var q3s = new Vec(0, HEIGHT / 2 + 1);
+			var q3e = new Vec(WIDTH / 2 - 1, HEIGHT - 1);
+			var q4s = new Vec(WIDTH / 2 + 1, HEIGHT / 2 + 1);
+			var q4e = new Vec(WIDTH - 1, HEIGHT - 1);
 
 			long q1 = input.Where(r => r.Pos >= q1s && r.Pos <= q1e).Count();
 			long q2 = input.Where(r => r.Pos >= q2s && r.Pos <= q2e).Count();

@@ -13,10 +13,10 @@ namespace Year2024.Day8 {
 	public class Day8 : Solver {
 		public Day8() : base(2024, 8) {
 		}
-		record Frequency(char frequency, List<Point> nodes);  
+		record Frequency(char frequency, List<Vec> nodes);  
 		List<Frequency> input;
 		int xMax, yMax;
-		List<Point> antiNodes;
+		List<Vec> antiNodes;
 		string[] inputFile;
 		protected override void ReadInputPart1(string fileName) {
 			var p = new  System.Drawing.Point();
@@ -30,9 +30,9 @@ namespace Year2024.Day8 {
 					var c = inputFile[y][x];
 					if (c != '.') {
 						var fr = input.FirstOrDefault(x => x.frequency == c);
-						var node = new Point(x, y);
+						var node = new Vec(x, y);
 						if (fr != null) fr.nodes.Add(node);
-						else input.Add(new Frequency(c, new List<Point> { node }));
+						else input.Add(new Frequency(c, new List<Vec> { node }));
 					}
 				}
 			}
@@ -58,40 +58,40 @@ namespace Year2024.Day8 {
 		private void Debug() {
 			for (int y = 0; y < yMax; y++) {
 				for (int x = 0; x < xMax; x++) {
-					if (antiNodes.Contains(new Point(x, y))) Console.Write("#");
+					if (antiNodes.Contains(new Vec(x, y))) Console.Write("#");
 					else Console.Write(inputFile[y][x]);
 				}
 				Console.WriteLine();
 			}
 		}
 
-		private void GetAntinodes(Point n1, Point n2) {
-			Point a1 = n1 + (n1 - n2);
-			Point a2 = n2 + (n2 - n1);
+		private void GetAntinodes(Vec n1, Vec n2) {
+			Vec a1 = n1 + (n1 - n2);
+			Vec a2 = n2 + (n2 - n1);
 			AddAntinode(a1);
 			AddAntinode(a2);
 		}
-		private bool AddAntinode(Point n) {
+		private bool AddAntinode(Vec n) {
 			if (IsInBounds(n.x, n.y)) {
 				TryAdd(n);
 				return true;
 			}
 			return false;
 		}
-		private void TryAdd(Point n) {
+		private void TryAdd(Vec n) {
 			if (!antiNodes.Contains(n)) antiNodes.Add(n);
 		}
 		private bool IsInBounds(int x, int y) {
 			if (x >= 0 && x < xMax && y >= 0 && y < yMax) return true;
 			return false;
 		}
-		private void GetAntinodesPart2(Point n1, Point n2) {
+		private void GetAntinodesPart2(Vec n1, Vec n2) {
 			Project(n1, n1 - n2);
 			Project(n2, n2 - n1);
 		}
-		private void Project(Point start, Point direction) {
-			Point last = start;
-			Point next;
+		private void Project(Vec start, Vec direction) {
+			Vec last = start;
+			Vec next;
 			while (true) {
 				next = last + direction;
 				if (!IsInBounds(next.x, next.y)) break;
