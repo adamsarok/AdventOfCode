@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Year2024.Day24 {
 	public class Day24 : Solver {
@@ -53,7 +52,6 @@ namespace Year2024.Day24 {
 		}
 
 		protected override void ReadInputPart1(string fileName) {
-			//input = new();
 			IsShort = fileName.Contains("short");
 			Circuit = new Dictionary<string, Gate>();
 			bool starterWires = true;
@@ -106,7 +104,6 @@ namespace Year2024.Day24 {
 			int pow = 0;
 			long result = 0;
 			foreach (var g in zGates) {
-				//Console.WriteLine($"{g.Name}:{g.Output}");
 				if (g.Output) result += (long)Math.Pow(2, pow);
 				pow++;
 			}
@@ -126,55 +123,40 @@ namespace Year2024.Day24 {
 			var gates = Circuit.Values
 				.Where(x => x is not StarterWire && (wrongGates.Contains(x.InputGate1.Name) || wrongGates.Contains(x.InputGate2.Name)))
 				.ToList();
-
-			for (int i = 0; i < Math.Pow(2, maxPow); i++) {
+			List<string> swappedGates = new List<string>();
+			for (int pow = 0; pow <= maxPow; pow++) { 
+				long i = (long)Math.Pow(2, pow);
 				if (!TryNum(i, 0)) {
-					//we get the first wrong gate at 256 in my example
-
-					//full adder should have
-					//OR gates are connected to the output of two AND gates
-
-					//XOR gates are connected to the outputs of:
-					//two OR or 1 OR, 1 XOR gates
-
-					//AND gates are connected to:
-					//2 OR gates or 1 OR and 1 XOR gates
-	
-					bool solved = SwapGates(wrongGates, i);
-					if (!solved) { //we have to make sure its valid!
-						solved = SwapGates(Circuit.Values.Where(x => x is not StarterWire).Select(x => x.Name).ToList(), i);
+					var swapped = SwapGates(wrongGates, i);
+					if (swapped == null) {
+						Console.WriteLine($"Failed swap at {i}");
+						return -1;
 					}
-					if (!solved) Console.WriteLine($"Failed swap at {i}");
+					swappedGates.AddRange(swapped);
 				}
 			}
+			Console.WriteLine(string.Join(',', swappedGates.OrderBy(x => x)));
 			return result;
 		}
 
-		private bool SwapGates(List<string> wrongGates, int i) {
+		private List<string> SwapGates(List<string> wrongGates, long i) {
 			for (int a = 0; a < wrongGates.Count; a++) {
 				for (int b = a + 1; b < wrongGates.Count; b++) {
 					var wg1 = wrongGates[a];
 					var wg2 = wrongGates[b];
-					if (bad.Contains((wg1, wg2))) continue;
-					//File.AppendAllText(@"C:\temp\output.txt", $"Swapping {wg1} -> {wg2} {Environment.NewLine}");
-					Swap(wg1, wg2); //hjm, qgd
+					Swap(wg1, wg2);
 					if (TryNum(i, 0)) {
 						wrongGates.Remove(wg1);
 						wrongGates.Remove(wg2);
 						Console.WriteLine($"Swapping {wg1} and {wg2} succeed at val {i}");
-						return true;
-						//Console.WriteLine()
+						return new List<string>() { wg1, wg2 };
 					} else {
 						Swap(wg2, wg1);
 					}
 				}
 			}
-			return false;
+			return null;
 		}
-
-		List<(string, string)> bad = new List<(string, string)>() { ("mgk", "mvb") };
-
-		//z08, jss
 
 		private void Swap(string name1, string name2) {
 			var temp = Circuit[name1];
@@ -184,17 +166,8 @@ namespace Year2024.Day24 {
 			Circuit[name1].Name = name1;
 		}
 
-		static IEnumerable<IEnumerable<T>> GetPermutations<T>(IEnumerable<T> list, int length) {
-			if (length == 1) return list.Select(t => new T[] { t });
-
-			return GetPermutations(list, length - 1)
-				.SelectMany(t => list.Where(e => !t.Contains(e)),
-					(t1, t2) => t1.Concat(new T[] { t2 }));
-		}
-
-
 		private HashSet<string> CheckCircuit() {
-			//good idea but not complete. this only checks if a gate is the correct type, not if it is linked to the correct bit
+			//this only checks if a gate is the correct type, not if it is linked to the correct bit, however it seems to cover the possible problems mixups in my test case
 			HashSet<string> wrongGates = new HashSet<string>();
 			foreach (var g in Circuit.Values) {
 				if (g is OR) {
@@ -207,7 +180,6 @@ namespace Year2024.Day24 {
 					if (g.InputGate1 is AND) wrongGates.Add(g.InputGate1.Name);
 					if (g.InputGate2 is AND) wrongGates.Add(g.InputGate2.Name);
 					if (g.InputGate1 is XOR && g.InputGate2 is XOR) {
-						//how do we know which one is wrong? :(
 						wrongGates.Add(g.InputGate1.Name);
 						wrongGates.Add(g.InputGate2.Name);
 					}
@@ -218,7 +190,6 @@ namespace Year2024.Day24 {
 					if (g.InputGate1 is AND) wrongGates.Add(g.InputGate1.Name);
 					if (g.InputGate2 is AND) wrongGates.Add(g.InputGate2.Name);
 					if (g.InputGate1 is XOR && g.InputGate2 is XOR) {
-						//how do we know which one is wrong? :(
 						wrongGates.Add(g.InputGate1.Name);
 						wrongGates.Add(g.InputGate2.Name);
 					}
@@ -248,7 +219,6 @@ namespace Year2024.Day24 {
 					g.Output = false;
 				}
 				pow++;
-				//binaryList.Add((number & 1) == 1);
 			}
 		}
 	}
