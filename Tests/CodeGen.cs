@@ -4,17 +4,18 @@ namespace Tests {
 	public class CodeGen {
 		[Fact]
 		public void GenerateYear() {
-			int year = 2020;
+			int year = 2021;
 			for (int i = 1; i <= 25; i++) {
 				string baseDir = AppContext.BaseDirectory;
 				string sourceDir = Path.Combine(baseDir, "..", "..", "..", "..");
 				var dir = Path.Combine(sourceDir, $"Year{year}", $"Day{i.ToString("00")}");
-				if (!Path.Exists(dir)) {
-					Directory.CreateDirectory(dir);
+				if (!Path.Exists(dir)) Directory.CreateDirectory(dir);
+				string csfilePath = Path.Combine(dir, $"Day{i.ToString("00")}.cs");
+				if (!File.Exists(csfilePath)) {
 					var code = GetTemplate(year, i);
 					File.WriteAllText(Path.Combine(dir, $"Day{i.ToString("00")}.cs"), code);
-					AddTxts(dir, year, i);
 				}
+				AddTxts(dir, year, i);
 			}
 		}
 
@@ -22,6 +23,7 @@ namespace Tests {
 			string daystr = day.ToString("00");
 			var file1 = Path.Combine(dir, $"{year}shortinput{daystr}.txt");
 			var file2 = Path.Combine(dir, $"{year}input{daystr}.txt");
+			if (File.Exists(file1) || File.Exists(file2)) return;
 			File.Create(file1).Close();
 			File.Create(file2).Close();
 			string csprojPath = Path.Combine(dir, "..", $"Year{year}.csproj");
