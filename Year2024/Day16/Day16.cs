@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
@@ -46,12 +47,6 @@ namespace Year2024.Day16 {
 			}
 
 			Console.WriteLine($"Solved in {iter} iterations");
-
-			//211800 in 2521857 iterations in 86 seconds
-			//211800 in 2521857 iterations in 26 seconds
-			//211800 in 2454094 iterations in 6 seconds
-
-			//min until now: 157568
 
 			return result;
 		}
@@ -202,73 +197,68 @@ namespace Year2024.Day16 {
 			}
 		}
 
-		//We can find one best path with this logic, but not all best paths
-		//3008 4009 3010 -> here the path through 4009 is skipped even though its the same cost as through 3009
-		//#    #    #    #    #    #    #    #    #    #    #    #    #    #    #
-		//#  5016 6017 6018 6019 6020 6021 6022   #  8040 8039 8038 8037 7036   #
-		//#  5015   #  7017   #    #    #  7023   #  9023   #    #    #  7035   #
-		//#  5014 6015 6016 6017 6018   #  7024   #  8022 8021 7020   #  7034   #
-		//#  5013   #    #    #  7019   #    #    #    #    #  7019   #  7033   #
-		//#  5012   #  3010   #  6020 6019 6018 6017 5016 6017 6018   #  7032   #
-		//#  5011   #  3009   #    #    #    #    #  5015   #    #    #  7031   #
-		//#  4010 4009 3008 4009 3010 4011 4012 4013 4014 4015 4016   #  7030   #
-		//#    #    #  3007   #  3009   #    #    #    #    #  5017   #  7029   #
-		//#  1004 2005 2006   #  3008 4009 4010 4011 4012   #  5018   #  7028   #
-		//#  1003   #  3005   #  3007   #    #    #  5013   #  5019   #  7027   #
-		//#  1002 2003 2004 2005 2006   #  5012 6013 5014   #  5020   #  7026   #
-		//#  1001   #    #    #  3007   #  5011   #  5013   #  5021   #  7025   #
-		//#   -1    1    2    #  3008 4009 4010 4011 4012   #  5022 6023 6024   #
-		//#    #    #    #    #    #    #    #    #    #    #    #    #    #    #
-
-		//maybe we can go back along the path and "fix" the gaps we see here?
-
-
-		long part2result;
+	
 		long target = long.MinValue;
+		long minCost;
+		List<Vec> dirs = [new Vec(0, 1), new Vec(0, -1), new Vec(1, 0), new Vec(-1, 0)];
+		Dictionary<char, HashSet<Vec>> tiles;
+		Dictionary<Vec, long> costs2;
+		Stack<Action> actions;
+		List<(long s, HashSet<Vec> v)> best;
 		protected override long SolvePart2() {
-			part2result = 0;
-			SolvePart1();
-			target = result; //hacky
-			optimalPaths = new bool[input.Length, input[0].Length];
-			SolvePart1();
-			//PrintOptimalPaths();
-			//PrintCosts();
-			//for (int y = 0; y < input.Length; y++) {
-			//	for (int x = 0; x < input[0].Length; x++) {
-			//		if (input[y][x] == 'E') {
-			//			CountBack(new Point(x, y));
-			//		}
-			//	}
-			//}
-			return part2result;
+			minCost = long.MaxValue;
+			best = new();
+			actions = [];
+			tiles = new() { { '#', [] }, };
+			costs2 = [];
+			for (int y = 0; y < input.Length; y++) {
+				for (int x = 0; x < input[y].Length; x++) {
+					var c = input[y][x];
+					if (!tiles.ContainsKey(c)) {
+						tiles[c] = [new Vec(x, y)];
+					} else {
+						tiles[c].Add(new Vec(x, y));
+					}
+				}
+			}
+			//for a long time this step was what I was missing - going from S->E than E->S can solve the problem of some turns which would be skipped with a simple Dijkstra
+			DoPath([.. tiles['S']], new Vec(1, 0), 0, tiles['E'].First());
+			DoPath([.. tiles['E']], new Vec(1, 0), 0, tiles['S'].First());
+			return best.Where(x => x.s == minCost).SelectMany(x => x.v)
+				.Distinct().Count();
 		}
-		private long GetCost(long y, long x) {
-			if (x < 0 || x >= input[0].Length || y < 0 || y >= input.Length) return long.MaxValue;
-			return costs[y, x];
+
+		private void Path(List<Vec> path, Vec lastDir, long lastCost, int dirOrder, Vec dest) {
+			if (lastCost > minCost) return;
+			foreach (var direction in dirs.Skip(dirOrder).Concat(dirs.Take(dirOrder))) {
+				Vec nextCell = path.Last() + direction;
+				Vec newDirection = nextCell - path.Last();
+				Vec dirDiff = newDirection + lastDir;
+				long cost = lastCost;
+				if (dirDiff.x == 0 && dirDiff.y == 0) cost += 2000;
+				else if (dirDiff.x != 0 && dirDiff.y != 0) cost += 1000;
+				cost += 1;
+				if (cost > minCost || tiles['#'].Contains(nextCell)
+					|| (costs2.TryGetValue(nextCell, out long tileCost) 
+					&& cost > tileCost)) {
+					continue;
+				}
+				costs2[nextCell] = cost;
+				if (nextCell == dest) {
+					minCost = Math.Min(minCost, cost);
+					best.Add((cost, [.. path, nextCell]));
+					continue;
+				}
+
+				actions.Push(() => Path([.. path, nextCell], newDirection, cost, dirOrder, dest));
+			}
 		}
-		private void CountBack(Vec point) {
-			long min = new long[]{
-				GetCost(point.y + 1, point.x),
-				GetCost(point.y - 1, point.x),
-				GetCost(point.y, point.x + 1),
-				GetCost(point.y, point.x - 1)
-			}.Min();
-			if (min < 0) return;
-			if (GetCost(point.y + 1, point.x) == min) {
-				part2result++;
-				CountBack(new Vec(point.x, point.y + 1));
-			}
-			if (GetCost(point.y - 1, point.x) == min) {
-				part2result++;
-				CountBack(new Vec(point.x, point.y - 1));
-			}
-			if (GetCost(point.y, point.x + 1) == min) {
-				part2result++;
-				CountBack(new Vec(point.x + 1, point.y));
-			}
-			if (GetCost(point.y, point.x - 1) == min) {
-				part2result++;
-				CountBack(new Vec(point.x - 1, point.y + 1));
+
+		void DoPath(List<Vec> path, Vec dir, long cost, Vec dest) {
+			for (int dirOrder = 0; dirOrder < 4; dirOrder++) {
+				costs2.Clear();
+				Path(path, dir, cost, dirOrder, dest);
+				while (actions.Count > 0) actions.Pop().Invoke();
 			}
 		}
 	}
