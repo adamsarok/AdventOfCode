@@ -10,11 +10,6 @@ namespace Year2019.Day02 {
 		public Day02() : base(2019, 2) {
 		}
 
-		//1: 1,[posinput],[posinput],[posoutput]
-		//1: D = B + C 
-		//2: D = B * C
-		//99: halt
-
 		int[] intCode;
 		int[] input;
 
