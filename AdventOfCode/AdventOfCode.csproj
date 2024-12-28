@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Year2019\Year2019.csproj" />
     <ProjectReference Include="..\Year2020\Year2020.csproj" />
     <ProjectReference Include="..\Year2021\Year2021.csproj" />
     <ProjectReference Include="..\Year2022\Year2022.csproj" />

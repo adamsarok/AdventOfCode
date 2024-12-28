@@ -4,7 +4,7 @@ namespace Tests {
 	public class CodeGen {
 		[Fact]
 		public void GenerateYear() {
-			int year = 2021;
+			int year = 2019;
 			for (int i = 1; i <= 25; i++) {
 				string baseDir = AppContext.BaseDirectory;
 				string sourceDir = Path.Combine(baseDir, "..", "..", "..", "..");
@@ -29,7 +29,7 @@ namespace Tests {
 			string csprojPath = Path.Combine(dir, "..", $"Year{year}.csproj");
 
 			XDocument csproj = XDocument.Load(csprojPath);
-			XElement itemGroup = csproj.Root.Elements("ItemGroup").First();
+			XElement itemGroup = csproj.Root.Elements("ItemGroup").FirstOrDefault();
 
 			if (itemGroup == null) {
 				itemGroup = new XElement("ItemGroup");
