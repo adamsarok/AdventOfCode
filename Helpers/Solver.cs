@@ -49,7 +49,11 @@ namespace Helpers {
 		}
 		protected abstract long SolvePart1();
 		protected abstract long SolvePart2();
-		protected abstract void ReadInputPart1(string fileName);
-		protected abstract void ReadInputPart2(string fileName);
+		protected virtual void ReadInputPart1(string fileName) {
+			IsShort = fileName.Contains("short");
+		}
+		protected virtual void ReadInputPart2(string fileName) {
+			IsShort = fileName.Contains("short");
+		}
 	}
 }

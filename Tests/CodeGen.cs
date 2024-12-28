@@ -63,6 +63,7 @@ namespace Year{year}.Day{dayStr} {{
 		public Day{dayStr}() : base({year}, {day}) {{
 		}}
 		protected override void ReadInputPart1(string fileName) {{
+			base.ReadInputPart1(fileName);
 			//input = new();
 			foreach (var l in File.ReadAllLines(fileName)) {{
 
@@ -70,6 +71,7 @@ namespace Year{year}.Day{dayStr} {{
 		}}
 
 		protected override void ReadInputPart2(string fileName) {{
+			base.ReadInputPart2(fileName);
 			//input = new();
 			foreach (var l in File.ReadAllLines(fileName)) {{
 
