@@ -8,6 +8,7 @@ using System.Numerics;
 using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
+using static Helpers.Enums;
 
 namespace Year2024.Day16 {
 	public class Day16 : Solver {
@@ -50,12 +51,7 @@ namespace Year2024.Day16 {
 
 			return result;
 		}
-		enum Direction {
-			Up,
-			Down,
-			Left,
-			Right
-		}
+		
 		private void Debug() {
 			Console.Clear();
 			for (int y = 0; y < input.Length; y++) {
