@@ -10,11 +10,10 @@ using System.Threading.Tasks;
 
 namespace Year2019.Day11 {
 	public class Day11 : Solver {
-		private long[] startCode;
-
 		public Day11() : base(2019, 11) {
 		}
 
+		private long[] startCode;
 		protected override void ReadInputPart1(string fileName) {
 			base.ReadInputPart1(fileName);
 			IsShort = fileName.Contains("short");
