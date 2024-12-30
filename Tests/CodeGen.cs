@@ -79,12 +79,14 @@ namespace Year{year}.Day{dayStr} {{
 		}}
 
 		protected override long SolvePart1() {{
+			base.SolvePart1(fileName);
 			long result = 0;
 
 			return result;
 		}}
 
 		protected override long SolvePart2() {{
+			base.SolvePart2(fileName);
 			long result = 0;
 
 			return result;

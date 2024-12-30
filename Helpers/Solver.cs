@@ -7,6 +7,7 @@ namespace Helpers {
 			public Oopsie(string msg) : base($"Shouldn't happen: {msg}") { } //the detailed shouldn't happen exception
 		}
 		protected bool IsShort { get; set; }
+		protected bool IsPart1 { get; set; }
 		public void Solve() {
 			string daystr = day.ToString("00");
 			string shortInput = $"Day{daystr}\\{year}shortinput{daystr}.txt";
@@ -47,8 +48,14 @@ namespace Helpers {
 			Console.ResetColor();
 			Console.WriteLine();
 		}
-		protected abstract long SolvePart1();
-		protected abstract long SolvePart2();
+		protected virtual long SolvePart1() {
+			IsPart1 = true;
+			return -1;
+		}
+		protected virtual long SolvePart2() {
+			IsPart1 = false;
+			return -1;
+		}
 		protected virtual void ReadInputPart1(string fileName) {
 			IsShort = fileName.Contains("short");
 		}
