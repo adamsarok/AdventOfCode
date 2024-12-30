@@ -69,12 +69,6 @@ namespace Year2019.Day19 {
 					default: throw new Oopsie("unknown ParamMode");
 				}
 			}
-
-			enum StatusCode {
-				Wall = 0,   //pos stays same
-				Step = 1,   //pos changed to next step
-				Finish = 2, //oxygen system reached
-			}
 			enum Opcode {
 				ADD = 1,
 				MUL = 2,
@@ -114,7 +108,6 @@ namespace Year2019.Day19 {
 				bool isX = true;
 				while (instructionPointer < intCode.Length) {
 					var cmd = ParseCommand(intCode[instructionPointer]);
-					//Console.WriteLine(cmd);
 					switch (cmd.opcode) {
 						case Opcode.ADD:
 							SetVariable(instructionPointer + 3, param1(cmd) + param2(cmd), cmd.cMode);
@@ -169,7 +162,6 @@ namespace Year2019.Day19 {
 		protected override long SolvePart1() {
 			base.SolvePart1();
 			if (IsShort) return -1;
-			//seems we always halt after getting 1 output?
 			tiles = new char?[50, 50];
 			long result = 0;
 			var compy = new IntCodeComputer(startCode);
@@ -178,7 +170,7 @@ namespace Year2019.Day19 {
 					var res = compy.RunCode(new LVec(x, y));
 					if (res == 1) result++;
 					tiles[x, y] = res == 1 ? '#' : '.';
-					compy.Reset();
+					compy.Reset(); //seems we always halt after getting 1 output
 				}
 			}
 			//Debug();
@@ -186,47 +178,28 @@ namespace Year2019.Day19 {
 		}
 
 		//11442 ms - should be much better
+		//9900 ms - better
+		//75 ms - yep
 		protected override long SolvePart2() {
 			base.SolvePart2();
 			if (IsShort) return -1;
 			var compy = new IntCodeComputer(startCode);
 			int squareSize = 100;
+			int lastBeam = 1;
 			for (int y = 100; y < int.MaxValue; y++) {
-				int beamCnt = 0;
-				for (int x = 0; x < int.MaxValue; x++) {
+				for (int x = lastBeam - 1; x < int.MaxValue; x++) {
 					var res = compy.RunCode(new LVec(x, y));
-					if (res == 1) beamCnt++;
-					if (beamCnt > 0 && res == 0) break; //we are out of the beam
-					if (beamCnt == squareSize) {
-						//we need to draw a line up from 10 square from the 10th tractor beam square
-						//if that is also a tractor beam square, we have a square of 10x10 fit inside the beam
-						compy.Reset();
-						var up = compy.RunCode(new LVec(x, y - (squareSize - 1)));
-						if (up == 1) {
-							var ul = new LVec(x - (squareSize - 1), y - (squareSize - 1));
-							var ur = new LVec(x, y - (squareSize - 1));
-							var dl = new LVec(x - (squareSize - 1), y);
-							var dr = new LVec(x, y);
-							CheckCube(ul, ur, dl, dr);
-							return (ul.x * 10000) + ul.y;
-						} else break;
-					}
 					compy.Reset();
+					if (res == 1) { //if up + 99, right + 99 is in beam we have a 100 square
+						lastBeam = x;
+						var up = compy.RunCode(new LVec(x + (squareSize - 1), y - (squareSize - 1)));
+						compy.Reset();
+						if (up == 1) return (x * 10000) + (y - (squareSize - 1));
+						else break;
+					}
 				}
 			}
 			return -1;
 		}
-
-		private void CheckCube(LVec ul, LVec ur, LVec dl, LVec dr) {
-			var compy = new IntCodeComputer(startCode);
-			if (compy.RunCode(ul) != 1) throw new Oopsie($"{ul} outside of beam");
-			compy.Reset();
-			if (compy.RunCode(ur) != 1) throw new Oopsie($"{ur} outside of beam");
-			compy.Reset();
-			if (compy.RunCode(dl) != 1) throw new Oopsie($"{dl} outside of beam");
-			compy.Reset();
-			if (compy.RunCode(dr) != 1) throw new Oopsie($"{dr} outside of beam");
-		}
 	}
-
 }
