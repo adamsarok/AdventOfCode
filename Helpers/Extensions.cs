@@ -30,5 +30,31 @@ namespace Helpers {
 				}
 			}
 		}
+
+		public static IEnumerable<IEnumerable<T>> Combinations<T>(this IEnumerable<T> sequence, int length) {
+			if (sequence == null) {
+				yield break;
+			}
+
+			var arr = sequence.ToArray();
+
+			if (!arr.Any()) {
+				yield return Enumerable.Empty<T>();
+			} else {
+				T[] result = new T[length];
+				int combinations = arr.Length;
+				long all = (long)Math.Pow(combinations, length);
+				for (long i = 0; i < all; i++) {
+					long temp = i;
+					for (int pos = 0; pos < length; pos++) {
+						result[pos] = arr[temp % combinations];
+						temp /= combinations;
+					}
+					yield return result;
+				}
+			}
+		}
+
+
 	}
 }

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using static Helpers.Dijkstra;
 
 namespace Year2019.Day17 {
@@ -36,6 +37,11 @@ namespace Year2019.Day17 {
 
 			public IntCodeComputer(long[] startCode) {
 				intCode = new long[10000];
+				this.startCode = startCode;
+				Reset();
+			}
+
+			private void Reset() {
 				instructionPointer = 0;
 				tiles = new();
 				for (int i = 0; i < startCode.Length; i++) intCode[i] = startCode[i];
@@ -107,7 +113,7 @@ namespace Year2019.Day17 {
 			long param2(Command cmd) => GetVariable(instructionPointer + 2, cmd.bMode);
 
 			public long RunCode(bool part1) {
-				int outCnt = 0;
+				int part2InpCnt = 0;
 				while (instructionPointer < intCode.Length) {
 					var cmd = ParseCommand(intCode[instructionPointer]);
 					switch (cmd.opcode) {
@@ -121,19 +127,25 @@ namespace Year2019.Day17 {
 							instructionPointer += 4;
 							break;
 						case Opcode.IN:
-							SetVariable(instructionPointer + 1, 0, cmd.aMode);
+							if (!part1 && part2input.Any() && part2InpCnt < part2input.Count) {
+								SetVariable(instructionPointer + 1, part2input[part2InpCnt++], cmd.aMode);
+							} else {
+								SetVariable(instructionPointer + 1, 0, cmd.aMode);
+							}
 							instructionPointer += 2;
 							break;
 						case Opcode.OUT:
-							switch (param1(cmd)) {
+							var val = param1(cmd);
+							switch (val) {
 								case 10:
 									pos = new LVec(0, pos.y + 1);
 									break;
 								default: 
-									tiles.Add(pos, (char)param1(cmd));
+									tiles.Add(pos, (char)val);
 									pos += new LVec(1, 0);
 									break;
 							}
+							lastOut = val;
 							instructionPointer += 2;
 							break;
 						case Opcode.JIT:
@@ -157,44 +169,41 @@ namespace Year2019.Day17 {
 							instructionPointer += 2;
 							break;
 						case Opcode.HALT:
-							var path = GetPath();
+							path = GetPath();
 							if (part1) return CountIntersections(path);
-							Debug(path);
+							if (part2input.Any()) return lastOut;
+							//Debug(path);
 							Traverse(path);
-							return -1;
+							Reset();
+							break;
 					}
 				}
 				return -1;
 			}
 
-			int scaffolds = 0;
+			long lastOut;
+
 			LVec start;
 			private void Traverse(char[,] path) {
-				//does it matter which direction we travel?
-				//var v = char.Parse("8"); //to move 8, we have to input this which is 56
-				//try greedy: turn as little as we can, go as far as we can in 1 dir?
 				List<string> pathInput = new List<string>();
 				pos = start;
 				path[pos.x,pos.y] = 'D';
-				scaffolds--;
-				//1. turn towards closest scaffold
-				//2. go as far as we can
-				//3. if no scaffold go back
-				while (scaffolds > 0) {
-					pathInput.AddRange(TurnToClosestScaff());
+				while (TurnToClosestScaff(pathInput)) {
 					int len = 0;
 					while (GetTile(pos + facing) == '#') {
 						pos += facing;
 						path[pos.x, pos.y] = 'D';
-						scaffolds--;
 						len++;
 					}
 					pathInput.Add(len.ToString());
 					//Debug(path);
 				}
-				var compressed = Compress(pathInput);
+				//Debug(path);
+				Compress(pathInput);
 			}
-			private List<string> Compress(List<string> commands) {
+
+			List<long> part2input = new List<long>();
+			private void Compress(List<string> commands) {
 				Dictionary<string, List<int>> repetitions = new Dictionary<string, List<int>>();
 				int windowLength = 2;
 				List<string> window = new List<string>();
@@ -211,44 +220,55 @@ namespace Year2019.Day17 {
 					windowLength++;
 				}
 				string resultOrig = string.Join(",", commands);
-				string result = resultOrig;
 				List<string> compressionKeys = new List<string>() { "A", "B", "C" };
-				int actKey = 0;
-				foreach (var kvp in repetitions.Where(x => x.Value.Count > 1 && x.Key.Length <= 20).OrderByDescending(x => x.Key.Length * x.Value.Count)) {
-					if (actKey > 2) break;
-					if (result.Contains(kvp.Key)) {
-						result = result.Replace(kvp.Key, compressionKeys[actKey]);
-						Console.WriteLine($"{compressionKeys[actKey]}: {kvp.Value.Count} * {kvp.Key}");
+				var validKeys = repetitions.Where(x => x.Value.Count > 1 && x.Key.Length <= 20).Select(x => x.Key);
+				HashSet<string> bestKeys = new HashSet<string>();
+				foreach (var combination in validKeys.Combinations(3)) {
+					int actKey = 0;
+					string result = resultOrig;
+					HashSet<string> unique = new HashSet<string>();
+					bool ok = true;
+					foreach (var key in combination) {
+						if (unique.Contains(key) || !result.Contains(key)) {
+							ok = false;
+							break;
+						}
+						unique.Add(key); //key is not found in the result this is a suboptimal key choice
+						result = result.Replace(key, compressionKeys[actKey]);
 						actKey++;
 					}
+					if (ok && result.Length <= 20) {
+						part2input = new List<long>();
+						part2input.AddRange(result.ToCharArray().Select(x => (long)x));
+						part2input.Add(10);
+						foreach (var key in combination) {
+							part2input.AddRange(key.ToCharArray().Select(x => (long)x));
+							part2input.Add(10);
+						}
+						part2input.Add((long)'n');
+						part2input.Add(10);
+						return;
+					}
 				}
-				//TODO: we are getting close but this is not complete yet
-				//The resulting string is longer than 20 chars, however the compression should be correct
-				//We are covering the most chars if we check by key repetitions * key length?
-				//Does this mean the original traversal is not optimal when looking at the compressed string result?
-				Console.WriteLine(resultOrig);
-				Console.WriteLine(result);
-				return new List<string>();
+				throw new Oopsie($"Failed to find 20 length compressed string.");
 			}
 			private char GetTile(LVec pos) {
 				if (tiles.TryGetValue(pos, out char c)) return c;
 				return ' ';
 			}
-			private List<string> TurnToClosestScaff() {
-				if (GetTile(pos + facing) == '#') return new List<string>();
+			private bool TurnToClosestScaff(List<string> path) {
+				if (GetTile(pos + facing) == '#') return true;
 				if (GetTile(pos + facing.RotateLeft()) == '#') {
 					facing = facing.RotateLeft();
-					return new List<string> { "L" };
+					path.Add("L");
+					return true;
 				}
 				if (GetTile(pos + facing.RotateRight()) == '#') {
 					facing = facing.RotateRight();
-					return new List<string> { "R" };
+					path.Add("R");
+					return true;
 				}
-				if (GetTile(pos + facing.RotateLeft().RotateLeft()) == '#') {
-					facing = facing.RotateLeft().RotateLeft();
-					return new List<string> { "L", "L" };
-				}
-				throw new Oopsie("we're hopelessly lost");
+				return false;
 			}
 
 			private long CountIntersections(char[,] path) {
@@ -261,7 +281,7 @@ namespace Year2019.Day17 {
 						}
 					}
 				}
-				Debug(path);
+				//Debug(path);
 				return result;
 			}
 
@@ -273,11 +293,12 @@ namespace Year2019.Day17 {
 					}
 					Console.WriteLine();
 				}
-				Thread.Sleep(10);
+				//Thread.Sleep(1000);
 			}
 
 			private LVec pos;
 			private LVec facing;
+			private char[,] path;
 
 			private char[,] GetPath() {
 				if (!tiles.Any()) return null;
@@ -305,9 +326,6 @@ namespace Year2019.Day17 {
 							case '>':
 								start = new LVec(x, y);
 								facing = new LVec(1, 0);
-								break;
-							case '#':
-								scaffolds++;
 								break;
 						}
 					}
