@@ -75,22 +75,33 @@ namespace Year2019.Day21 {
 				Immediate = 1,
 				Relative = 2
 			}
-			//record Command(Opcode opcode, ParamMode aMode, ParamMode bMode, ParamMode cMode);
 
 			long param1(long mode) => GetVariable(instructionPointer + 1, mode);
 			long param2(long mode) => GetVariable(instructionPointer + 2, mode);
 
 			List<long> output;
 			char[] input;
-			private void SetCommands(List<string> commands) {
-				input = string.Join("\n", commands).ToCharArray();
+			private void SetCommands(List<Command> commands, bool isFirstPart) {
+				StringBuilder temp = new StringBuilder();
+				foreach (var c in commands) {
+					temp.Append(s1[c.a]).Append(' ');
+					if (isFirstPart) temp.Append(s2[c.b]);
+					else temp.Append(s2_part2[c.b]);
+					temp.Append(' ').Append(s3[c.c]).Append('\n');
+				}
+				temp.Append(isFirstPart ? "WALK\n" : "RUN\n");
+				input = temp.ToString().ToCharArray();
 			}
 
-			public long RunCode(List<string> commands) {
-				SetCommands(commands);
+			static string[] s1 = new string[] { "AND", "OR", "NOT" };
+			static string[] s2 = new string[] { "A", "B", "C", "D", "T", "J" };
+			static string[] s2_part2 = new string[] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "T", "J" };
+			static string[] s3 = new string[] { "T", "J" };
+
+			public long RunCode(List<Command> commands, bool isFirstPart) {
+				SetCommands(commands, isFirstPart);
 				output = new List<long>();
 				int actInput = 0;
-				//instructionsRan = 0;
 				while (instructionPointer < intCode.Length) {
 					long cmdNum = intCode[instructionPointer];
 					var opcode = (Opcode)(cmdNum % 100);
@@ -101,9 +112,6 @@ namespace Year2019.Day21 {
 					var bMode = modes % 10;
 					modes /= 10;
 					var cMode = modes % 10;
-					//Console.WriteLine(instructionPointer);
-					//instructionsRan++;
-					//var cmd = ParseCommand(intCode[instructionPointer]);
 					switch (opcode) {
 						case Opcode.ADD:
 							SetVariable(instructionPointer + 3, param1(aMode) + param2(bMode), cMode);
@@ -148,7 +156,6 @@ namespace Year2019.Day21 {
 							instructionPointer += 2;
 							break;
 						case Opcode.HALT:
-							//return new string(output.ToArray());
 							return output.Last();
 					}
 				}
@@ -158,39 +165,30 @@ namespace Year2019.Day21 {
 
 
 		private char?[,] tiles;
-		string[] s1 = new string[] { "AND", "OR", "NOT" };
-		string[] s2 = new string[] { "B", "C", "T", "J" }; //A and D can be skipped as that is the last and first
-		string[] s2_part2 = new string[] { "B", "C", "E", "F", "G", "H", "I", "T", "J" };
-		string[] s3 = new string[] { "T", "J" };
-		List<string> allCommands;
+
+		List<Command> allCommands;
 		private void SetAllCommands() {
-			allCommands = new List<string>();
-			foreach (var a in s1) {
-				foreach (var b in s2) {
-					foreach (var c in s3) {
-						allCommands.Add($"{a} {b} {c}");
-					}
-				}
-			}
-		}
-		private void SetAllCommandsPart2() {
-			allCommands = new List<string>();
-			foreach (var a in s1) {
-				foreach (var b in s2_part2) {
-					foreach (var c in s3) {
-						allCommands.Add($"{a} {b} {c}");
+			allCommands = new List<Command>();
+			for (byte a = 0; a < 3; a++) {
+				for (byte b = 0; b < (IsPart1 ? 6 : 11); b++) {
+					for (byte c = 0; c < 2; c++) {
+						//in 2nd part A and D is already used
+						if (!IsPart1 && (b == 0 || b == 3)) continue;
+						allCommands.Add(new Command(a, b, c));
 					}
 				}
 			}
 		}
 
-		//1st: 18103 ms no result
-		//2nd: 9159 ms no result
-		//3rd: 8032 ms no result
-		//4nd: 7563 ms no result
-		//16 threads: 2000 ms no result
-		//last try: 245 ms success!
 		record struct Command(byte a, byte b, byte c);
+
+		Command NOT_A_J = new Command(2, 0, 1);
+		Command AND_D_J = new Command(0, 3, 1);
+
+		Command SECOND_NOT_A_T = new Command(2, 0, 0);
+		Command SECOND_OR_T_J = new Command(1, 9, 1);
+		Command SECOND_AND_D_J = new Command(0, 3, 1);
+
 
 		protected override long SolvePart1() {
 			base.SolvePart1();
@@ -206,38 +204,46 @@ namespace Year2019.Day21 {
 			List<string> winner = new List<string>();
 			while (true) {
 				List<Task<long>> tasks = new List<Task<long>>();
-				BlockingCollection<List<string>> commandQueue = new BlockingCollection<List<string>>();
-				//foreach (var partition in allCommands.Combinations(commandsToAdd)) commandQueue.Enqueue(partition.ToList());
+				BlockingCollection<List<Command>> commandQueue = new BlockingCollection<List<Command>>();
 				Task producerTask = Task.Factory.StartNew(() => {
-					foreach (var partition in allCommands.Combinations(commandsToAdd)) {
-						commandQueue.Add(partition.ToList());
+					foreach (var combination in allCommands.Combinations(commandsToAdd)) {
+						bool valid = true;
+						HashSet<byte> bs = new HashSet<byte>();
+						foreach (var b in combination) {
+							if (bs.Contains(b.b)) {
+								valid = false; //assume each register A,B,C etc can only appear once in a command set
+								continue;
+							}
+							bs.Add(b.b);
+						}
+						if (!valid) continue;
+						var commands = combination.ToList();
+						commandQueue.Add(combination.ToList());
 					}
 					commandQueue.CompleteAdding();
 				});
 
+				Timer t = new Timer((o) => {
+					if (commandQueue.Any()) Console.WriteLine($"Commands left: {commandQueue.Count}");
+				}, null, 10000, 10000);
 
 				for (int i = 0; i < threadCount; i++) {
 					tasks.Add(Task.Factory.StartNew(() => {
-						//List<string> commands;
 						var compy = new IntCodeComputer(startCode);
 						foreach (var commands in commandQueue.GetConsumingEnumerable()) {
-							bool valid = true;
-							for (int i = 0; i < commands.Count - 1; i++) if (commands[i + 1] == commands[i]) valid = false;
-							if (!valid) continue;
 							compy.Reset();
-							List<string> cmdsLocal = isFirstPart ? commands.Prepend("NOT A J").Append($"AND D J\nWALK\n").ToList() : commands.Append("\nRUN\n").ToList();
-							var r = compy.RunCode(cmdsLocal);
-							if (r > 0) {
-								winner = cmdsLocal;
-								return r;
-							}
+							var cmdsLocal = isFirstPart ?
+								commands.Prepend(NOT_A_J).Append(AND_D_J).ToList() :
+								commands.Append(SECOND_NOT_A_T).Append(SECOND_OR_T_J).Append(SECOND_AND_D_J).ToList();
+							var r = compy.RunCode(cmdsLocal, isFirstPart);
+							if (r > 0) return r;		
 						}
 						return -1;
 					}));
 				}
 				Task.WaitAll(tasks.ToArray());
 				long result = tasks.Max(t => t.Result);
-				Console.WriteLine($"Tried: {(isFirstPart ? commandsToAdd + 2 : commandsToAdd)} commands in {sw.ElapsedMilliseconds} ms.");
+				Console.WriteLine($"Tried: {(isFirstPart ? commandsToAdd + 2 : commandsToAdd + 3)} commands in {sw.ElapsedMilliseconds} ms.");
 				if (result > 0) {
 					foreach (var w in winner) Console.WriteLine(w);
 					return result;
@@ -250,7 +256,7 @@ namespace Year2019.Day21 {
 		protected override long SolvePart2() {
 			base.SolvePart2();
 			if (IsShort) return -1;
-			SetAllCommandsPart2();
+			SetAllCommands();
 			return Calc(false);
 		}
 		
