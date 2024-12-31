@@ -54,16 +54,5 @@ namespace Helpers {
 				}
 			}
 		}
-
-		public static IEnumerable<IEnumerable<T>> Partition<T>(this IEnumerable<T> source, int partitions) {
-			var sourceList = source.ToList();
-			int totalItems = sourceList.Count;
-			int itemsPerPartition = (int)Math.Ceiling(totalItems / (double)partitions);
-
-			for (int i = 0; i < partitions; i++) {
-				yield return sourceList.Skip(i * itemsPerPartition).Take(itemsPerPartition);
-			}
-		}
-
 	}
 }
