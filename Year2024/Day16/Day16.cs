@@ -8,7 +8,7 @@ using System.Numerics;
 using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
-using static Helpers.Enums;
+using static Helpers.Directions;
 
 namespace Year2024.Day16 {
 	public class Day16 : Solver {
@@ -42,7 +42,7 @@ namespace Year2024.Day16 {
 				for (int x = 0; x < input[0].Length; x++) {
 					if (input[y][x] == 'S') {
 						costs[y,x] = -1;
-						GoFrom(new Vec(x, y), Direction.Right, 0);
+						GoFrom(new Vec(x, y), Direction.East, 0);
 					}
 				}
 			}
@@ -68,66 +68,66 @@ namespace Year2024.Day16 {
 			iter++;
 			if (Go(point, facing, facing, currentScore)) return true; //first try straight line
 			switch (facing) {
-				case Direction.Up:
-				case Direction.Down:
-					if (Go(point, facing, Direction.Left, currentScore)) return true;
-					if (Go(point, facing, Direction.Right, currentScore)) return true;
+				case Direction.North:
+				case Direction.South:
+					if (Go(point, facing, Direction.West, currentScore)) return true;
+					if (Go(point, facing, Direction.East, currentScore)) return true;
 					break;
-				case Direction.Left:
-				case Direction.Right:
-					if (Go(point, facing, Direction.Up, currentScore)) return true;
-					if (Go(point, facing, Direction.Down, currentScore)) return true;
+				case Direction.West:
+				case Direction.East:
+					if (Go(point, facing, Direction.North, currentScore)) return true;
+					if (Go(point, facing, Direction.South, currentScore)) return true;
 					break;
 			}
 			return false;
 		}
 		private int GetTurns(Direction currentFacing, Direction dirToGo) {
 			switch (currentFacing) {
-				case Direction.Up:
+				case Direction.North:
 					switch (dirToGo) {
-						case Direction.Up:
+						case Direction.North:
 							return 0;
-						case Direction.Down:
+						case Direction.South:
 							return 2;
-						case Direction.Left:
+						case Direction.West:
 							return 1;
-						case Direction.Right:
+						case Direction.East:
 							return 1;
 					}
 					break;
-				case Direction.Down:
+				case Direction.South:
 					switch (dirToGo) {
-						case Direction.Up:
+						case Direction.North:
 							return 2;
-						case Direction.Down:
+						case Direction.South:
 							return 0;
-						case Direction.Left:
+						case Direction.West:
 							return 1;
-						case Direction.Right:
+						case Direction.East:
 							return 1;
 					}
 					break;
-				case Direction.Left:
+				case Direction.West:
 					switch (dirToGo) {
-						case Direction.Up:
+						case Direction.North:
 							return 1;
-						case Direction.Down:
+						case Direction.South:
 							return 1;
-						case Direction.Left:
+						case Direction.West:
 							return 0;
-						case Direction.Right:
+						case Direction.East:
 							return 2;
 					}
 					break;
-				case Direction.Right:
+				case Direction.East:
 					switch (dirToGo) {
-						case Direction.Up:
+						case Direction.North:
 							return 1;
-						case Direction.Down:
+						case Direction.South:
 							return 1;
-						case Direction.Left:
+						case Direction.West:
 							return 2;
-						case Direction.Right:
+						case Direction.East:
 							return 0;
 					}
 					break;
@@ -138,16 +138,16 @@ namespace Year2024.Day16 {
 			//Debug();
 			Vec dest;
 			switch (dirToGo) {
-				case Direction.Up:
+				case Direction.North:
 					dest = new Vec(from.x, from.y - 1);
 					break;
-				case Direction.Down:
+				case Direction.South:
 					dest = new Vec(from.x, from.y + 1);
 					break;
-				case Direction.Left:
+				case Direction.West:
 					dest = new Vec(from.x - 1, from.y);
 					break;
-				case Direction.Right:
+				case Direction.East:
 					dest = new Vec(from.x + 1, from.y);
 					break;
 				default:
