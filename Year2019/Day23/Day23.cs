@@ -35,19 +35,21 @@ namespace Year2019.Day23 {
 			private long[] startCode;
 			private readonly long networkaddress;
 			private readonly Network network;
+			private readonly bool isFirstPart;
 
-			public IntCodeComputer(long[] startCode, long networkaddress, Network network) {
+			public IntCodeComputer(long[] startCode, long networkaddress, Network network, bool isFirstPart) {
 				intCode = new long[10000];
 				this.startCode = startCode;
 				this.networkaddress = networkaddress;
 				this.network = network;
+				this.isFirstPart = isFirstPart;
 				Reset();
 				inputs = new Queue<long>();
 				inputs.Enqueue(networkaddress);
-				//inputs.Enqueue(-1);
 			}
 
 			public void Reset() {
+				isStopping = false;
 				instructionPointer = 0;
 				relativeBase = 0;
 				for (int i = 0; i < startCode.Length; i++) intCode[i] = startCode[i];
@@ -90,12 +92,10 @@ namespace Year2019.Day23 {
 			public Queue<long> inputs;
 			LVec? lastMessage;
 			long? outIP, outX;
+			public bool receiving = false;
 
 			public long RunCode() {
-
-				Thread.Sleep(1);
-				while (instructionPointer < intCode.Length) {
-					//if (instructionPointer < 0) instructionPointer = 0;
+				while (!isStopping && instructionPointer < intCode.Length) {
 					long cmdNum = intCode[instructionPointer];
 					var opcode = (Opcode)(cmdNum % 100);
 					if (opcode == 0) throw new Oopsie();
@@ -105,10 +105,6 @@ namespace Year2019.Day23 {
 					var bMode = modes % 10;
 					modes /= 10;
 					var cMode = modes % 10;
-					//if (network.TryReceive(networkaddress, out var message)) {
-					//	inputs.Enqueue(message.x);
-					//	inputs.Enqueue(message.y);
-					//}
 					switch (opcode) {
 						case Opcode.ADD:
 							SetVariable(instructionPointer + 3, param1(aMode) + param2(bMode), cMode);
@@ -121,11 +117,13 @@ namespace Year2019.Day23 {
 							break;
 						case Opcode.IN:
 							long input;
-							Thread.Sleep(1);
 							if (inputs.TryDequeue(out input)) {
-								Console.WriteLine($"{networkaddress} received {input}");
 								SetVariable(instructionPointer + 1, input, aMode);
-							} else SetVariable(instructionPointer + 1, -1, aMode);
+								if (!receiving) receiving = true;
+							} else {
+								Thread.Sleep(1);
+								SetVariable(instructionPointer + 1, -1, aMode);
+							}
 							instructionPointer += 2;
 							break;
 						case Opcode.OUT:
@@ -135,14 +133,13 @@ namespace Year2019.Day23 {
 							} else if (outX == null) {
 								outX = c;
 							} else {
-								if (outIP.Value == 255) {
+								if (isFirstPart && outIP.Value == 255) {
 									return c;
 								}
 								network.Send(outIP.Value, new LVec(outX.Value, c));
 								outIP = null;
 								outX = null;
 							}
-							//output.Add(c);
 							instructionPointer += 2;
 							break;
 						case Opcode.JIT:
@@ -171,92 +168,102 @@ namespace Year2019.Day23 {
 				}
 				return -1;
 			}
+			bool isStopping = false;
+			internal void Kill() {
+				isStopping = true;
+			}
 		}
 
 		class Network {
-			//Dictionary<long, ConcurrentQueue<LVec>> messageQueues = new();
 			Dictionary<long, IntCodeComputer> computers = new();
-			Dictionary<long, DateTime> lastPing = new();
+			Dictionary<long, DateTime> lastSendAt = new();
 			object locky = new object();
-			public Network() {
-				//Timer wakeOnLan = new Timer((o) => {
-				//	lock (locky) {
-				//		foreach (var addr in lastPing.Where(x => x.Value < DateTime.Now.AddSeconds(-2))) {
-				//			Console.WriteLine($"Waking: {addr.Key}");
-				//			computers[addr.Key].Reset();
-				//			computers[addr.Key].RunCode(addr.Key, this);
-				//		}
-				//	}
-				//}, null, 5000, 5000);
+			LVec? natPacket;
+			LVec? lastNatPacket;
+			public Network(bool isFirstPart) {
+				if (!isFirstPart) {
+					Timer wakeOnLan = new Timer((o) => {
+						lock (locky) {
+							if (lastSendAt.All(x => x.Value < DateTime.Now.AddMilliseconds(-100)) && natPacket != null) {
+								Console.WriteLine($"All computers idle, sending {natPacket} to compy [0]");
+								if (lastNatPacket != null && lastNatPacket.y == natPacket.y) {
+									Console.Write($"Part2 final: ");
+									Console.ForegroundColor = ConsoleColor.Green;
+									Console.Write(natPacket.y);
+									Console.ResetColor();
+									Environment.Exit(0);
+								}
+								var compy = computers[0];
+								compy.inputs.Enqueue(natPacket.x);
+								compy.inputs.Enqueue(natPacket.y);
+								lastNatPacket = natPacket;
+								natPacket = null;
+							}
+						}
+					}, null, 200, 200);
+				}
 			}
 			bool isStartup = true;
 			public void Send(long networkAddress, LVec message) {
 				lock (locky) {
-					//if (isStartup) {
-					//	Thread.Sleep(30000);
-					//	isStartup = false;
-					//}
-					var c = computers[networkAddress];
-					//if (c.inputs == null) Thread.Sleep(1000);
-					c.inputs.Enqueue(message.x);
-					c.inputs.Enqueue(message.y);
+					if (networkAddress == 255) natPacket = message;
+					else {
+						var c = computers[networkAddress];
+						while (!c.receiving) {
+							Thread.Sleep(100);
+						}
+						//Console.WriteLine($"{networkAddress} received {message}");
+						lastSendAt[networkAddress] = DateTime.Now;
+						c.inputs.Enqueue(message.x);
+						c.inputs.Enqueue(message.y);
+					}
 				}
 			}
-			//public bool TryReceive(long networkAddress, out LVec message) {
-			//	//lock (locky) {
-			//		lastPing[networkAddress] = DateTime.Now;
-			//		if (messageQueues[networkAddress].TryDequeue(out message)) {
-			//			Console.WriteLine($"{networkAddress} received {message}");
-			//			return true;
-			//		}
-			//	//}
-			//	return false;
-			//}
 			public void AddComputer(long networkAddress, IntCodeComputer compy) {
 				computers.Add(networkAddress, compy);
-				//messageQueues.Add(networkAddress, new ConcurrentQueue<LVec>());
-				lastPing.Add(networkAddress, DateTime.Now);
+				lastSendAt.Add(networkAddress, DateTime.Now);
 			}
 		}
 
-		//still flaky - adding computers slows down considerably after a few compys, but why?
 		protected override long SolvePart1() {
 			base.SolvePart1();
 			if (IsShort) return -1;
+			return RunNetwork(true);
+		}
+
+		private long RunNetwork(bool isFirstPart) {
 			var tasks = new List<Task<long>>();
 			int compyCount = 50;
-			var network = new Network();
+			var network = new Network(isFirstPart);
 			List<IntCodeComputer> computers = new();
 			for (long l = 0; l < compyCount; l++) {
 				var networkAddress = l;
-				var compy = new IntCodeComputer(startCode, networkAddress, network);
+				var compy = new IntCodeComputer(startCode, networkAddress, network, isFirstPart);
 				network.AddComputer(networkAddress, compy);
 				computers.Add(compy);
 			}
+			ThreadPool.SetMinThreads(compyCount, compyCount);
 			for (int l = 0; l < compyCount; l++) {
 				int address = l;
-				tasks.Add(Task.Factory.StartNew(() => {
+				tasks.Add(Task.Run(() => {
 					var compy = computers[address];
-					long r = -1;
-					while (r < 0) {
-						Console.WriteLine($"Starting compy {address}");
-						r = compy.RunCode();
-						compy.Reset();
-					}
+					long r = compy.RunCode();
 					return r;
 				}));
 			}
-
-			Task.WaitAll(tasks.ToArray());
-			long result = tasks.Max(t => t.Result);
-			return result;
+			int index = Task.WaitAny(tasks.ToArray());
+			var r = tasks[index].Result;
+			foreach (var compy in computers) {
+				compy.Kill();
+			}
+			Task.WaitAll(tasks);
+			return r;
 		}
-
-		
 
 		protected override long SolvePart2() {
 			base.SolvePart2();
 			if (IsShort) return -1;
+			RunNetwork(false);
 			return -1;
 		}
 	}
