@@ -22,4 +22,4 @@ Advent of Code Solutions
 
 [![2015](https://img.shields.io/badge/2015-0*-red)](https://adventofcode.com/)
 
-[![Total](https://img.shields.io/badge/Total*-112*-yellow)](https://adventofcode.com/)
+[![Total](https://img.shields.io/badge/Total*-120*-yellow)](https://adventofcode.com/)
