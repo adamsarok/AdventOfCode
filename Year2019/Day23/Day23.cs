@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Year2019.Day23 {
@@ -84,9 +85,11 @@ namespace Year2019.Day23 {
 			LVec? lastMessage;
 			long? outIP, outX;
 
-			public long RunCode(long networkaddress, Dictionary<long, ConcurrentQueue<LVec>> messageQueues) {
+			public long RunCode(long networkaddress, Network network) {
 				inputs = new Queue<long>();
 				inputs.Enqueue(networkaddress);
+				inputs.Enqueue(-1);
+				Thread.Sleep(1000);
 				while (instructionPointer < intCode.Length) {
 					//if (instructionPointer < 0) instructionPointer = 0;
 					long cmdNum = intCode[instructionPointer];
@@ -98,6 +101,10 @@ namespace Year2019.Day23 {
 					var bMode = modes % 10;
 					modes /= 10;
 					var cMode = modes % 10;
+					if (network.TryReceive(networkaddress, out var message)) {
+						inputs.Enqueue(message.x);
+						inputs.Enqueue(message.y);
+					}
 					switch (opcode) {
 						case Opcode.ADD:
 							SetVariable(instructionPointer + 3, param1(aMode) + param2(bMode), cMode);
@@ -110,18 +117,13 @@ namespace Year2019.Day23 {
 							break;
 						case Opcode.IN:
 							long input;
-							if (messageQueues[networkaddress].TryDequeue(out var msg)) {
-								Console.WriteLine($"{networkaddress} received {msg}");
-								inputs.Enqueue(msg.x);
-								inputs.Enqueue(msg.y);
-							} 
+							Thread.Sleep(1);
 							if (inputs.TryDequeue(out input)) SetVariable(instructionPointer + 1, input, aMode);
 							else SetVariable(instructionPointer + 1, -1, aMode);
 							instructionPointer += 2;
 							break;
 						case Opcode.OUT:
 							var c = param1(aMode);
-
 							if (outIP == null) {
 								outIP = c;
 							} else if (outX == null) {
@@ -130,7 +132,7 @@ namespace Year2019.Day23 {
 								if (outIP.Value == 255) {
 									return c;
 								}
-								messageQueues[outIP.Value].Enqueue(new LVec(outX.Value, c));
+								network.Send(outIP.Value, new LVec(outX.Value, c));
 								outIP = null;
 								outX = null;
 							}
@@ -165,23 +167,59 @@ namespace Year2019.Day23 {
 			}
 		}
 
-
+		class Network { //still flaky, try pushing directly to input queue of compys?
+			Dictionary<long, ConcurrentQueue<LVec>> messageQueues = new();
+			Dictionary<long, IntCodeComputer> computers = new();
+			Dictionary<long, DateTime> lastPing = new();
+			object locky = new object();
+			public Network() {
+				Timer wakeOnLan = new Timer((o) => {
+					lock (locky) {
+						foreach (var addr in lastPing.Where(x => x.Value < DateTime.Now.AddSeconds(-2))) {
+							Console.WriteLine($"Waking: {addr.Key}");
+							computers[addr.Key].Reset();
+							computers[addr.Key].RunCode(addr.Key, this);
+						}
+					}
+				}, null, 5000, 5000);
+			}
+			public void Send(long networkAddress, LVec message) {
+				lock (locky) {
+					messageQueues[networkAddress].Enqueue(message);
+				}
+			}
+			public bool TryReceive(long networkAddress, out LVec message) {
+				//lock (locky) {
+					lastPing[networkAddress] = DateTime.Now;
+					if (messageQueues[networkAddress].TryDequeue(out message)) {
+						Console.WriteLine($"{networkAddress} received {message}");
+						return true;
+					}
+				//}
+				return false;
+			}
+			public void AddComputer(long networkAddress, IntCodeComputer compy) {
+				computers.Add(networkAddress, compy);
+				messageQueues.Add(networkAddress, new ConcurrentQueue<LVec>());
+				lastPing.Add(networkAddress, DateTime.Now);
+			}
+		}
 	
-		//something's not right, message flow stops
 		protected override long SolvePart1() {
 			base.SolvePart1();
 			if (IsShort) return -1;
-			var messageQueues = new Dictionary<long, ConcurrentQueue<LVec>>();
 			var tasks = new List<Task<long>>();
 			int compyCount = 50;
+			var network = new Network();
 			for (long l = 0; l < compyCount; l++) {
 				var networkAddress = l;
-				messageQueues[networkAddress] = new ConcurrentQueue<LVec>();
+				var compy = new IntCodeComputer(startCode);
+				network.AddComputer(networkAddress, compy);
 				tasks.Add(Task.Factory.StartNew(() => {
-					var compy = new IntCodeComputer(startCode);
 					long r = -1;
 					while (r < 0) {
-						r = compy.RunCode(networkAddress, messageQueues);
+						r = compy.RunCode(networkAddress, network);
+						compy.Reset();
 					}
 					return r;
 				}));
