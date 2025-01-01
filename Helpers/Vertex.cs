@@ -16,15 +16,11 @@ namespace Helpers {
 			long C2 = A2 * other.start.x + B2 * other.start.y;
 
 			long delta = A1 * B2 - A2 * B1;
-			if (delta == 0) {
-				// Lines are parallel
-				return null;
-			}
+			if (delta == 0) return null;
 
 			long x = (B2 * C1 - B1 * C2) / delta;
 			long y = (A1 * C2 - A2 * C1) / delta;
 
-			// Check if the intersection point is within both line segments
 			if (IsBetween(start.x, end.x, x) && IsBetween(start.y, end.y, y) &&
 				IsBetween(other.start.x, other.end.x, x) && IsBetween(other.start.y, other.end.y, y)) {
 				return new LVec(x, y);
