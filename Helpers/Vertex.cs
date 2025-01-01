@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -29,8 +31,16 @@ namespace Helpers {
 			return null;
 		}
 
+		public double Length => Math.Sqrt(Math.Pow(end.x - start.x, 2) + Math.Pow(end.y - start.y, 2));
+
 		private bool IsBetween(long a, long b, long c) {
 			return Math.Min(a, b) <= c && c <= Math.Max(a, b);
+		}
+
+		public bool Intersects(LVec point) {
+			long crossProduct = (point.y - start.y) * (end.x - start.x) - (point.x - start.x) * (end.y - start.y);
+			if (crossProduct != 0) return false;
+			return IsBetween(start.x, end.x, point.x) && IsBetween(start.y, end.y, point.y);
 		}
 	}
 }

@@ -66,9 +66,35 @@ namespace Year2019.Day03 {
 		}
 
 		protected override long SolvePart2() {
-			long result = 0;
-
+			List<Vertex> wire1 = new();
+			List<Vertex> wire2 = new();
+			wire1 = ParseWire(wires[0]);
+			wire2 = ParseWire(wires[1]);
+			var start = new LVec(0, 0);
+			long result = long.MaxValue;
+			foreach (var vert1 in wire1) {
+				foreach (var vert2 in wire2) {
+					var intersection = vert1.Intersection(vert2);
+					if (intersection != null && intersection != start) {
+						var dist1 = GetDistToVec(wire1, intersection);
+						var dist2 = GetDistToVec(wire2, intersection);
+						result = Math.Min(result, dist1 + dist2);
+					}
+				}
+			}
 			return result;
 		}
+
+		long GetDistToVec(List<Vertex> wire, LVec target) {
+			long dist = 0;
+			foreach (var vert in wire) {
+				if (vert.Intersects(target)) {
+					dist += vert.start.ManhattanDistance(target);
+					return dist;
+				} else dist += (long)vert.Length;
+			}
+			return -1;
+		}
+
 	}
 }
