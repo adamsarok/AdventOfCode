@@ -13,17 +13,9 @@ namespace Year2019.Day12 {
 			public int Id { get; set; }
 			public LVec3D Pos { get; set; }
 			public LVec3D Velocity { get; set; }
-
-			//values are always between -10 / 10
-			const long a = 100L;
-			const long b = 100 * 100L;
-			const long c = 100 * 100 * 100L;
-			const long d = 100 * 100 * 100 * 100L; 
-			const long e = 100 * 100 * 100 * 100 * 100L;
-			public string Hash => Id.ToString() + "m" + (Pos.x + Pos.y * a + Pos.z * b + Velocity.x * c + Velocity.y * d + Velocity.z * e);
-			public string HashX => Id.ToString() + "m" + (Pos.x + Velocity.x * a);
-			public string HashY => Id.ToString() + "m" + (Pos.y + Velocity.y * a);
-			public string HashZ => Id.ToString() + "m" + (Pos.z + Velocity.z * a);
+			public string HashX => $"p{Pos.x}v{Velocity.x}";
+			public string HashY => $"p{Pos.y}v{Velocity.y}";
+			public string HashZ => $"p{Pos.z}v{Velocity.z}";
 		}
 		List<Moon> moons;
 		protected override void ReadInputPart1(string fileName) {
@@ -51,14 +43,12 @@ namespace Year2019.Day12 {
 
 		private long Simulate(long steps) {
 			long result = 0;
-			long max = 0;
-
 			for (long i = 1; i <= steps; i++) {
 				for (int m1 = 0; m1 < moons.Count; m1++) {
 					for (int m2 = m1 + 1; m2 < moons.Count; m2++) {
 						var moon = moons[m1];
 						var other = moons[m2];
-						int mX = -moon.Pos.x.CompareTo(other.Pos.x); //??? why - ???
+						int mX = -moon.Pos.x.CompareTo(other.Pos.x);
 						int mY = -moon.Pos.y.CompareTo(other.Pos.y);
 						int mZ = -moon.Pos.z.CompareTo(other.Pos.z);
 						moon.Velocity = new LVec3D(moon.Velocity.x + mX, moon.Velocity.y + mY, moon.Velocity.z + mZ);
@@ -81,22 +71,17 @@ namespace Year2019.Day12 {
 		}
 
 		protected override long SolvePart2() {
-			//var t1 = Helpers.Helpers.LCM(Helpers.Helpers.LCM(x, y), z);
-
-			if (!IsShort) return -1;
 			long result = 0;
-			HashSet<string> states = new HashSet<string>();
 			HashSet<string> statesx = new HashSet<string>();
 			HashSet<string> statesy = new HashSet<string>();
 			HashSet<string> statesz = new HashSet<string>();
 			long? cycleX = null, cycleY = null, cycleZ = null;
-			//long actState = 0;
 			while (true) { 
 				for (int m1 = 0; m1 < moons.Count; m1++) {
 					for (int m2 = m1 + 1; m2 < moons.Count; m2++) {
 						var moon = moons[m1];
 						var other = moons[m2];
-						int mX = -moon.Pos.x.CompareTo(other.Pos.x); //??? why - ???
+						int mX = -moon.Pos.x.CompareTo(other.Pos.x);
 						int mY = -moon.Pos.y.CompareTo(other.Pos.y);
 						int mZ = -moon.Pos.z.CompareTo(other.Pos.z);
 						moon.Velocity = new LVec3D(moon.Velocity.x + mX, moon.Velocity.y + mY, moon.Velocity.z + mZ);
@@ -104,36 +89,22 @@ namespace Year2019.Day12 {
 					}
 				}
 				foreach (var moon in moons) moon.Pos += moon.Velocity;
-				string actState = "", actStatex = "", actStatey = "", actStatez = "";
+				string actStatex = "", actStatey = "", actStatez = "";
 				foreach (var moon in moons) {
-					actState += moon.Hash;
 					actStatex += moon.HashX;
 					actStatey += moon.HashY;
 					actStatez += moon.HashZ;
 				}
 				result++;
-				//if (cycleX == null && statesx.Contains(actStatex)) cycleX = result - 1;
-				//	statesx.Clear();
-				//	Console.WriteLine($"Cycle detected on X at {result - 1}");
-				//	//break;
-				//}
-				//if (statesy.Contains(actStatey)) {
-				//	statesy.Clear();
-				//	Console.WriteLine($"Cycle detected on Y at {result - 1}");
-				//	//break;
-				//}
-				//if (statesz.Contains(actStatez)) {
-				//	statesz.Clear();
-				//	Console.WriteLine($"Cycle detected on Z at {result - 1}");
-				//	//break;
-				//}
-				if (states.Contains(actState)) break;
-				states.Add(actState);
+				if (cycleX == null && statesx.Contains(actStatex)) cycleX = result - 1;
+				if (cycleY == null && statesy.Contains(actStatey)) cycleY = result - 1;
+				if (cycleZ == null && statesz.Contains(actStatez)) cycleZ = result - 1;
 				statesx.Add(actStatex);
-				statesy.Add(actStatey); 
+				statesy.Add(actStatey);
 				statesz.Add(actStatez);
-			} 
-			return result - 1;
+				if (cycleX != null && cycleY != null && cycleZ != null) break;
+			}
+			return Helpers.Helpers.LCM(Helpers.Helpers.LCM(cycleX.Value, cycleY.Value), cycleZ.Value);
 		}
 	}
 }
