@@ -1,7 +1,7 @@
 ﻿//var b = new Year2019.Day21.Day21();
 //b.Solve();
 
-var s1 = new Year2019.Day10.Day10();
+var s1 = new Year2019.Day12.Day12();
 s1.Solve();
 
 //var sb = new Year2021.Day03.Day03();
