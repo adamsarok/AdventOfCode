@@ -3,12 +3,14 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Year2019.Day18 {
+	//slow and will not finish on the full dataset. on short examples can be used to cross check
 	public class Day18 : Solver {
 		public Day18() : base(2019, 18) {
 		}
@@ -18,8 +20,6 @@ namespace Year2019.Day18 {
 		Vec player;
 		char[,] input;
 		int width, height;
-		//List<char> passThrough;
-		List<char> keysPickedUp;
 		protected override void ReadInputPart1(string fileName) {
 			base.ReadInputPart1(fileName);
 			var f = File.ReadAllLines(fileName);
@@ -38,168 +38,178 @@ namespace Year2019.Day18 {
 					else if (char.IsAsciiLetterLower(c)) keys.Add(c, new Vec(x, y));
 				}
 			}
-
 		}
+
+		record KeyDistance(char key1, char key2, List<char> neededKeys, long distance);
+		Dictionary<(char, char), KeyDistance> keyDistances;
 
 		protected override void ReadInputPart2(string fileName) {
 			ReadInputPart1(fileName);
 		}
 
-		record SaveState(Vec playerPos, long Steps, List<char> keys, (char, Vec) nextStep, long[,] costs);
-		Stack<SaveState> branches;
 		long steps = 0;
 		long result = 0;
+		Stopwatch sw;
 		protected override long SolvePart1() {
 			//if (!IsShort) return -1;
 			result = long.MaxValue;
-			//1. find keys we can pickup
-			//2. if we can pick multiple keys up, branch & try all keys?
-			branches = new Stack<SaveState>();
-			keysPickedUp = new List<char>();
-			keyCosts = new();
-			costsMemos = new();
-			Stopwatch sw = Stopwatch.StartNew();
-			var d = new Dijkstra18(input, keys);
-			var costs = d.Map(player, keysPickedUp);
-			var possibleSteps = keys.Where(x => costs[x.Value.x, x.Value.y] != long.MaxValue).ToList();
-			foreach (var nextStep in possibleSteps) TryStack(nextStep, steps, costs);
-			SaveState nextBranch;
-			while (branches.TryPop(out nextBranch)) {
-				costs = nextBranch.costs;
-				steps = nextBranch.Steps;
-				player = nextBranch.playerPos;
-				keysPickedUp = nextBranch.keys;
-				var nextPos = nextBranch.nextStep.Item2;
-				steps += costs[nextPos.x, nextPos.y];
-				if (steps > result) {
-					continue;
+			//2nd iteration - find all (distances, neededkeys) between key pairs
+			//in the short examples this is trivial, however in the full example, what happens if we have two paths
+			//path1 shorter but needing additional keys, path2 longer? build a graph, where path1 has a prerequisite length to the needed keys? 
+			keyDistances = new();
+			sw = Stopwatch.StartNew();
+			var d = new Dijkstra18(input);
+			foreach (var key in keys) { //key -> key
+				var costs = d.Map(key.Value);
+				foreach (var other in keys.Where(x => x.Key != key.Key)) {
+					var cost = costs[other.Value.x, other.Value.y];
+					keyDistances.Add((key.Key, other.Key), new KeyDistance(key.Key, other.Key, cost.neededKeys, cost.cost)); 
 				}
-				totalIterations++;
-				//Console.ForegroundColor = ConsoleColor.White;
-				//Console.WriteLine($"\nPicking up key {nextBranch.nextStep.Item1} at {nextPos} costing {costs[nextPos.x, nextPos.y]} steps");
-				//Console.WriteLine($"Total steps: {steps}");
-				player = nextPos;
-				var key = input[nextPos.x, nextPos.y];
-				keysPickedUp.Add(key);
-				if (!keys.Keys.Except(keysPickedUp).Any()) {
-					//Console.WriteLine($"{steps}: {string.Join(',', keysPickedUp)}");
-					if (steps < result) {
-						Console.WriteLine($"Found better result {steps} in {sw.ElapsedMilliseconds} ms");
-						sw.Restart();
-						result = steps;
-					}
-					continue;
-				}
-				costs = d.Map(player, keysPickedUp);
-				possibleSteps = keys.Where(x => !keysPickedUp.Contains(x.Key) && costs[x.Value.x, x.Value.y] != long.MaxValue).ToList();
-				foreach (var nextStep in possibleSteps) TryStack(nextStep, steps, costs);
+			} //player -> key
+			var plCosts = d.Map(player);
+			foreach (var key in keys) {
+				var cost = plCosts[key.Value.x, key.Value.y];
+				keyDistances.Add(('@', key.Key), new KeyDistance('@', key.Key, cost.neededKeys, cost.cost));
 			}
+
+			//foreach (var permutation in keys.Keys.Permute()) {
+			//	var dist = CheckKeyPermutation(permutation);
+			//	if (dist > 0 && dist < result) {
+			//		Console.WriteLine($"Found current best {dist} in {sw.ElapsedMilliseconds} ms");
+			//		result = dist;
+			//	}
+			//}
+			minCost = long.MaxValue;
+			var possibleSteps = keyDistances.Where(x => x.Key.Item1 == '@' && x.Value.neededKeys.Count == 0).ToList();
+			foreach (var st in possibleSteps) {
+				Traverse(st.Value.distance, new List<char>(), '@', st.Key.Item2);
+			}
+
 			Console.WriteLine($"Finished in {totalIterations} iterations");
-			return result;
+			return minCost;
 		}
+
+		////4548 not the solution
+		//Found current best 4118 in 16115 ms - this is also not the right answer. something is still way too slow
+
+		long minCost;
+		private void Traverse(long steps, List<char> keysFound, char keyFrom, char keyTo) {
+			if (steps > minCost) return;
+			var newKeys = new List<char>(keysFound);
+			newKeys.Add(keyTo);
+			if (newKeys.Count == keys.Count) {
+				if (steps < minCost) {
+					minCost = steps;
+					Console.WriteLine($"Found current best {steps} in {sw.ElapsedMilliseconds} ms");
+				}
+				return;
+			}
+			var possibleSteps = keyDistances.Where(x => x.Key.Item1 == keyTo
+				&& !keysFound.Contains(x.Key.Item2)
+				&& !x.Value.neededKeys.Except(newKeys).Any()).ToList();
+			foreach (var st in possibleSteps) Traverse(steps + st.Value.distance, newKeys, keyTo, st.Key.Item2);
+			totalIterations++;
+		}
+
+		//we can rule out permutations where we don't have the necessary keys
+		//however this is still painfully slow to iterate on all permutations, we need something smarter.
+		private long CheckKeyPermutation(IEnumerable<char> permutation) {
+			var p = permutation.Prepend('@').ToList();
+			List<char> haveKeys = new List<char>();
+			long dist = 0;
+			for (int i = 0; i < p.Count - 1; i++) {
+				totalIterations++;
+				var key = p[i];
+				var keyDist = keyDistances[(key, p[i + 1])];               
+				if (keyDist.neededKeys.Except(haveKeys).Where(x => x != key).Any()) { 
+					//Console.WriteLine($"skipping impossible combination {string.Join(',', p)}");
+					return -1;
+				}
+				haveKeys.Add(key);
+				//Console.WriteLine($"{key}->{p[i+1]}={keyDist.distance}:");
+				dist += keyDist.distance;
+			}
+			//Console.WriteLine($"{dist}: Valid combination {string.Join(',', p)}");
+			return dist;
+		}
+
 		long totalIterations = 0;
+			
 
-
-
-		Dictionary<string, long> keyCosts;
-		//this pruning is incorrect, we are much faster but the best solutions are skipped : (
-		private void TryStack(KeyValuePair<char, Vec> nextStep, long steps, long[,] costs) { //does not work : (
-			//if (steps > result || steps > costs[nextStep.Value.x, nextStep.Value.y]) return;
-			//var key = string.Join(',', keysPickedUp.Append(nextStep.Key).Order());
-			//long prevCost;
-			//if (!keyCosts.TryGetValue(key, out prevCost)) {
-			//	keyCosts.Add(key, steps);
-			//	prevCost = long.MaxValue;
-			//}
-			//if (prevCost > steps) {
-			//	keyCosts[key] = steps;
-			branches.Push(new SaveState(player, steps, new List<char>(keysPickedUp), (nextStep.Key, nextStep.Value), (long[,])costs.Clone()));
-			//} else {
-				//Console.WriteLine($"Pruning {key}, we have better solution of {prevCost} instead of {steps}");
-			//}
-		}
-
-		private void Debug(long[,] costs) {
-			Console.Clear();
-			bool zebra = false;
-			for (long y = 0; y < height; y++) {
-				for (long x = 0; x < width; x++) {
-					var cost = costs[x, y];
-					if (cost > 99) cost = 99;
-					Console.ForegroundColor = ConsoleColor.Green;
-					if (input[x, y] == '#') Console.Write("##");
-					else {
-						if (cost == long.MaxValue) Console.ResetColor();
-						else {
-							Console.ForegroundColor = zebra ? ConsoleColor.Yellow : ConsoleColor.Blue;
-							zebra = !zebra;
-						}
-						Console.Write($"{cost.ToString("00")}");
-					}
-				}
-				Console.WriteLine();
-			}
-			Console.ForegroundColor = ConsoleColor.White;
-			Console.WriteLine();
-			for (long y = 0; y < height; y++) {
-				for (long x = 0; x < width; x++) {
-					var cost = costs[x, y];
-					if (cost > 99) cost = 99;
-					var c = input[x, y];
-					if (keysPickedUp.Contains(char.ToLower(input[x, y]))) Console.Write("..");
-					else Console.Write($"{input[x, y]}{input[x, y]}");
-				}
-				Console.WriteLine();
-			}
-			//Console.WriteLine($"{")
-		}
-
-		//4548 not the solution
-
-		ConcurrentDictionary<(Vec, List<char>), char[,]> costsMemos;
-
-		public class Dijkstra18(char[,] input, Dictionary<char, Vec> allKeys) {
-			ConcurrentDictionary<(Vec, List<char>), long[,]> costsMemos = new ConcurrentDictionary<(Vec, List<char>), long[,]>();
+		public class Dijkstra18(char[,] input) {
 			int width, height;
 			HashSet<Vec> dirty;
-			List<char> passThrough;
-			public long[,] Map(Vec start, List<char> keysPickedUp) {
-				if (costsMemos.ContainsKey((start, keysPickedUp))) Console.WriteLine($"Memo found!"); //this memo does not work
-				return costsMemos.GetOrAdd((start, keysPickedUp), cc => {
-					passThrough = new List<char>(allKeys.Keys);
-					passThrough.Add('.');
-					passThrough.Add('@');
-					passThrough.AddRange(keysPickedUp.Select(x => char.ToUpper(x)));
+			public record Cost(long cost, List<char> neededKeys);
+			public Cost[,] Map(Vec start) {
 
-					width = input.GetLength(0);
-					height = input.GetLength(1);
-					dirty = new();
-					var costs = new long[width, height];
-					for (int x = 0; x < width; x++) {
-						for (int y = 0; y < height; y++) {
-							costs[x, y] = long.MaxValue;
-						}
+
+				width = input.GetLength(0);
+				height = input.GetLength(1);
+				dirty = new();
+				var costs = new Cost[width, height];
+				for (int x = 0; x < width; x++) {
+					for (int y = 0; y < height; y++) {
+						costs[x, y] = new Cost(long.MaxValue, new());
 					}
-					dirty.Add(start);
-					costs[start.x, start.y] = 0;
-					while (dirty.Any()) {
-						var next = dirty.First();
-						dirty.Remove(next);
-						var cost = costs[next.x, next.y] + 1;
-						Process(next.x - 1, next.y, cost, costs);
-						Process(next.x + 1, next.y, cost, costs);
-						Process(next.x, next.y - 1, cost, costs);
-						Process(next.x, next.y + 1, cost, costs);
+				}
+				dirty.Add(start);
+				costs[start.x, start.y] = new Cost(0, new());
+				while (dirty.Any()) {
+					var next = dirty.First();
+					dirty.Remove(next);
+					var prevcost = costs[next.x, next.y];
+					var neededKeys = new List<char>(prevcost.neededKeys);
+					if (char.IsAsciiLetterUpper(input[next.x, next.y])) {
+						neededKeys.Add(char.ToLower(input[next.x, next.y]));
 					}
-					//Debug();
-					return costs;
-				});
+					var cost = new Cost(prevcost.cost + 1, neededKeys);
+					Process(next.x - 1, next.y, cost, costs);
+					Process(next.x + 1, next.y, cost, costs);
+					Process(next.x, next.y - 1, cost, costs);
+					Process(next.x, next.y + 1, cost, costs);
+				}
+				//Debug(costs);
+				return costs;
 			}
 
-			private void Process(int x, int y, long cost, long[,] costs) {
+			private void Debug(Cost[,] costs) {
+				Console.Clear();
+				bool zebra = false;
+				for (long y = 0; y < height; y++) {
+					for (long x = 0; x < width; x++) {
+						var cost = costs[x, y].cost;
+						if (cost > 99) cost = 99;
+						Console.ForegroundColor = ConsoleColor.Green;
+						if (input[x, y] == '#') Console.Write("##");
+						else {
+							if (cost == long.MaxValue) Console.ResetColor();
+							else {
+								Console.ForegroundColor = zebra ? ConsoleColor.Yellow : ConsoleColor.Blue;
+								zebra = !zebra;
+							}
+							Console.Write($"{cost.ToString("00")}");
+						}
+					}
+					Console.WriteLine();
+				}
+				Console.ForegroundColor = ConsoleColor.White;
+			}
+
+
+			private void Process(int x, int y, Cost cost, Cost[,] costs) {
 				if (x < 0 || y < 0 || x >= width || y >= height) return;
-				if (!passThrough.Contains(input[x, y])) return;
-				if (costs[x, y] < cost) return;
+				var c = input[x, y];
+				if (c == '#') return;
+
+				var old = costs[x, y];
+				if (old.cost < cost.cost) return;
+
+				if (old.cost < long.MaxValue && c < cost.neededKeys.Count) {
+					bool TODO = true;
+				}
+				//what happens if we have two paths
+				//path1 shorter but needing additional keys, path2 longer? store the shortest per all possible key combinations?
+
 				costs[x, y] = cost;
 				//maxCost = Math.Max(maxCost, cost);
 				dirty.Add(new Vec(x, y));
