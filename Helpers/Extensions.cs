@@ -67,5 +67,21 @@ namespace Helpers {
 				 .Where((v, i) => (index & (1 << i)) != 0)
 				 .ToArray());
 		}
+
+		public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source) {
+			if (source == null) {
+				throw new ArgumentNullException(nameof(source));
+			}
+
+			Random rng = new Random();
+			T[] elements = source.ToArray();
+			for (int i = elements.Length - 1; i > 0; i--) {
+				int swapIndex = rng.Next(i + 1);
+				T temp = elements[i];
+				elements[i] = elements[swapIndex];
+				elements[swapIndex] = temp;
+			}
+			return elements;
+		}
 	}
 }

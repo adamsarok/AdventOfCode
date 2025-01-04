@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Year2019.Day18 {
 	//slow and will not finish on the full dataset. on short examples can be used to cross check
@@ -17,6 +18,7 @@ namespace Year2019.Day18 {
 
 		Dictionary<char, Vec> doors;
 		Dictionary<char, Vec> keys;
+		long allKeys;
 		Vec player;
 		char[,] input;
 		int width, height;
@@ -38,10 +40,11 @@ namespace Year2019.Day18 {
 					else if (char.IsAsciiLetterLower(c)) keys.Add(c, new Vec(x, y));
 				}
 			}
+			allKeys = (1 << keys.Count) - 1;
 		}
 
-		record KeyDistance(char key1, char key2, List<char> neededKeys, long distance);
-		Dictionary<(char, char), KeyDistance> keyDistances;
+		record KeyDistance(char key1, long key1bits, char key2, long key2bits, long neededKeys, long distance);
+		Dictionary<char, List<KeyDistance>> keyDistances;
 
 		protected override void ReadInputPart2(string fileName) {
 			ReadInputPart1(fileName);
@@ -57,20 +60,25 @@ namespace Year2019.Day18 {
 			//in the short examples this is trivial, however in the full example, what happens if we have two paths
 			//path1 shorter but needing additional keys, path2 longer? build a graph, where path1 has a prerequisite length to the needed keys? 
 			keyDistances = new();
+			minimumCosts = new();
 			sw = Stopwatch.StartNew();
 			var d = new Dijkstra18(input);
 			foreach (var key in keys) { //key -> key
 				var costs = d.Map(key.Value);
+				keyDistances.Add(key.Key, new List<KeyDistance>());
 				foreach (var other in keys.Where(x => x.Key != key.Key)) {
 					var cost = costs[other.Value.x, other.Value.y];
-					keyDistances.Add((key.Key, other.Key), new KeyDistance(key.Key, other.Key, cost.neededKeys, cost.cost)); 
+					keyDistances[key.Key].Add(new KeyDistance(key.Key, GetBitMask(key.Key), other.Key, GetBitMask(other.Key), cost.neededKeys, cost.cost)); 
 				}
 			} //player -> key
 			var plCosts = d.Map(player);
+			keyDistances.Add('@', new List<KeyDistance>());
 			foreach (var key in keys) {
 				var cost = plCosts[key.Value.x, key.Value.y];
-				keyDistances.Add(('@', key.Key), new KeyDistance('@', key.Key, cost.neededKeys, cost.cost));
+				keyDistances['@'].Add(new KeyDistance('@', 0, key.Key, GetBitMask(key.Key), cost.neededKeys, cost.cost));
 			}
+
+			//var test = keyDistances.OrderByDescending(x => x.Value.neededKeys.Count).ToList();
 
 			//foreach (var permutation in keys.Keys.Permute()) {
 			//	var dist = CheckKeyPermutation(permutation);
@@ -80,72 +88,87 @@ namespace Year2019.Day18 {
 			//	}
 			//}
 			minCost = long.MaxValue;
-			var possibleSteps = keyDistances.Where(x => x.Key.Item1 == '@' && x.Value.neededKeys.Count == 0).ToList();
+			var possibleSteps = keyDistances['@'].Where(x => x.neededKeys == 0).ToList();
 			foreach (var st in possibleSteps) {
-				Traverse(st.Value.distance, new List<char>(), '@', st.Key.Item2);
+				Traverse(st.distance, 0, '@', st.key2);
 			}
+
+			Tests();
 
 			Console.WriteLine($"Finished in {totalIterations} iterations");
 			return minCost;
 		}
 
-		//4548 not the solution
-		//Found current best 4118 in 16115 ms - this is also not the right answer. something is still way too slow
-		//Found current best 4090 in 179302 ms
-		//Much better still not complete: Found current best 3830 in 81 ms
+		private void Tests() {
+			List<char> keys = new List<char>() { 'a', 'b', 'c' };
 
-		//still not good enough - maybe a single dijkstra where the key is not just position but collected keys?
+			long haveKeys = GetBitMask(new List<char> { 'a', 'b', 'e', 'f'  });
+			long neededKeys = GetBitMask(new List<char> { 'a', 'b' });
+			long all = (1 << keys.Count) - 1;
+			long acc = 0;
+			foreach (var c in keys) {
+				acc |= (1u << c - 'a');
+			}
+			//var allSteps = new List<long>() { haveNots, haves, all };
+			var a = GetBitMask('a');
+			var possible = (neededKeys & ~haveKeys); // == 0)
+		}
+
+		//Found current best 3764 in 2850353 ms
+		//this runs for 2 hours :(
+
+		Dictionary<(Vec, long), long> minimumCosts;
+		//private (Vec, string) GetKey(char key, long keysFound) => (keys[key], string.Join(',', keysFound.Order()));
 
 		long minCost;
-		private void Traverse(long steps, List<char> keysFound, char keyFrom, char keyTo) {
+
+		long GetBitMask(char c) => (1 << c - 'a');
+		long GetBitMask(List<char> l) {
+			long r = 0;
+			foreach (var c in l) r |= GetBitMask(c);
+			return r;
+		}
+
+		private void Traverse(long steps, long keysFound, char keyFrom, char keyTo) {
 			if (steps > minCost) return;
-			var newKeys = new List<char>(keysFound);
-			newKeys.Add(keyTo);
-			if (newKeys.Count == keys.Count) {
+			long newKeys = keysFound;
+			newKeys |= (1u << keyTo - 'a');
+			long prevCost;
+			var posKey = (keys[keyTo], newKeys);
+			if (!minimumCosts.TryGetValue((keys[keyTo], newKeys), out prevCost)) {
+				minimumCosts.Add(posKey, steps);
+			} else if (prevCost < steps) {
+				return;
+			}
+			if ((allKeys & ~newKeys) == 0) {
+				//Console.WriteLine(string.Join(",", newKeys));
 				if (steps < minCost) {
 					minCost = steps;
 					Console.WriteLine($"Found current best {steps} in {sw.ElapsedMilliseconds} ms");
 				}
 				return;
 			}
-			var possibleSteps = keyDistances.Where(x => x.Key.Item1 == keyTo
-				&& !keysFound.Contains(x.Key.Item2)
-				&& !x.Value.neededKeys.Except(newKeys).Any()).ToList();
-			foreach (var st in possibleSteps.OrderBy(x => x.Value.distance)) {
-				Traverse(steps + st.Value.distance, newKeys, keyTo, st.Key.Item2);
+			
+
+			var possibleSteps = keyDistances[keyTo].Where(x => 
+				(x.key2bits & ~newKeys) != 0				 //is a key we don't have yet
+				&& ((x.neededKeys & ~newKeys) == 0)).ToList(); //we have all prerequisite keys
+
+			//var possibleSteps2 = keyDistances.Where(x =>
+			//	(x.Value.neededKeys & ~newKeys) == 0).ToList();
+
+			foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
+				Traverse(steps + st.distance, newKeys, keyTo, st.key2);
 			}
 			totalIterations++;
 		}
 
-		//we can rule out permutations where we don't have the necessary keys
-		//however this is still painfully slow to iterate on all permutations, we need something smarter.
-		private long CheckKeyPermutation(IEnumerable<char> permutation) {
-			var p = permutation.Prepend('@').ToList();
-			List<char> haveKeys = new List<char>();
-			long dist = 0;
-			for (int i = 0; i < p.Count - 1; i++) {
-				totalIterations++;
-				var key = p[i];
-				var keyDist = keyDistances[(key, p[i + 1])];               
-				if (keyDist.neededKeys.Except(haveKeys).Where(x => x != key).Any()) { 
-					//Console.WriteLine($"skipping impossible combination {string.Join(',', p)}");
-					return -1;
-				}
-				haveKeys.Add(key);
-				//Console.WriteLine($"{key}->{p[i+1]}={keyDist.distance}:");
-				dist += keyDist.distance;
-			}
-			//Console.WriteLine($"{dist}: Valid combination {string.Join(',', p)}");
-			return dist;
-		}
-
 		long totalIterations = 0;
 			
-
 		public class Dijkstra18(char[,] input) {
 			int width, height;
 			HashSet<Vec> dirty;
-			public record Cost(long cost, List<char> neededKeys);
+			public record Cost(long cost, long neededKeys);
 			public Cost[,] Map(Vec start) {
 
 
@@ -164,9 +187,10 @@ namespace Year2019.Day18 {
 					var next = dirty.First();
 					dirty.Remove(next);
 					var prevcost = costs[next.x, next.y];
-					var neededKeys = new List<char>(prevcost.neededKeys);
-					if (char.IsAsciiLetterUpper(input[next.x, next.y])) {
-						neededKeys.Add(char.ToLower(input[next.x, next.y]));
+					long neededKeys = prevcost.neededKeys;
+					var c = input[next.x, next.y];
+					if (char.IsAsciiLetterUpper(c)) {
+						neededKeys |= (1u << char.ToLower(c) - 'a');
 					}
 					var cost = new Cost(prevcost.cost + 1, neededKeys);
 					Process(next.x - 1, next.y, cost, costs);
@@ -208,11 +232,18 @@ namespace Year2019.Day18 {
 				if (c == '#') return;
 
 				var old = costs[x, y];
+
+				//if (old.cost > cost.cost 
+				//	&& old.cost < long.MaxValue 
+				//	&& old.neededKeys.Count < cost.neededKeys.Count) {
+				//	//what happens if we have two paths
+				//	//path1 shorter but needing additional keys, path2 longer? store the shortest per all possible key combinations?
+				//	//it seems there is no such combinations - I don't get however, what is still going wrong :-(
+				//	bool TODO = true;
+				//}
+
 				if (old.cost < cost.cost) return;
 
-				if (old.cost < long.MaxValue && c < cost.neededKeys.Count) {
-					bool TODO = true;
-				}
 				//what happens if we have two paths
 				//path1 shorter but needing additional keys, path2 longer? store the shortest per all possible key combinations?
 
