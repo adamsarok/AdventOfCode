@@ -50,75 +50,39 @@ namespace Year2019.Day18 {
 			ReadInputPart1(fileName);
 		}
 
-		long steps = 0;
-		long result = 0;
 		Stopwatch sw;
 		protected override long SolvePart1() {
-			//if (!IsShort) return -1;
-			result = long.MaxValue;
-			//2nd iteration - find all (distances, neededkeys) between key pairs
-			//in the short examples this is trivial, however in the full example, what happens if we have two paths
-			//path1 shorter but needing additional keys, path2 longer? build a graph, where path1 has a prerequisite length to the needed keys? 
 			keyDistances = new();
 			minimumCosts = new();
 			sw = Stopwatch.StartNew();
 			var d = new Dijkstra18(input);
-			foreach (var key in keys) { //key -> key
+			foreach (var key in keys) {
 				var costs = d.Map(key.Value);
 				keyDistances.Add(key.Key, new List<KeyDistance>());
 				foreach (var other in keys.Where(x => x.Key != key.Key)) {
 					var cost = costs[other.Value.x, other.Value.y];
 					keyDistances[key.Key].Add(new KeyDistance(key.Key, GetBitMask(key.Key), other.Key, GetBitMask(other.Key), cost.neededKeys, cost.cost)); 
 				}
-			} //player -> key
+			}
 			var plCosts = d.Map(player);
 			keyDistances.Add('@', new List<KeyDistance>());
 			foreach (var key in keys) {
 				var cost = plCosts[key.Value.x, key.Value.y];
 				keyDistances['@'].Add(new KeyDistance('@', 0, key.Key, GetBitMask(key.Key), cost.neededKeys, cost.cost));
 			}
-
-			//var test = keyDistances.OrderByDescending(x => x.Value.neededKeys.Count).ToList();
-
-			//foreach (var permutation in keys.Keys.Permute()) {
-			//	var dist = CheckKeyPermutation(permutation);
-			//	if (dist > 0 && dist < result) {
-			//		Console.WriteLine($"Found current best {dist} in {sw.ElapsedMilliseconds} ms");
-			//		result = dist;
-			//	}
-			//}
 			minCost = long.MaxValue;
 			var possibleSteps = keyDistances['@'].Where(x => x.neededKeys == 0).ToList();
 			foreach (var st in possibleSteps) {
 				Traverse(st.distance, 0, '@', st.key2);
 			}
-
-			Tests();
-
 			Console.WriteLine($"Finished in {totalIterations} iterations");
 			return minCost;
-		}
-
-		private void Tests() {
-			List<char> keys = new List<char>() { 'a', 'b', 'c' };
-
-			long haveKeys = GetBitMask(new List<char> { 'a', 'b', 'e', 'f'  });
-			long neededKeys = GetBitMask(new List<char> { 'a', 'b' });
-			long all = (1 << keys.Count) - 1;
-			long acc = 0;
-			foreach (var c in keys) {
-				acc |= (1u << c - 'a');
-			}
-			//var allSteps = new List<long>() { haveNots, haves, all };
-			var a = GetBitMask('a');
-			var possible = (neededKeys & ~haveKeys); // == 0)
 		}
 
 		//Found current best 3764 in 2850353 ms
 		//this runs for 2 hours :(
 
 		Dictionary<(Vec, long), long> minimumCosts;
-		//private (Vec, string) GetKey(char key, long keysFound) => (keys[key], string.Join(',', keysFound.Order()));
 
 		long minCost;
 
@@ -135,27 +99,23 @@ namespace Year2019.Day18 {
 			newKeys |= (1u << keyTo - 'a');
 			long prevCost;
 			var posKey = (keys[keyTo], newKeys);
-			if (!minimumCosts.TryGetValue((keys[keyTo], newKeys), out prevCost)) {
+			if (!minimumCosts.TryGetValue(posKey, out prevCost)) {
 				minimumCosts.Add(posKey, steps);
 			} else if (prevCost < steps) {
 				return;
 			}
 			if ((allKeys & ~newKeys) == 0) {
-				//Console.WriteLine(string.Join(",", newKeys));
 				if (steps < minCost) {
 					minCost = steps;
 					Console.WriteLine($"Found current best {steps} in {sw.ElapsedMilliseconds} ms");
 				}
 				return;
 			}
-			
 
-			var possibleSteps = keyDistances[keyTo].Where(x => 
-				(x.key2bits & ~newKeys) != 0				 //is a key we don't have yet
-				&& ((x.neededKeys & ~newKeys) == 0)).ToList(); //we have all prerequisite keys
 
-			//var possibleSteps2 = keyDistances.Where(x =>
-			//	(x.Value.neededKeys & ~newKeys) == 0).ToList();
+			var possibleSteps = keyDistances[keyTo].Where(x =>
+				(x.key2bits & ~newKeys) != 0		  //is a key we don't have yet
+				&& ((x.neededKeys & ~newKeys) == 0)); //we have all prerequisite keys
 
 			foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
 				Traverse(steps + st.distance, newKeys, keyTo, st.key2);
@@ -198,7 +158,6 @@ namespace Year2019.Day18 {
 					Process(next.x, next.y - 1, cost, costs);
 					Process(next.x, next.y + 1, cost, costs);
 				}
-				//Debug(costs);
 				return costs;
 			}
 
@@ -230,25 +189,9 @@ namespace Year2019.Day18 {
 				if (x < 0 || y < 0 || x >= width || y >= height) return;
 				var c = input[x, y];
 				if (c == '#') return;
-
 				var old = costs[x, y];
-
-				//if (old.cost > cost.cost 
-				//	&& old.cost < long.MaxValue 
-				//	&& old.neededKeys.Count < cost.neededKeys.Count) {
-				//	//what happens if we have two paths
-				//	//path1 shorter but needing additional keys, path2 longer? store the shortest per all possible key combinations?
-				//	//it seems there is no such combinations - I don't get however, what is still going wrong :-(
-				//	bool TODO = true;
-				//}
-
 				if (old.cost < cost.cost) return;
-
-				//what happens if we have two paths
-				//path1 shorter but needing additional keys, path2 longer? store the shortest per all possible key combinations?
-
 				costs[x, y] = cost;
-				//maxCost = Math.Max(maxCost, cost);
 				dirty.Add(new Vec(x, y));
 			}
 		}
