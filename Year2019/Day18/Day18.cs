@@ -89,8 +89,12 @@ namespace Year2019.Day18 {
 			return minCost;
 		}
 
-		////4548 not the solution
+		//4548 not the solution
 		//Found current best 4118 in 16115 ms - this is also not the right answer. something is still way too slow
+		//Found current best 4090 in 179302 ms
+		//Much better still not complete: Found current best 3830 in 81 ms
+
+		//still not good enough - maybe a single dijkstra where the key is not just position but collected keys?
 
 		long minCost;
 		private void Traverse(long steps, List<char> keysFound, char keyFrom, char keyTo) {
@@ -107,7 +111,9 @@ namespace Year2019.Day18 {
 			var possibleSteps = keyDistances.Where(x => x.Key.Item1 == keyTo
 				&& !keysFound.Contains(x.Key.Item2)
 				&& !x.Value.neededKeys.Except(newKeys).Any()).ToList();
-			foreach (var st in possibleSteps) Traverse(steps + st.Value.distance, newKeys, keyTo, st.Key.Item2);
+			foreach (var st in possibleSteps.OrderBy(x => x.Value.distance)) {
+				Traverse(steps + st.Value.distance, newKeys, keyTo, st.Key.Item2);
+			}
 			totalIterations++;
 		}
 
