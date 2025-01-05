@@ -229,7 +229,6 @@ namespace Year2019.Day18 {
 		}
 
 		private void TraversePart2(long steps, long keysFound, char pl1pos, char pl2pos, char pl3pos, char pl4pos, char keyFrom, char keyTo) {
-			if (steps > minCost) return;
 			long newKeys = keysFound;
 			newKeys |= (1u << keyTo - 'a');
 			long prevCost;
@@ -240,33 +239,36 @@ namespace Year2019.Day18 {
 				return;
 			}
 			if ((allKeys & ~newKeys) == 0) {
-				if (steps < minCost) {
-					minCost = steps;
-					Console.WriteLine($"Found current best {steps} in {sw.ElapsedMilliseconds} ms");
-				}
+				minCost = steps;
+				Console.WriteLine($"Found current best {steps} in {sw.ElapsedMilliseconds} ms");
 				return;
 			}
+			var maxCost = minCost - steps;
 			var possibleSteps = keyDistances[pl1pos].Where(x =>
 				(x.key2bits & ~newKeys) != 0
-				&& ((x.neededKeys & ~newKeys) == 0));
+				&& ((x.neededKeys & ~newKeys) == 0)
+				&& x.distance < maxCost);
 			foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
 				TraversePart2(steps + st.distance, newKeys, st.key2, pl2pos, pl3pos, pl4pos, pl1pos, st.key2);
 			}
 			possibleSteps = keyDistances[pl2pos].Where(x =>
 				(x.key2bits & ~newKeys) != 0
-				&& ((x.neededKeys & ~newKeys) == 0));
+				&& ((x.neededKeys & ~newKeys) == 0)
+				&& x.distance < maxCost);
 			foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
 				TraversePart2(steps + st.distance, newKeys, pl1pos, st.key2, pl3pos, pl4pos, pl1pos, st.key2);
 			}
 			possibleSteps = keyDistances[pl3pos].Where(x =>
 				(x.key2bits & ~newKeys) != 0
-				&& ((x.neededKeys & ~newKeys) == 0));
+				&& ((x.neededKeys & ~newKeys) == 0)
+				&& x.distance < maxCost);
 			foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
 				TraversePart2(steps + st.distance, newKeys, pl1pos, pl2pos, st.key2, pl4pos, pl1pos, st.key2);
 			}
 			possibleSteps = keyDistances[pl4pos].Where(x =>
 				(x.key2bits & ~newKeys) != 0
-				&& ((x.neededKeys & ~newKeys) == 0));
+				&& ((x.neededKeys & ~newKeys) == 0)
+				&& x.distance < maxCost);
 			foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
 				TraversePart2(steps + st.distance, newKeys, pl1pos, pl2pos, pl3pos, st.key2, pl1pos, st.key2);
 			}
