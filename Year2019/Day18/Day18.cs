@@ -228,52 +228,53 @@ namespace Year2019.Day18 {
 			Console.ForegroundColor = ConsoleColor.White;
 		}
 
-		private void TraversePart2(long steps, long keysFound, char pl1pos, char pl2pos, char pl3pos, char pl4pos, char keyFrom, char keyTo) {
-			long newKeys = keysFound;
-			newKeys |= (1u << keyTo - 'a');
-			long prevCost;
-			var posKey = (keys[keyTo], newKeys);
-			if (!minimumCosts.TryGetValue(posKey, out prevCost)) {
-				minimumCosts.Add(posKey, steps);
-			} else if (prevCost < steps) {
-				return;
-			}
-			if ((allKeys & ~newKeys) == 0) {
-				minCost = steps;
-				Console.WriteLine($"Found current best {steps} in {sw.ElapsedMilliseconds} ms");
-				return;
-			}
-			var maxCost = minCost - steps;
-			var possibleSteps = keyDistances[pl1pos].Where(x =>
-				(x.key2bits & ~newKeys) != 0
-				&& ((x.neededKeys & ~newKeys) == 0)
-				&& x.distance < maxCost);
-			foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
-				TraversePart2(steps + st.distance, newKeys, st.key2, pl2pos, pl3pos, pl4pos, pl1pos, st.key2);
-			}
-			possibleSteps = keyDistances[pl2pos].Where(x =>
-				(x.key2bits & ~newKeys) != 0
-				&& ((x.neededKeys & ~newKeys) == 0)
-				&& x.distance < maxCost);
-			foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
-				TraversePart2(steps + st.distance, newKeys, pl1pos, st.key2, pl3pos, pl4pos, pl1pos, st.key2);
-			}
-			possibleSteps = keyDistances[pl3pos].Where(x =>
-				(x.key2bits & ~newKeys) != 0
-				&& ((x.neededKeys & ~newKeys) == 0)
-				&& x.distance < maxCost);
-			foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
-				TraversePart2(steps + st.distance, newKeys, pl1pos, pl2pos, st.key2, pl4pos, pl1pos, st.key2);
-			}
-			possibleSteps = keyDistances[pl4pos].Where(x =>
-				(x.key2bits & ~newKeys) != 0
-				&& ((x.neededKeys & ~newKeys) == 0)
-				&& x.distance < maxCost);
-			foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
-				TraversePart2(steps + st.distance, newKeys, pl1pos, pl2pos, pl3pos, st.key2, pl1pos, st.key2);
-			}
-			totalIterations++;
-		}
+		//private void TraversePart2(long steps, long keysFound, char pl1pos, char pl2pos, char pl3pos, char pl4pos, char keyTo) {
+		//	if (steps >= minCost) return;
+		//	long newKeys = keysFound;
+		//	newKeys |= (1u << keyTo - 'a');
+		//	long prevCost;
+		//	var posKey = (keys[keyTo], newKeys);
+		//	if (!minimumCosts.TryGetValue(posKey, out prevCost)) {
+		//		minimumCosts.Add(posKey, steps);
+		//	} else if (prevCost < steps) {
+		//		return;
+		//	}
+		//	if ((allKeys & ~newKeys) == 0) {
+		//		minCost = steps;
+		//		Console.WriteLine($"Found current best {steps} in {sw.ElapsedMilliseconds} ms");
+		//		return;
+		//	}
+		//	var maxCost = minCost - steps;
+		//	var possibleSteps = keyDistances[pl1pos].Where(x =>
+		//		(x.key2bits & ~newKeys) != 0
+		//		&& ((x.neededKeys & ~newKeys) == 0)
+		//		&& x.distance < maxCost);
+		//	foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
+		//		TraversePart2(steps + st.distance, newKeys, st.key2, pl2pos, pl3pos, pl4pos, st.key2);
+		//	}
+		//	possibleSteps = keyDistances[pl2pos].Where(x =>
+		//		(x.key2bits & ~newKeys) != 0
+		//		&& ((x.neededKeys & ~newKeys) == 0)
+		//		&& x.distance < maxCost);
+		//	foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
+		//		TraversePart2(steps + st.distance, newKeys, pl1pos, st.key2, pl3pos, pl4pos, st.key2);
+		//	}
+		//	possibleSteps = keyDistances[pl3pos].Where(x =>
+		//		(x.key2bits & ~newKeys) != 0
+		//		&& ((x.neededKeys & ~newKeys) == 0)
+		//		&& x.distance < maxCost);
+		//	foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
+		//		TraversePart2(steps + st.distance, newKeys, pl1pos, pl2pos, st.key2, pl4pos, st.key2);
+		//	}
+		//	possibleSteps = keyDistances[pl4pos].Where(x =>
+		//		(x.key2bits & ~newKeys) != 0
+		//		&& ((x.neededKeys & ~newKeys) == 0)
+		//		&& x.distance < maxCost);
+		//	foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
+		//		TraversePart2(steps + st.distance, newKeys, pl1pos, pl2pos, pl3pos, st.key2, st.key2);
+		//	}
+		//	totalIterations++;
+		//}
 
 		protected override long SolvePart2() {
 			keyDistances = new();
@@ -294,22 +295,60 @@ namespace Year2019.Day18 {
 			minCost = long.MaxValue;
 			var possibleSteps = keyDistances['1'].Where(x => x.neededKeys == 0).ToList();
 			foreach (var st in possibleSteps) {
-				TraversePart2(st.distance, 0, st.key2, '2', '3', '4', '1', st.key2);
+				TraversePart2(st.distance, 0, st.key2, '2', '3', '4', st.key2);
 			}
 			possibleSteps = keyDistances['2'].Where(x => x.neededKeys == 0).ToList();
 			foreach (var st in possibleSteps) {
-				TraversePart2(st.distance, 0, '1', st.key2, '3', '4', '2', st.key2);
+				TraversePart2(st.distance, 0, '1', st.key2, '3', '4', st.key2);
 			}
 			possibleSteps = keyDistances['3'].Where(x => x.neededKeys == 0).ToList();
 			foreach (var st in possibleSteps) {
-				TraversePart2(st.distance, 0, '1', '2', st.key2, '4', '3', st.key2);
+				TraversePart2(st.distance, 0, '1', '2', st.key2, '4', st.key2);
 			}
 			possibleSteps = keyDistances['4'].Where(x => x.neededKeys == 0).ToList();
 			foreach (var st in possibleSteps) {
-				TraversePart2(st.distance, 0, '1', '2', '3', st.key2, '4', st.key2);
+				TraversePart2(st.distance, 0, '1', '2', '3', st.key2, st.key2);
 			}
 			Console.WriteLine($"Finished in {totalIterations} iterations");
-			return minCost;
+			return minCost; 
 		}
+
+		//this is is still extremely slow at 30+ minutes
+		private void TraversePart2(long steps, long keysFound, char pl1pos, char pl2pos, char pl3pos, char pl4pos, char keyTo) {
+			long newKeys = keysFound | (1u << (keyTo - 'a'));
+			long prevCost;
+			var posKey = (keys[keyTo], newKeys);
+			if (!minimumCosts.TryGetValue(posKey, out prevCost)) {
+				minimumCosts.Add(posKey, steps);
+			} else if (prevCost < steps) {
+				return;
+			}
+			if ((allKeys & ~newKeys) == 0) {
+				minCost = steps;
+				Console.WriteLine($"Found current best {steps} in {sw.ElapsedMilliseconds} ms");
+				return;
+			}
+			var maxCost = minCost - steps;
+
+			var possibleSteps = new List<KeyDistance>();
+			possibleSteps.AddRange(keyDistances[pl1pos].Where(x => (x.key2bits & ~newKeys) != 0 && (x.neededKeys & ~newKeys) == 0 && x.distance < maxCost));
+			possibleSteps.AddRange(keyDistances[pl2pos].Where(x => (x.key2bits & ~newKeys) != 0 && (x.neededKeys & ~newKeys) == 0 && x.distance < maxCost));
+			possibleSteps.AddRange(keyDistances[pl3pos].Where(x => (x.key2bits & ~newKeys) != 0 && (x.neededKeys & ~newKeys) == 0 && x.distance < maxCost));
+			possibleSteps.AddRange(keyDistances[pl4pos].Where(x => (x.key2bits & ~newKeys) != 0 && (x.neededKeys & ~newKeys) == 0 && x.distance < maxCost));
+
+			foreach (var st in possibleSteps.OrderBy(x => x.distance)) {
+				if (st.key1 == pl1pos) {
+					TraversePart2(steps + st.distance, newKeys, st.key2, pl2pos, pl3pos, pl4pos, st.key2);
+				} else if (st.key1 == pl2pos) {
+					TraversePart2(steps + st.distance, newKeys, pl1pos, st.key2, pl3pos, pl4pos, st.key2);
+				} else if (st.key1 == pl3pos) {
+					TraversePart2(steps + st.distance, newKeys, pl1pos, pl2pos, st.key2, pl4pos, st.key2);
+				} else if (st.key1 == pl4pos) {
+					TraversePart2(steps + st.distance, newKeys, pl1pos, pl2pos, pl3pos, st.key2, st.key2);
+				}
+			}
+			totalIterations++;
+		}
+
 	}
 }
