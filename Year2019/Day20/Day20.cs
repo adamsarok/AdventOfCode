@@ -27,10 +27,10 @@ namespace Year2019.Day20 {
 					var c = f[y][x];
 					input[x, y] = c;
 					if (!procd.Contains(new Vec(x,y)) && char.IsAsciiLetter(c) && c != '\0') {
-						var r = f[y][x + 1]; //  input[x + 1, y];
+						var r = f[y][x + 1];
 						string key;
 						Vec portalPos;
-						bool isOuter = x <= 1 || y <= 1 || x >= width - 1 || y >= height - 1;
+						bool isOuter = x <= 1 || y <= 1 || x >= width - 2 || y >= height - 2;
 						if (char.IsLetter(r) && r != '\0') {
 							portalPos = x + 2 < width && f[y][x + 2] == '.' ? new Vec(x + 2, y) : new Vec(x - 1, y);
 							procd.Add(new Vec(x + 1, y));
@@ -41,13 +41,13 @@ namespace Year2019.Day20 {
 							portalPos = y < height - 2 && f[y + 2][x] == '.' ? new Vec(x, y + 2) : new Vec(x, y - 1);
 							key = c.ToString() + d.ToString();
 						}
-						TryAddPortal(key, portalPos);
+						TryAddPortal(key, portalPos, isOuter);
 					}
 				}
 			}
 		}
 
-		private void TryAddPortal(string key, Vec portalPos) {
+		private void TryAddPortal(string key, Vec portalPos, bool isOuter) {
 			if (key.Contains(".")) throw new Exception();
 			procd.Add(portalPos);
 			if (key == "AA") {
@@ -57,63 +57,63 @@ namespace Year2019.Day20 {
 			} else {
 				Portal p;
 				if (portals.TryGetValue(key, out p)) {
-					portals[key] = new Portal(key, p.from, portalPos);
+					portals[key] = isOuter ? new Portal(key, p.inner, portalPos) : new Portal(key, portalPos, p.outer);
 				} else {
-					portals.Add(key, new Portal(key, portalPos, null));
+					portals.Add(key, isOuter ? new Portal(key, null, portalPos) : new Portal(key, portalPos, null));
 				}
 			}
 		}
 
 		protected override void ReadInputPart2(string fileName) {
-			base.ReadInputPart2(fileName);
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
+			ReadInputPart1(fileName);
 		}
 
 		protected override long SolvePart1() {
 			long result = 0;
-			var d = new Dijkstra(input, portals.Values.ToList());
-			return d.GetCost(start, end);
+			var d = new Dijkstra(input, portals.Values.ToList(), start, end, false);
+			return d.GetCost();
 		}
 		Dictionary<string, Portal> portals;
-		public record Portal(string code, Vec? from, Vec? to);
-		public class Dijkstra(char[,] input, List<Portal> portals) {
-			private long[,] costs;
+		public record Portal(string code, Vec? inner, Vec? outer);
+		public class Dijkstra(char[,] input, List<Portal> portals, Vec start, Vec end, bool hasDepths) {
+			private List<long[,]> costsPerDepth;
 			int width, height;
-			HashSet<Vec> dirty;
+			HashSet<(Vec, int)> dirty;
 			long maxCost;
 			public enum CostType { StartFinish, LongestPath }
-			public long GetCost(Vec start, Vec end) {
+			public long GetCost() {
 				width = input.GetLength(0);
 				height = input.GetLength(1);
 				dirty = new();
-				costs = new long[width, height];
-				for (int x = 0; x < width; x++) {
-					for (int y = 0; y < height; y++) {
-						costs[x, y] = long.MaxValue;
+				costsPerDepth = new();
+				for (int i = 0; i < portals.Count; i++) {
+					var c = new long[width, height];
+					for (int x = 0; x < width; x++) {
+						for (int y = 0; y < height; y++) {
+							c[x, y] = long.MaxValue;
+						}
 					}
+					costsPerDepth.Add(c);
 				}
-				dirty.Add(start);
-				costs[start.x, start.y] = 0;
+				dirty.Add((start, 0));
+				costsPerDepth[0][start.x, start.y] = 0;
 				while (dirty.Any()) {
 					var next = dirty.First();
 					dirty.Remove(next);
-					var cost = costs[next.x, next.y] + 1;
-					Process(next.x - 1, next.y, cost);
-					Process(next.x + 1, next.y, cost);
-					Process(next.x, next.y - 1, cost);
-					Process(next.x, next.y + 1, cost);
+					var cost = costsPerDepth[next.Item2][next.Item1.x, next.Item1.y] + 1;
+					Process(next.Item1.x - 1, next.Item1.y, cost, next.Item2);
+					Process(next.Item1.x + 1, next.Item1.y, cost, next.Item2);
+					Process(next.Item1.x, next.Item1.y - 1, cost, next.Item2);
+					Process(next.Item1.x, next.Item1.y + 1, cost, next.Item2);
 				}
 				//Debug();
-				return costs[end.x, end.y];
+				return costsPerDepth[0][end.x, end.y];
 			}
 			private void Debug() {
 				Console.Clear();
 				for (long y = 0; y < height; y++) {
 					for (long x = 0; x < width; x++) {
-						var cost = costs[x, y];
+						var cost = costsPerDepth[0][x, y];
 						if (cost == long.MaxValue) Console.ResetColor();
 						else Console.ForegroundColor = ConsoleColor.Green;
 						if (cost > 999) cost = 999;
@@ -122,29 +122,39 @@ namespace Year2019.Day20 {
 					Console.WriteLine();
 				}
 			}
-			private void Process(int x, int y, long cost) {
+			private void Process(int x, int y, long cost, int depth) {
 				var pos = new Vec(x, y);
-				var p = portals.FirstOrDefault(x => x.from == pos || x.to == pos);
+				var p = portals.FirstOrDefault(x => x.inner == pos || x.outer == pos);
 				if (p != null) {
-					Vec to = (p.from == pos ? p.to : p.from);
-					if (cost + 1 < costs[to.x, to.y]) {
-						costs[to.x, to.y] = cost + 1;
-						dirty.Add(to);
+					Vec to = (p.inner == pos ? p.outer : p.inner);
+					if (hasDepths && p.inner == pos) depth++;
+					else if (hasDepths) depth--;
+					if (depth < 0 || depth >= portals.Count) return;
+					if (cost + 1 < costsPerDepth[depth][to.x, to.y]) {
+						costsPerDepth[depth][to.x, to.y] = cost + 1;
+						dirty.Add((to, depth));
 					}
+				} else {
+					if (x < 0 || y < 0 || x >= width || y >= height) return;
+					if (input[x, y] != '.') return;
+					if (costsPerDepth[depth][x, y] < cost) return;
+					if (pos == end) {
+						if (depth != 0) {
+							return;
+						} else {
+							bool what = true;
+						}
+					}
+					costsPerDepth[depth][x, y] = cost;
+					dirty.Add((new Vec(x, y), depth));
 				}
-				if (x < 0 || y < 0 || x >= width || y >= height) return;
-				if (input[x, y] != '.') return;
-				if (costs[x, y] < cost) return;
-				costs[x, y] = cost;
-				//maxCost = Math.Max(maxCost, cost);
-				dirty.Add(new Vec(x, y));
 			}
 		}
 
 		protected override long SolvePart2() {
 			long result = 0;
-
-			return result;
+			var d = new Dijkstra(input, portals.Values.ToList(), start, end, true);
+			return d.GetCost();
 		}
 	}
 }
