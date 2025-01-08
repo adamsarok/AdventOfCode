@@ -12,7 +12,7 @@ Advent of Code Solutions
 
 [![2020](https://img.shields.io/badge/2020-0*-red)](https://adventofcode.com/)
 
-[![2019](https://img.shields.io/badge/2019-34*-yellow)](https://adventofcode.com/)
+[![2019](https://img.shields.io/badge/2019-43*-yellow)](https://adventofcode.com/)
 
 [![2018](https://img.shields.io/badge/2018-0*-red)](https://adventofcode.com/)
 
@@ -22,4 +22,4 @@ Advent of Code Solutions
 
 [![2015](https://img.shields.io/badge/2015-0*-red)](https://adventofcode.com/)
 
-[![Total](https://img.shields.io/badge/Total*-120*-yellow)](https://adventofcode.com/)
+[![Total](https://img.shields.io/badge/Total*-143*-yellow)](https://adventofcode.com/)
