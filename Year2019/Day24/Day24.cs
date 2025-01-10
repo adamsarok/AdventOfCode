@@ -53,7 +53,7 @@ namespace Year2019.Day24 {
 					}
 				}
 				bugs = next;
-				Debug();
+				//Debug();
 				state = GetState();
 			}
 			return state;
@@ -94,47 +94,49 @@ namespace Year2019.Day24 {
 
 		int GetAdjBugs2(int x, int y, Layer layer) {
 			int cnt = 0;
-			if (x > 0 && bugs[x - 1, y]) cnt++;
-			if (y > 0 && bugs[x, y - 1]) cnt++;
-			if (x < width - 1 && bugs[x + 1, y]) cnt++;
-			if (y < height - 1 && bugs[x, y + 1]) cnt++;
-			if (layer.Outer != null) {
-				if (x == 0 && layer.Outer.Value[1, 2]) {
+			if (x > 0 && layer.Value[x - 1, y]) cnt++;
+			if (y > 0 && layer.Value[x, y - 1]) cnt++;
+			if (x < width - 1 && layer.Value[x + 1, y]) cnt++;
+			if (y < height - 1 && layer.Value[x, y + 1]) cnt++;
+			var outer = layers[layer.Level - 1];
+			if (outer != null) {
+				if (x == 0 && outer.Value[1, 2]) {
 					cnt++;
-				} else if (x == width - 1 && layer.Outer.Value[3, 2]) {
+				} else if (x == width - 1 && outer.Value[3, 2]) {
 					cnt++;
 				}
-				if (y == 0 && layer.Outer.Value[2, 1]) {
+				if (y == 0 && outer.Value[2, 1]) {
 					cnt++;
-				} else if (y == height - 1 && layer.Outer.Value[2, 3]) {
+				} else if (y == height - 1 && outer.Value[2, 3]) {
 					cnt++;
 				}
 			}
-			if (layer.Inner != null) { //ok?
+			var inner = layers[layer.Level + 1];
+			if (inner != null) {
 				if (x == 1 && y == 2) {
-					if (layer.Inner.Value[0, 0]) cnt++;
-					if (layer.Inner.Value[0, 1]) cnt++;
-					if (layer.Inner.Value[0, 2]) cnt++;
-					if (layer.Inner.Value[0, 3]) cnt++;
-					if (layer.Inner.Value[0, 4]) cnt++;
+					if (inner.Value[0, 0]) cnt++;
+					if (inner.Value[0, 1]) cnt++;
+					if (inner.Value[0, 2]) cnt++;
+					if (inner.Value[0, 3]) cnt++;
+					if (inner.Value[0, 4]) cnt++;
 				} else if (x == 3 && y == 2) {
-					if (layer.Inner.Value[4, 0]) cnt++;
-					if (layer.Inner.Value[4, 1]) cnt++;
-					if (layer.Inner.Value[4, 2]) cnt++;
-					if (layer.Inner.Value[4, 3]) cnt++;
-					if (layer.Inner.Value[4, 4]) cnt++;
+					if (inner.Value[4, 0]) cnt++;
+					if (inner.Value[4, 1]) cnt++;
+					if (inner.Value[4, 2]) cnt++;
+					if (inner.Value[4, 3]) cnt++;
+					if (inner.Value[4, 4]) cnt++;
 				} else if (x == 2 && y == 1) {
-					if (layer.Inner.Value[0, 0]) cnt++;
-					if (layer.Inner.Value[1, 0]) cnt++;
-					if (layer.Inner.Value[2, 0]) cnt++;
-					if (layer.Inner.Value[3, 0]) cnt++;
-					if (layer.Inner.Value[4, 0]) cnt++;
+					if (inner.Value[0, 0]) cnt++;
+					if (inner.Value[1, 0]) cnt++;
+					if (inner.Value[2, 0]) cnt++;
+					if (inner.Value[3, 0]) cnt++;
+					if (inner.Value[4, 0]) cnt++;
 				} else if (x == 2 && y == 3) {
-					if (layer.Inner.Value[0, 4]) cnt++;
-					if (layer.Inner.Value[1, 4]) cnt++;
-					if (layer.Inner.Value[2, 4]) cnt++;
-					if (layer.Inner.Value[3, 4]) cnt++;
-					if (layer.Inner.Value[4, 4]) cnt++;
+					if (inner.Value[0, 4]) cnt++;
+					if (inner.Value[1, 4]) cnt++;
+					if (inner.Value[2, 4]) cnt++;
+					if (inner.Value[3, 4]) cnt++;
+					if (inner.Value[4, 4]) cnt++;
 				}
 			}
 			return cnt;
@@ -142,85 +144,70 @@ namespace Year2019.Day24 {
 		class Layer {
 			public bool[,] Value { get; set; }
 			public bool[,] NextValue { get; set; }
-			public Layer Outer { get; set; }
-			public Layer Inner { get; set; }
 			public bool SpawnOuter { get; set; }
 			public bool SpawnInner { get; set; }
 			public int Level { get; set; }
 		}
 
-		private void ApplyState(Layer layer) {
-			if (layer.SpawnInner) {
-				layer.Inner = new Layer() { Outer = layer, Value = new bool[width, height], Level = layer.Level + 1 };
-				layer.SpawnInner = false;
-			}
-			if (layer.SpawnOuter) {
-				layer.Outer = new Layer() { Inner = layer, Value = new bool[width, height], Level = layer.Level - 1 };
-				layer.SpawnOuter = false;
-			}
-			if (layer.NextValue != null) {
-				layer.Value = layer.NextValue;
-				layer.NextValue = null;
-			}
-		}
+		Layer[] layers;
 
 		protected override long SolvePart2() {
 			long result = 0;
-			//we are going down, each timestep should populate a new recursive tile?
 
-			//An empty space becomes infested with a bug if exactly one or two bugs are adjacent to it.
-			//spawn new tile up: bugs exist on the outside ring
-			//spawn new tile down: bugs exist on the inside ring (1,1) -> (3,3)
+			int iterations = IsShort ? 10 : 200;
 
-			//return -1;
+			layers = new Layer[iterations * 2 + 1];
+			int center = iterations;
 
-			var first = new Layer() { Value = bugs };
-			first.Value[2, 2] = false;
-			Layer next;
-			Stopwatch sw = Stopwatch.StartNew();
-			for (int i = 0; i < 10; i++) {
-				//TODO: this is incorrect! we need to store a next state of all layers
-				Console.WriteLine($"Iteration {i} in {sw.ElapsedMilliseconds} ms");
-				
-				Console.WriteLine($"Bugs: {SumAll(first)}");
-				next = first;
-				Calc(next);
-				while (next.Inner != null) {
-					Calc(next.Inner);
-					next = next.Inner;
+			layers[center] = new Layer() { Value = bugs, Level = center };
+			layers[center].Value[2, 2] = false;
+			layers[center - 1] = new Layer() { Value = new bool[width, height], Level = center - 1 };
+			layers[center + 1] = new Layer() { Value = new bool[width, height], Level = center + 1 };
+			//Debug(layers[center]);
+			for (int i = 0; i < iterations; i++) {
+				for (int l = 0; l < layers.Length; l++) {
+					var layer = layers[l];
+					if (layer == null) continue;
+					Calc(layer);
 				}
-				next = first;
-				while (next.Outer != null) {
-					Calc(next.Outer);
-					next = next.Outer;
+				var top = layers.First(x => x != null);
+				if (top.SpawnOuter) {
+					layers[top.Level - 1] = new Layer() { Value = new bool[width, height], Level = top.Level - 1 };
+					top.SpawnOuter = false;
+					Calc(layers[top.Level - 1]);
 				}
-
-				Console.WriteLine($"Bugs: {SumAll(first)}");
-
-				ApplyState(first);
-				next = first;
-				while (next.Outer != null) {
-					ApplyState(next.Outer);
-					next = next.Outer;
-					Debug(next);
+				var bott = layers.Last(x => x != null);
+				if (bott.SpawnInner) {
+					layers[bott.Level + 1] = new Layer() { Value = new bool[width, height], Level = bott.Level + 1 };
+					bott.SpawnInner = false;
+					Calc(layers[top.Level + 1]);
 				}
-				Debug(first);
-				next = first;
-				while (next.Inner != null) {
-					ApplyState(next.Inner);
-					next = next.Inner;
-					Debug(next);
+				for (int l = 0; l < layers.Length; l++) {
+					var layer = layers[l];
+					if (layer == null || layer.NextValue == null) continue;
+					layer.Value = layer.NextValue;
+					layer.NextValue = null;
 				}
 
-				//spawn new, set values from calc state
+				//if (i == iterations - 1) {
+				//	for (int l = 0; l < layers.Length; l++) {
+				//		var layer = layers[l];
+				//		if (layer == null) continue;
+				//		Debug(layer);
+				//	}
+				//}
+
 			}
-		
-			return SumAll(first);
+
+			for (int l = 0; l < layers.Length; l++) {
+				var layer = layers[l];
+				if (layer == null) continue;
+				result += Sum(layer);
+			}
+			return result;
 		}
 
 		private void Debug(Layer layer) {
-			//Console.Clear();
-			Console.WriteLine($"Depth {layer.Level}:");
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
 					Console.Write(layer.Value[x, y] ? "#" : ".");
@@ -228,23 +215,6 @@ namespace Year2019.Day24 {
 				Console.WriteLine();
 			}
 			Console.WriteLine();
-		}
-
-
-		private long SumAll(Layer first) {
-			long result = 0;
-			result += Sum(first);
-			var next = first;
-			while (next.Inner != null) {
-				result += Sum(next.Inner);
-				next = next.Inner;
-			}
-			next = first;
-			while (next.Outer != null) {
-				result += Sum(next.Outer);
-				next = next.Outer;
-			}
-			return result;
 		}
 
 		private long Sum(Layer layer) {
@@ -266,8 +236,8 @@ namespace Year2019.Day24 {
 					var adj = GetAdjBugs2(x, y, layer);
 					if (bug) {
 						if (adj == 1) next[x, y] = true;
-						if (layer.Outer == null && IsSpawnOuter(x, y)) layer.SpawnOuter = true;
-						if (layer.Inner == null && IsSpawnInner(x, y)) layer.SpawnInner = true;
+						if (layers[layer.Level - 1] == null && IsSpawnOuter(x, y)) layer.SpawnOuter = true;
+						if (layers[layer.Level + 1] == null && IsSpawnInner(x, y)) layer.SpawnInner = true;
 					} else {
 						if (adj == 1 || adj == 2) next[x, y] = true;
 					}
@@ -280,7 +250,8 @@ namespace Year2019.Day24 {
 			return x == 0 || x == width - 1 || y == 0 || y == height - 1;
 		}
 		private bool IsSpawnInner(int x, int y) {
-			return (x == 2 && y == 1) || (x == 2 && y == 3) || (x == 1 && y == 2) || (x == 3 && y == 2);
+			return true; //something was not right here, however always spawning an inner layer works and still fast
+			//return (x == 2 && y == 1) || (x == 2 && y == 3) || (x == 1 && y == 2) || (x == 3 && y == 2);
 		}
 	}
 }
