@@ -10,7 +10,7 @@ Advent of Code Solutions
 
 [![2021](https://img.shields.io/badge/2021-5*-yellow)](https://adventofcode.com/)
 
-[![2020](https://img.shields.io/badge/2020-0*-red)](https://adventofcode.com/)
+[![2020](https://img.shields.io/badge/2020-10*-yellow)](https://github.com/adamsarok/AdventOfCode-2020-ts)
 
 [![2019](https://img.shields.io/badge/2019-50*-green)](https://adventofcode.com/)
 
