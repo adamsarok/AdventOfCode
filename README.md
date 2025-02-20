@@ -1,6 +1,6 @@
 Advent of Code Solutions
 
-*Started in 2024. 500 stars would be nice, for now I complete days I feel like doing*
+*Started in 2024. 500 stars would be nice*
 
 [![2024](https://img.shields.io/badge/2024-50*-green)](https://adventofcode.com/)
 
@@ -10,7 +10,7 @@ Advent of Code Solutions
 
 [![2021](https://img.shields.io/badge/2021-5*-yellow)](https://adventofcode.com/)
 
-[![2020](https://img.shields.io/badge/2020-18*-yellow)](https://github.com/adamsarok/AdventOfCode-2020-ts)
+[![2020](https://img.shields.io/badge/2020-22*-yellow)](https://github.com/adamsarok/AdventOfCode-2020-ts)
 
 [![2019](https://img.shields.io/badge/2019-50*-green)](https://adventofcode.com/)
 
@@ -22,4 +22,4 @@ Advent of Code Solutions
 
 [![2015](https://img.shields.io/badge/2015-0*-red)](https://adventofcode.com/)
 
-[![Total](https://img.shields.io/badge/Total*-168*-yellow)](https://adventofcode.com/)
+[![Total](https://img.shields.io/badge/Total*-172*-yellow)](https://adventofcode.com/)
