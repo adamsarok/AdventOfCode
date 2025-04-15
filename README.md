@@ -1,6 +1,6 @@
 Advent of Code Solutions
 
-*Started in 2024. 500 stars would be nice*
+*Started in 2024. Mostly C#, 2020 in TypeScript, 2018 in Python.*
 
 [![2024](https://img.shields.io/badge/2024-50*-green)](https://adventofcode.com/)
 
@@ -14,7 +14,7 @@ Advent of Code Solutions
 
 [![2019](https://img.shields.io/badge/2019-50*-green)](https://adventofcode.com/)
 
-[![2018](https://img.shields.io/badge/2018-0*-red)](https://adventofcode.com/)
+[![2018](https://img.shields.io/badge/2018-6*-yellow)](https://github.com/adamsarok/AdventOfCode-2018-py)
 
 [![2017](https://img.shields.io/badge/2017-0*-red)](https://adventofcode.com/)
 
@@ -22,4 +22,4 @@ Advent of Code Solutions
 
 [![2015](https://img.shields.io/badge/2015-0*-red)](https://adventofcode.com/)
 
-[![Total](https://img.shields.io/badge/Total*-172*-yellow)](https://adventofcode.com/)
+[![Total](https://img.shields.io/badge/Total*-178*-yellow)](https://adventofcode.com/)
