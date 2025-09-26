@@ -121,7 +121,7 @@
     <None Update="Day05\2024shortinput5.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Day02\2024input2.txt">
+    <None Update="Day02\2024input02.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Day03\2024input3.txt">
@@ -136,7 +136,7 @@
     <None Update="Day1\2024shortinput1.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Day02\2024shortinput2.txt">
+    <None Update="Day02\2024shortinput02.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Day03\2024shortinput3.txt">

@@ -6,27 +6,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2024.Day2 {
-	public class Day2 : Solver {
+namespace Year2024 {
+	public class Day2 : IAocSolver {
 		List<List<int>> reports = new List<List<int>>();
-		public Day2() : base(2024, 2) {
-		}
-		protected override void ReadInputPart1(string fileName) {
+
+		public long SolvePart1(string[] input) {
 			reports = new List<List<int>>();
-			foreach (var l in File.ReadAllLines(fileName)) {
+			foreach (var l in input) {
 				var report = new List<int>();
 				foreach (var ll in l.Split(' ')) {
 					report.Add(int.Parse(ll));
 				}
 				reports.Add(report);
 			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			ReadInputPart1(fileName);
-		}
-
-		protected override long SolvePart1() {
 			long result = 0;
 			foreach (var report in reports) {
 				if (CheckReport(report)) result++;
@@ -34,7 +26,15 @@ namespace Year2024.Day2 {
 			return result;
 		}
 
-		protected override long SolvePart2() {
+		public long SolvePart2(string[] input) {
+			reports = new List<List<int>>();
+			foreach (var l in input) {
+				var report = new List<int>();
+				foreach (var ll in l.Split(' ')) {
+					report.Add(int.Parse(ll));
+				}
+				reports.Add(report);
+			}
 			long result = 0;
 			foreach (var report in reports) {
 				bool good = false;
