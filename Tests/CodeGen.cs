@@ -2,9 +2,9 @@
 
 namespace Tests {
 	public class CodeGen {
+		private const int year = 2025;
 		[Fact]
 		public void GenerateYear() {
-			int year = 2019;
 			for (int i = 1; i <= 25; i++) {
 				string baseDir = AppContext.BaseDirectory;
 				string sourceDir = Path.Combine(baseDir, "..", "..", "..", "..");
@@ -12,10 +12,16 @@ namespace Tests {
 				if (!Path.Exists(dir)) Directory.CreateDirectory(dir);
 				string csfilePath = Path.Combine(dir, $"Day{i.ToString("00")}.cs");
 				if (!File.Exists(csfilePath)) {
-					var code = GetTemplate(year, i);
+					var code = GetSolverTemplate(year, i);
 					File.WriteAllText(Path.Combine(dir, $"Day{i.ToString("00")}.cs"), code);
 				}
 				AddTxts(dir, year, i);
+				var testDir = Path.Combine(sourceDir, $"Year{year}Tests", $"Day{i.ToString("00")}");
+				string testFile = Path.Combine(testDir, $"Day{i.ToString("00")}Tests.cs");
+				if (!File.Exists(csfilePath)) {
+					var code = GetTestTemplate(year, i);
+					File.WriteAllText(Path.Combine(testDir, $"Day{i.ToString("00")}Tests.cs"), code);
+				}
 			}
 		}
 
@@ -26,6 +32,11 @@ namespace Tests {
 			if (File.Exists(file1) || File.Exists(file2)) return;
 			File.Create(file1).Close();
 			File.Create(file2).Close();
+			WriteCSProj(dir, year, daystr, file1, file2);
+			WriteTestCSProj(dir, year, daystr, file1, file2);
+		}
+
+		private static void WriteTestCSProj(string dir, int year, string daystr, string file1, string file2) {
 			string csprojPath = Path.Combine(dir, "..", $"Year{year}.csproj");
 
 			XDocument csproj = XDocument.Load(csprojPath);
@@ -48,8 +59,30 @@ namespace Tests {
 			csproj.Save(csprojPath);
 		}
 
+		private static void WriteCSProj(string dir, int year, string daystr, string file1, string file2) {
+			string csprojPath = Path.Combine(dir, "..", $"Year{year}.csproj");
 
-		private string GetTemplate(int year, int day) {
+			XDocument csproj = XDocument.Load(csprojPath);
+			XElement itemGroup = csproj.Root.Elements("ItemGroup").FirstOrDefault();
+
+			if (itemGroup == null) {
+				itemGroup = new XElement("ItemGroup");
+				csproj.Root.Add(itemGroup);
+			}
+
+			foreach (var file in new[] { file1, file2 }) {
+				var path = Path.Combine($"Day{daystr}\\{Path.GetFileName(file)}");
+				XElement noneElement = new XElement("None",
+					new XAttribute("Update", path),
+					new XElement("CopyToOutputDirectory", "Always")
+				);
+				itemGroup.Add(noneElement);
+			}
+
+			csproj.Save(csprojPath);
+		}
+
+		private string GetSolverTemplate(int year, int day) {
 			var dayStr = day.ToString("00");
 			return $@"using Helpers;
 using System;
@@ -59,38 +92,41 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Year{year}.Day{dayStr} {{
-	public class Day{dayStr} : Solver {{
-		public Day{dayStr}() : base({year}, {day}) {{
-		}}
-		protected override void ReadInputPart1(string fileName) {{
-			base.ReadInputPart1(fileName);
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {{
-
-			}}
+	public class Day{dayStr} : IAocSolver {{
+		public long SolvePart1(string[] input) {{
+			return 0;
 		}}
 
-		protected override void ReadInputPart2(string fileName) {{
-			base.ReadInputPart2(fileName);
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {{
-
-			}}
+		public long SolvePart2(string[] input) {{
+			return 0;
 		}}
+	}}
+}}
+";
+		}
 
-		protected override long SolvePart1() {{
-			base.SolvePart1(fileName);
-			long result = 0;
+		private string GetTestTemplate(int year, int day) {
+			var dayStr = day.ToString("00");
+			return $@"using Helpers;
 
-			return result;
-		}}
+namespace Year{year}Tests;
 
-		protected override long SolvePart2() {{
-			base.SolvePart2(fileName);
-			long result = 0;
-
-			return result;
-		}}
+public class Day02 {{
+	[Fact]
+	public void TestPart1() {{
+		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 1, true, new Year{year}.Day{day}()));
+	}}
+	[Fact]
+	public void SolvePart1() {{
+		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 1, false, new Year{year}.Day{day}()));
+	}}
+	[Fact]
+	public void TestPart2() {{
+		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 2, true, new Year{year}.Day{day}()));
+	}}
+	[Fact]
+	public void SolvePart2() {{
+		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 2, false, new Year{year}.Day{day}()));
 	}}
 }}
 ";
