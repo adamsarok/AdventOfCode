@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2025.Day12 {
+namespace Year2025 {
 	public class Day12 : IAocSolver {
 		public long SolvePart1(string[] input) {
 			return 0;

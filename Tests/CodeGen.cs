@@ -16,9 +16,10 @@ namespace Tests {
 					File.WriteAllText(Path.Combine(dir, $"Day{i.ToString("00")}.cs"), code);
 				}
 				AddTxts(dir, year, i);
-				var testDir = Path.Combine(sourceDir, $"Year{year}Tests", $"Day{i.ToString("00")}");
-				string testFile = Path.Combine(testDir, $"Day{i.ToString("00")}Tests.cs");
-				if (!File.Exists(csfilePath)) {
+				var testDir = Path.Combine(sourceDir, $"Year{year}Tests");
+				string testFilePath = Path.Combine(testDir, $"Day{i.ToString("00")}Tests.cs");
+				if (!Path.Exists(testDir)) Directory.CreateDirectory(testDir);
+				if (!File.Exists(testFilePath)) {
 					var code = GetTestTemplate(year, i);
 					File.WriteAllText(Path.Combine(testDir, $"Day{i.ToString("00")}Tests.cs"), code);
 				}
@@ -91,7 +92,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year{year}.Day{dayStr} {{
+namespace Year{year} {{
 	public class Day{dayStr} : IAocSolver {{
 		public long SolvePart1(string[] input) {{
 			return 0;
@@ -111,22 +112,22 @@ namespace Year{year}.Day{dayStr} {{
 
 namespace Year{year}Tests;
 
-public class Day02 {{
+public class Day{dayStr}Tests {{
 	[Fact]
 	public void TestPart1() {{
-		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 1, true, new Year{year}.Day{day}()));
+		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 1, true, new Year{year}.Day{dayStr}()));
 	}}
 	[Fact]
 	public void SolvePart1() {{
-		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 1, false, new Year{year}.Day{day}()));
+		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 1, false, new Year{year}.Day{dayStr}()));
 	}}
 	[Fact]
 	public void TestPart2() {{
-		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 2, true, new Year{year}.Day{day}()));
+		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 2, true, new Year{year}.Day{dayStr}()));
 	}}
 	[Fact]
 	public void SolvePart2() {{
-		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 2, false, new Year{year}.Day{day}()));
+		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 2, false, new Year{year}.Day{dayStr}()));
 	}}
 }}
 ";
