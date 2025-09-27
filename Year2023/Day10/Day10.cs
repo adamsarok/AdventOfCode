@@ -30,60 +30,77 @@ namespace Year2023 {
 			return result;
 		}
 
-		public long SolvePart2(string[] input) {
-			SolvePart1(input);
-			int height = input.Length;
-			int width = input[0].Length;
-			int insideCount = 0;
-			using (StreamWriter writer = new StreamWriter("debug_output.txt")) {
-				for (int y = 0; y < height; y++) {
-					bool inside = false;
-					for (int x = 0; x < width; x++) {
-						if (IsPartOfLoop(x, y)) {
-							char c = input[y][x];
-							writer.Write(c);
-							// Toggle inside only for vertical crossings
-							if (c == '|' || c == 'J' || c == 'L') {
-								inside = !inside;
-							}
-						} else if (inside) {
-							writer.Write('*');
-							insideCount++;
-						} else {
-							writer.Write('.');
-						}
-					}
-					writer.WriteLine();
-				}
-			}
-			return insideCount;
-		}
+    public long SolvePart2(string[] input) {
+        SolvePart1(input);
+        
+        // Use ray casting algorithm to count interior points
+        int height = input.Length;
+        int width = input[0].Length;
+        int insideCount = 0;
+        
+        // Remove debug output for now to speed up execution
+        // using (StreamWriter writer = new StreamWriter(@"C:\Users\sarok\source\repos\AdventOfCode\debug_output2.txt")) {
+            for (int y = 0; y < height; y++) {
+                bool inside = false;
+                char lastCorner = ' ';
+                
+                for (int x = 0; x < width; x++) {
+                    if (IsPartOfLoop(x, y)) {
+                        char c = input[y][x];
+                        
+                        // Replace S with the actual pipe type it represents
+                        if (c == 'S') {
+                            c = GetStartPipeType(x, y, input);
+                        }
+                        
+                        // Ray casting: count crossings
+                        if (c == '|') {
+                            inside = !inside;
+                        } else if (c == 'F' || c == 'L') {
+                            lastCorner = c;
+                        } else if (c == '7') {
+                            if (lastCorner == 'L') {
+                                inside = !inside;
+                            }
+                            lastCorner = ' ';
+                        } else if (c == 'J') {
+                            if (lastCorner == 'F') {
+                                inside = !inside;
+                            }
+                            lastCorner = ' ';
+                        }
+                        // '-' doesn't change anything, just continues the horizontal segment
+                    } else if (inside) {
+                        insideCount++;
+                    }
+                }
+            }
+        
+        Console.WriteLine($"Inside count: {insideCount}");
+        return insideCount;
+    }
+    
+    private double CalculateShoelaceArea() {
+        // Get the loop vertices in order using the existing BuildLoopPolygon method
+        var vertices = BuildLoopPolygon();
+        
+        // Shoelace formula: A = |1/2 * sum(xi * yi+1 - xi+1 * yi)|
+        double area = 0;
+        int n = vertices.Count;
+        
+        for (int i = 0; i < n; i++) {
+            int j = (i + 1) % n;
+            area += vertices[i].x * vertices[j].y;
+            area -= vertices[j].x * vertices[i].y;
+        }
+        
+        return Math.Abs(area) / 2.0;
+    }
+    
 
 		private List<(double x, double y)> BuildLoopPolygon() {
-			// Find the start tile
-			var start = visitedCoords.SelectMany(kvp => kvp.Value.Select(y => (kvp.Key, y))).First();
-			int x = start.Item1, y = start.Item2;
-			// Find the first valid direction from S
-			(int dx, int dy) = (0, 0);
-			foreach (var dir in new[] { (0, 1), (1, 0), (0, -1), (-1, 0) }) {
-				int nx = x + dir.Item1, ny = y + dir.Item2;
-				if (nx < 0 || ny < 0 || ny >= input.Length || nx >= input[0].Length) continue;
-				if (IsPartOfLoop(nx, ny)) {
-					dx = dir.Item1; dy = dir.Item2;
-					break;
-				}
-			}
-			var polygon = new List<(double x, double y)>();
-			var visited = new HashSet<(int, int, int, int)>();
-			int startX = x, startY = y, startDx = dx, startDy = dy;
-			do {
-				polygon.Add((x + 0.5, y + 0.5));
-				visited.Add((x, y, dx, dy));
-				(int nx, int ny, int ndx, int ndy) = GetNextPipe(x, y, dx, dy);
-				x = nx; y = ny; dx = ndx; dy = ndy;
-				if (visited.Contains((x, y, dx, dy))) break; // Prevent infinite loop
-			} while (!(x == startX && y == startY && dx == startDx && dy == startDy));
-			return polygon;
+			// Use the existing BuildOrderedLoopPath method which works correctly
+			return BuildOrderedLoopPath();
 		}
 
 		private (int nx, int ny, int ndx, int ndy) GetNextPipe(int x, int y, int dx, int dy) {
@@ -155,6 +172,29 @@ namespace Year2023 {
 
 		private bool IsPartOfLoop(int x, int y) {
 			return visitedCoords.TryGetValue(x, out var yList) && yList.Contains(y);
+		}
+
+		private char GetStartPipeType(int x, int y, string[] input) {
+			// Find the start position
+			var start = visitedCoords.SelectMany(kvp => kvp.Value.Select(y => (kvp.Key, y))).First();
+			if (x != start.Item1 || y != start.Item2) {
+				return 'S'; // Not the start position
+			}
+
+			// Determine what pipe type S should be based on its connections
+			bool hasNorth = y > 0 && IsPartOfLoop(x, y - 1) && (input[y - 1][x] == '|' || input[y - 1][x] == '7' || input[y - 1][x] == 'F');
+			bool hasSouth = y < input.Length - 1 && IsPartOfLoop(x, y + 1) && (input[y + 1][x] == '|' || input[y + 1][x] == 'J' || input[y + 1][x] == 'L');
+			bool hasEast = x < input[0].Length - 1 && IsPartOfLoop(x + 1, y) && (input[y][x + 1] == '-' || input[y][x + 1] == 'J' || input[y][x + 1] == '7');
+			bool hasWest = x > 0 && IsPartOfLoop(x - 1, y) && (input[y][x - 1] == '-' || input[y][x - 1] == 'L' || input[y][x - 1] == 'F');
+
+			if (hasNorth && hasSouth) return '|';
+			if (hasEast && hasWest) return '-';
+			if (hasNorth && hasEast) return 'L';
+			if (hasNorth && hasWest) return 'J';
+			if (hasSouth && hasEast) return 'F';
+			if (hasSouth && hasWest) return '7';
+			
+			return 'S'; // Fallback
 		}
 
 		Dictionary<int, List<int>> visitedCoords = new Dictionary<int, List<int>>();
