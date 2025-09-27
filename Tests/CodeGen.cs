@@ -4,7 +4,7 @@ namespace Codegen {
 	public class CodeGen {
 
 		[Theory]
-		[InlineData(2023)]
+		[InlineData(2025)]
 		public void GenerateYear(int year) {
 			for (int i = 1; i <= 25; i++) {
 				string baseDir = AppContext.BaseDirectory;
@@ -87,21 +87,13 @@ namespace Codegen {
 		private string GetSolverTemplate(int year, int day) {
 			var dayStr = day.ToString("00");
 			return $@"using Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Year{year} {{
-	public class Day{dayStr} : IAocSolver {{
-		public long SolvePart1(string[] input) {{
-			return 0;
-		}}
-
-		public long SolvePart2(string[] input) {{
-			return 0;
-		}}
+namespace Year{year};
+public class Day{dayStr} : IAocSolver {{
+	public long SolvePart1(string[] input) {{
+		return 0;
+	}}
+	public long SolvePart2(string[] input) {{
+		return 0;
 	}}
 }}
 ";
@@ -109,26 +101,28 @@ namespace Year{year} {{
 
 		private string GetTestTemplate(int year, int day) {
 			var dayStr = day.ToString("00");
-			return $@"using Helpers;
+			return $@"
+using Helpers;
+using Xunit.Abstractions;
 
 namespace Year{year}Tests;
 
-public class Day{dayStr}Tests {{
+public class Day{dayStr}Tests(ITestOutputHelper output) : TestBase(output) {{
 	[Fact]
 	public void TestPart1() {{
-		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 1, true, new Year{year}.Day{dayStr}()));
+		Solve(new SolverParams({year}, {day}, 1, true, new Year{year}.Day{dayStr}()));
 	}}
 	[Fact]
 	public void SolvePart1() {{
-		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 1, false, new Year{year}.Day{dayStr}()));
+		Solve(new SolverParams({year}, {day}, 1, false, new Year{year}.Day{dayStr}()));
 	}}
 	[Fact]
 	public void TestPart2() {{
-		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 2, true, new Year{year}.Day{dayStr}()));
+		Solve(new SolverParams({year}, {day}, 2, true, new Year{year}.Day{dayStr}()));
 	}}
 	[Fact]
 	public void SolvePart2() {{
-		AocHelper.Solve(new AocHelper.SolverParams({year}, {day}, 2, false, new Year{year}.Day{dayStr}()));
+		Solve(new SolverParams({year}, {day}, 2, false, new Year{year}.Day{dayStr}()));
 	}}
 }}
 ";

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 namespace Year2023 {
 	public class Day10 : IAocSolver {
 		public long SolvePart1(string[] input) {
+			this.input = ParseInput(input);
 			Queue<Step> q = new Queue<Step>();
 			for (int y = 0; y < input.Length; y++) {
 				var row = input[y];
@@ -35,19 +36,31 @@ namespace Year2023 {
 			return result;
 		}
 
-		static Dictionary<int, List<int>> visitedCoords = new Dictionary<int, List<int>>();
+		Dictionary<int, List<int>> visitedCoords = new Dictionary<int, List<int>>();
 		enum Directions { North, East, West, South };
-		static int result = 0;
-		static char[][] input;
+		int result = 0;
+		char[][] input;
+		private static char[][] ParseInput(string[] lines) {
+			char[][] result = new char[lines.Length][];
+			for (int i = 0; i < lines.Length; i++) {
+				var s = lines[i];
+				var row = new char[s.Length];
+				result[i] = row;
+				for (int j = 0; j < s.Length; j++) {
+					row[j] = s[j];
+				}
+			}
+			return result;
+		}
 
-		private static void Queue(int xFrom, int yFrom, int x, int y, Directions direction, int length, Queue<Step> q) {
+		private void Queue(int xFrom, int yFrom, int x, int y, Directions direction, int length, Queue<Step> q) {
 			Console.WriteLine($"[{xFrom},{yFrom}]={input[yFrom][xFrom]} thisLength={length}");
 			result = Math.Max(result, length);
 			AddVisited(xFrom, yFrom);
 			q.Enqueue(new Step(x, y, direction, length));
 		}
 
-		private static void Visit(Step s, Queue<Step> q) {
+		private void Visit(Step s, Queue<Step> q) {
 			if (!CanVisit(s.x, s.y)) return;
 			var next = input[s.y][s.x];
 			switch (next) {
@@ -130,7 +143,7 @@ namespace Year2023 {
 				this.length = length;
 			}
 		}
-		private static bool CanVisit(int x, int y) {
+		private bool CanVisit(int x, int y) {
 			if (y < 0 || y >= input.Length
 				|| x < 0 || x >= input[y].Length) {
 				return false;
@@ -141,7 +154,7 @@ namespace Year2023 {
 			}
 			return true;
 		}
-		private static void AddVisited(int x, int y) {
+		private void AddVisited(int x, int y) {
 			List<int> l;
 			if (!visitedCoords.TryGetValue(x, out l)) {
 				l = new List<int>();
@@ -149,19 +162,5 @@ namespace Year2023 {
 			}
 			l.Add(y);
 		}
-		private static char[][] ReadInput() {
-			var lines = File.ReadAllLines("testinput.txt");
-			char[][] result = new char[lines.Length][];
-			for (int i = 0; i < lines.Length; i++) {
-				var s = lines[i];
-				var row = new char[s.Length];
-				result[i] = row;
-				for (int j = 0; j < s.Length; j++) {
-					row[j] = s[j];
-				}
-			}
-			return result;
-		}
-
 	}
 }
