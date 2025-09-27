@@ -42,8 +42,8 @@ namespace Year2023 {
 						if (IsPartOfLoop(x, y)) {
 							char c = input[y][x];
 							writer.Write(c);
-							// Toggle inside on vertical crossings
-							if (c == '|' || c == 'J' || c == 'L' || c == 'S') {
+							// Toggle inside only for vertical crossings
+							if (c == '|' || c == 'J' || c == 'L') {
 								inside = !inside;
 							}
 						} else if (inside) {
