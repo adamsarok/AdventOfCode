@@ -1,115 +1,88 @@
 using Helpers;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Year2023 {
 	public class Day12 : IAocSolver {
 		public long SolvePart1(string[] input) {
-			int result = 0;
+			long result = 0;
 			foreach (var line in input) {
 				var solver = new Day12Solver(line.Split(' '), 1);
-				result += solver.Solutions.Count;
+				result += solver.CountArrangements();
 			}
 			return result;
 		}
 
 		public long SolvePart2(string[] input) {
-			int result = 0;
+			long result = 0;
 			foreach (var line in input) {
 				var solver = new Day12Solver(line.Split(' '), 5);
-				result += solver.Solutions.Count;
+				result += solver.CountArrangements();
 			}
 			return result;
 		}
 
 		private class Day12Solver {
-			public HashSet<string> Solutions = new HashSet<string>();
-			List<int> conditions = new List<int>();
-			string line = "";
+			private string springs;
+			private int[] groups;
+			private Dictionary<(int, int, int), long> memo = new Dictionary<(int, int, int), long>();
+
 			public Day12Solver(string[] inputs, int repeat) {
+				var springParts = new List<string>();
+				var groupParts = new List<string>();
+				
 				for (int i = 0; i < repeat; i++) {
-					if (i > 0) line += "?";
-					line += inputs[0];
-					conditions.AddRange(GetConditions(inputs[1]));
+					springParts.Add(inputs[0]);
+					groupParts.Add(inputs[1]);
 				}
-				Solve();
-			}
-			private List<int> GetConditions(string str) {
-				List<int> conditions = new List<int>();
-				str.Split(',').ToList().ForEach(x => conditions.Add(int.Parse(x.Trim())));
-				return conditions;
+				
+				springs = string.Join("?", springParts);
+				groups = string.Join(",", groupParts)
+					.Split(',')
+					.Select(int.Parse)
+					.ToArray();
 			}
 
-			private void Solve() {
-				switch (CheckLine(line, conditions)) {
-					case Conditions.Underflow:
-						SolveFrom(line, 0, conditions);
-						break;
-					case Conditions.Satisfied:
-						Solutions.Add(line); //already complete input
-						break;
-				}
+			public long CountArrangements() {
+				return CountArrangements(0, 0, 0);
 			}
 
-			private void SolveFrom(string input, int startFrom, List<int> conditions) {
-				if (startFrom >= input.Length) return;
-				SolveFrom(input, startFrom + 1, conditions);
-				var next = input;
-				for (int i = startFrom; i < input.Length; i++) {
-					if (next[i] == '?') {
-						var arr = input.ToCharArray();
-						arr[i] = '#';
-						next = new string(arr);
-						break;
+			private long CountArrangements(int springIndex, int groupIndex, int currentGroupLength) {
+				var key = (springIndex, groupIndex, currentGroupLength);
+				if (memo.ContainsKey(key)) {
+					return memo[key];
+				}
+
+				if (springIndex == springs.Length) {
+					if (groupIndex == groups.Length && currentGroupLength == 0) {
+						return 1;
 					}
-				}
-				if (checkedAlready.Contains(next)) return;
-				var res = CheckLine(next, conditions);
-				checkedAlready.Add(next);
-				//Console.WriteLine($" : {res}");
-				switch (res) {
-					case Conditions.Satisfied:
-						//Console.WriteLine(next);
-
-						Solutions.Add(next);
-						return;
-					case Conditions.Overflow:
-						return;
-					case Conditions.Underflow:
-						SolveFrom(next, startFrom + 1, conditions);
-						break;
-				}
-			}
-			HashSet<string> checkedAlready = new HashSet<string>();
-
-			private enum Conditions { Satisfied, Overflow, Underflow }
-			private Conditions CheckLine(string line, List<int> conditions) { //TODO: if we would pass the last counts to this method, we would be done?
-																			  //Console.Write($"Checking:{line}, {string.Join(",", conditions)} ");
-				int actCond = 0;
-				int actSprings = 0;
-				int totalSprings = 0;
-				for (int i = 0; i < line.Length; i++) {
-					if (line[i] == '#') {
-						actSprings++;
-						totalSprings++;
-					} else {
-						if (actSprings > 0) {
-							if (actCond < conditions.Count && actSprings < conditions[actCond]) return Conditions.Underflow;
-							actSprings = 0;
-							actCond++;
-						}
+					if (groupIndex == groups.Length - 1 && currentGroupLength == groups[groupIndex]) {
+						return 1;
 					}
+					return 0;
 				}
-				if (totalSprings > conditions.Sum()) return Conditions.Overflow;
-				if ((actCond < conditions.Count && conditions[actCond] > actSprings)
-					|| actCond < conditions.Count - 1) {
-					return Conditions.Underflow;
+
+				long count = 0;
+				char current = springs[springIndex];
+
+				// Try placing a damaged spring (#)
+				if (current == '#' || current == '?') {
+					count += CountArrangements(springIndex + 1, groupIndex, currentGroupLength + 1);
 				}
-				return Conditions.Satisfied;
+
+				// Try placing an operational spring (.)
+				if (current == '.' || current == '?') {
+					if (currentGroupLength == 0) {
+						// Not in a group, just continue
+						count += CountArrangements(springIndex + 1, groupIndex, 0);
+					} else if (groupIndex < groups.Length && currentGroupLength == groups[groupIndex]) {
+						// Finished a group, move to next group
+						count += CountArrangements(springIndex + 1, groupIndex + 1, 0);
+					}
+					// If currentGroupLength > 0 but doesn't match the expected group size, this is invalid
+				}
+
+				memo[key] = count;
+				return count;
 			}
 		}
 	}
