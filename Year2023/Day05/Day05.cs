@@ -5,23 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day05 {
-	public class Day05 : Solver {
-		public Day05() : base(2023, 5) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
+namespace Year2023 {
+	public class Day05 : IAocSolver {
 		public class Map(long sourceStart, long destStart, long range) {
 			public long GetMapValue(long source) {
 				if (source < sourceStart || source > SourceEnd) return -1;
@@ -48,13 +33,11 @@ namespace Year2023.Day05 {
 				Maps = temp;
 			}
 		}
-		protected override long SolvePart1() {
-			//long result = 0;
-			var lines = File.ReadAllLines("day5input.txt");
+		public long SolvePart1(string[] input) {
 			var seebs = new List<long>();
 			var levels = new List<Level>();
 			var level = new Level();
-			foreach (var line in lines) {
+			foreach (var line in input) {
 				if (!seebs.Any()) {
 					var s = line.Split(':')[1].Split(' ');
 					foreach (var seeb in s) {
@@ -96,13 +79,11 @@ namespace Year2023.Day05 {
 			return result;
 		}
 
-		protected override long SolvePart2() {
-			//long result = 0;
-			var lines = File.ReadAllLines("day5input.txt");
+		public long SolvePart2(string[] input) {
 			var seebs = new List<long>();
 			var levels = new List<Level>();
 			var level = new Level();
-			foreach (var line in lines) {
+			foreach (var line in input) {
 				if (!seebs.Any()) {
 					var s = line.Split(':')[1].Split(' ');
 					foreach (var seeb in s) {
@@ -128,26 +109,18 @@ namespace Year2023.Day05 {
 					}
 				}
 			}
-
 			foreach (var l in levels) l.FillGaps();
-
-			//1. we start from the seed ranges as source ranges
-			//2. iterate on levels
-			//  a. check which ranges of the level intersect the source ranges
-			//  b. if there are more than 1 ranges intersecting the source range, split the source range
-			//  c. the next level will process the newly split source ranges
-
 			long result = long.MaxValue;
 			for (int s = 0; s <= seebs.Count / 2; s += 2) {
 				long start = seebs[s];
 				long end = seebs[s] + seebs[s + 1];
 				var maps = new List<Map>() {
-				new Map(
-					sourceStart: seebs[s],
-					destStart: seebs[s],
-					range: seebs[s + 1]
-				)
-			};
+					new Map(
+						sourceStart: seebs[s],
+						destStart: seebs[s],
+						range: seebs[s + 1]
+					)
+				};
 				foreach (var l in levels) {
 					var newMaps = new List<Map>();
 					foreach (var map in maps) {
@@ -157,7 +130,6 @@ namespace Year2023.Day05 {
 				}
 				result = Math.Min(result, maps.Min(x => x.SourceStart));
 			}
-
 			return result;
 		}
 		private static List<Map> ProcessMap(Level l, Map s) {
@@ -180,7 +152,6 @@ namespace Year2023.Day05 {
 				Console.WriteLine($"{map.SourceStart}:{map.SourceEnd}");
 				result.Add(map);
 			}
-
 			return result;
 		}
 	}

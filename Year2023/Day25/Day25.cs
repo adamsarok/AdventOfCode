@@ -5,31 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day25 {
-	public class Day25 : Solver {
-		public Day25() : base(2023, 25) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
+namespace Year2023 {
+	public class Day25 : IAocSolver {
+		public long SolvePart1(string[] input) {
 			long result = 0;
 
 			return result;
 		}
-
-		protected override long SolvePart2() {
+		public long SolvePart2(string[] input) {
 			long result = 0;
 
 			return result;

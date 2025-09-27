@@ -5,41 +5,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day14 {
-	public class Day14 : Solver {
-		//this is such a cool task!
+namespace Year2023 {
+	public class Day14 : IAocSolver {
 		const char ROLLING = 'O';
 		const char EMPTY = '.';
 		public enum Directions { N, E, S, W }
-		public Day14() : base(2023, 14) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
-			List<char[]> lines = ReadInput();
+		public long SolvePart1(string[] input) {
+			List<char[]> lines = ReadInput(input);
 			Roll(lines, Directions.N);
 			Console.WriteLine("After:");
 			WriteState(lines);
-
 			return GetResult(lines);
 		}
 
-		protected override long SolvePart2() {
-			//N W S E
-			//1000000000 cycles
-			List<char[]> lines = ReadInput();
+		public long SolvePart2(string[] input) {
+			List<char[]> lines = ReadInput(input);
 			var cl = new CycleDetector();
 			for (long i = 0; i < 1000; i++) {
 				Roll(lines, Directions.N);
@@ -51,13 +31,9 @@ namespace Year2023.Day14 {
 				Console.WriteLine($"Iteration: {i} => {sum}");
 				if (r > 0) {
 					bool found = true;
-					//lazy to program whats left:
-					//1. this gets us the iteration cycle length & iteration cycle start
-					//2. result is index N in cycle = (1000000000 - cycle start) % cycle length 
-					//3. find element N in cycle
 				}
 			}
-			return 0; //TODO what
+			return 0;
 		}
 
 		private static int GetResult(List<char[]> lines) {
@@ -158,9 +134,9 @@ namespace Year2023.Day14 {
 			}
 		}
 
-		private static List<char[]> ReadInput() {
+		private static List<char[]> ReadInput(string[] input) {
 			var lines = new List<char[]>();
-			foreach (var l in File.ReadAllLines("testinput.txt")) {
+			foreach (var l in input) {
 				lines.Add(l.ToCharArray());
 			}
 			WriteState(lines);

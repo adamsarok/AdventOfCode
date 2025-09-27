@@ -5,35 +5,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day06 {
-	public class Day06 : Solver {
-		public Day06() : base(2023, 6) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
-			var lines = File.ReadAllLines("day6input.txt");
+namespace Year2023 {
+	public class Day06 : IAocSolver {
+		public long SolvePart1(string[] input) {
 			List<int> times = new List<int>();
 			List<int> distances = new List<int>();
-			lines[0]
+			input[0]
 				.Split(':')[1]
 				.Split(' ')
 				.Where(x => !string.IsNullOrWhiteSpace(x))
 				.ToList()
 				.ForEach(x => times.Add(int.Parse(x)));
-			lines[1]
+			input[1]
 				.Split(':')[1]
 				.Split(' ')
 				.Where(x => !string.IsNullOrWhiteSpace(x))
@@ -45,7 +28,7 @@ namespace Year2023.Day06 {
 				int waysToBeat = 0;
 				var maxTime = times[i];
 				var distToBeat = distances[i];
-				for (int tPressed = 1; tPressed <= maxTime - 1; tPressed++) { //press for at least 1 ms, max totalTime -1 ms
+				for (int tPressed = 1; tPressed <= maxTime - 1; tPressed++) {
 					var distance = tPressed * (maxTime - tPressed);
 					if (distance > distToBeat) {
 						Console.WriteLine($"tPressed:{tPressed} tTravel:{maxTime - tPressed} dTraveled:{distance}");
@@ -58,14 +41,13 @@ namespace Year2023.Day06 {
 			return result;
 		}
 
-		protected override long SolvePart2() {
-			var lines = File.ReadAllLines("day6input.txt");
-			var maxTime = long.Parse(string.Join("", lines[0]
+		public long SolvePart2(string[] input) {
+			var maxTime = long.Parse(string.Join("", input[0]
 				.Split(':')[1]
 				.Split(' ')
 				.Where(x => !string.IsNullOrWhiteSpace(x))
 				.ToList()));
-			var distToBeat = long.Parse(string.Join("", lines[1]
+			var distToBeat = long.Parse(string.Join("", input[1]
 				.Split(':')[1]
 				.Split(' ')
 				.Where(x => !string.IsNullOrWhiteSpace(x))

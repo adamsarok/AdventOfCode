@@ -5,23 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day07 {
-	public class Day07 : Solver {
-		public Day07() : base(2023, 7) {
-		}
-		string[] lines;
-		protected override void ReadInputPart1(string fileName) {
-			lines = File.ReadAllLines(fileName);
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			ReadInputPart1(fileName);
-		}
-
-		protected override long SolvePart1() {
+namespace Year2023 {
+	public class Day07 : IAocSolver {
+		public long SolvePart1(string[] input) {
 			List<string> hands = new List<string>();
 			List<int> bids = new List<int>();
-			foreach (var line in lines) {
+			foreach (var line in input) {
 				var s = line.Split(' ');
 				hands.Add(s[0]);
 				bids.Add(int.Parse(s[1]));
@@ -35,10 +24,10 @@ namespace Year2023.Day07 {
 			return result;
 		}
 
-		protected override long SolvePart2() {
+		public long SolvePart2(string[] input) {
 			List<string> hands = new List<string>();
 			List<int> bids = new List<int>();
-			foreach (var line in lines) {
+			foreach (var line in input) {
 				var s = line.Split(' ');
 				hands.Add(s[0]);
 				bids.Add(int.Parse(s[1]));

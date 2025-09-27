@@ -5,40 +5,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day09 {
-	public class Day09 : Solver {
-		public Day09() : base(2023, 9) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
-			var inputs = ReadInput();
+namespace Year2023 {
+	public class Day09 : IAocSolver {
+		public long SolvePart1(string[] input) {
+			var inputs = ReadInput(input);
 			int result = 0;
-			foreach (var input in inputs) {
-				var solver = new Day9Solver(input);
+			foreach (var inp in inputs) {
+				var solver = new Day9Solver(inp);
 				result += solver.Result;
 			}
-
 			return result;
 		}
 
-		protected override long SolvePart2() {
-			var inputs = ReadInput();
+		public long SolvePart2(string[] input) {
+			var inputs = ReadInput(input);
 			int result = 0;
-			foreach (var input in inputs) {
-				var s2 = new SolverBackwards(input);
+			foreach (var inp in inputs) {
+				var s2 = new SolverBackwards(inp);
 				result += s2.Result;
 			}
 			return result;
@@ -105,10 +88,9 @@ namespace Year2023.Day09 {
 				return result;
 			}
 		}
-		private static List<List<int>> ReadInput() {
-			var lines = File.ReadAllLines("testinput.txt");
+		private static List<List<int>> ReadInput(string[] input) {
 			List<List<int>> result = new List<List<int>>();
-			foreach (var line in lines) {
+			foreach (var line in input) {
 				var r = new List<int>();
 				result.Add(r);
 				foreach (var c in line.Split(' ')) {

@@ -5,30 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day02 {
-	public class Day02 : Solver {
-		public Day02() : base(2023, 2) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
-			long result = 0;
+namespace Year2023 {
+	public class Day02 : IAocSolver {
+		public long SolvePart1(string[] input) {
 			int part1 = 0;
 			int part2 = 0;
-			var lines = File.ReadAllLines("day2input.txt");
-			foreach (var line in lines) {
+			foreach (var line in input) {
 				var spl = line.Split(':');
 				int gameID = int.Parse(spl[0].Substring(5, spl[0].Length - 5));
 				var pulls = spl[1].Split(';');
@@ -60,13 +42,11 @@ namespace Year2023.Day02 {
 			}
 			Console.WriteLine($"PArt1: {part1}");
 			Console.WriteLine($"PArt2: {part2}");
-			return result;
+			return part1;
 		}
 
-		protected override long SolvePart2() {
-			long result = 0;
-
-			return result;
+		public long SolvePart2(string[] input) {
+			return 0;
 		}
 	}
 }

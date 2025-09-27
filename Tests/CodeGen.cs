@@ -1,10 +1,11 @@
 ﻿using System.Xml.Linq;
 
-namespace Tests {
+namespace Codegen {
 	public class CodeGen {
-		private const int year = 2025;
-		[Fact]
-		public void GenerateYear() {
+
+		[Theory]
+		[InlineData(2023)]
+		public void GenerateYear(int year) {
 			for (int i = 1; i <= 25; i++) {
 				string baseDir = AppContext.BaseDirectory;
 				string sourceDir = Path.Combine(baseDir, "..", "..", "..", "..");

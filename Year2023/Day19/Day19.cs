@@ -5,53 +5,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day19 {
-	public class Day19 : Solver {
-		public Day19() : base(2023, 19) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
+namespace Year2023 {
+	public class Day19 : IAocSolver {
+		public long SolvePart1(string[] input) {
 			long result = 0;
-
-			var s = new SolverPart1("shortinput.txt");
+			var s = new SolverPart1(input);
 			s.Solve();
-			var s2 = new SolverPart1("testinput.txt");
-			s2.Solve(); //TODO
-
+			return result;
+		}
+		public long SolvePart2(string[] input) {
+			long result = 0;
+			var s = new SolverPart2(input);
+			s.Solve();
 			return result;
 		}
 
-		protected override long SolvePart2() {
-			long result = 0;
-
-			var s = new SolverPart2("shortinput.txt");
-			s.Solve();
-			var s2 = new SolverPart2("testinput.txt");
-			s2.Solve();
-
-			return result;
-		}
-
-		public class SolverPart2(string inputFileName) : SolverBase(inputFileName) {
+		public class SolverPart2 : SolverBase {
+			public SolverPart2(string[] input) : base(input) { }
 			record struct Interval(Rule.TargetFields targetField, long from, long to) { }
 
-			//brute force would take 243 years so that is not very feasible
-			//build up ranges from all rules, so we have a list of intervals:
-			//0<a<123 && 10<x<55 && 555<m<556 && 9<s<15 => A
-			//then count the number of values possible in all A intervals
 			void SplitIntervals(Rule.Relations rel, int value, ref List<Interval> intervals) {
 				Interval? toSplit;
 				if (rel == Rule.Relations.GreaterThan) {
@@ -74,23 +46,17 @@ namespace Year2023.Day19 {
 
 					if (n1.from > 0 && n1.from <= 4000 && n1.to > 0 && n1.to <= 4000) intervals.Add(n1);
 					if (n2.from > 0 && n2.from <= 4000 && n2.to > 0 && n2.to <= 4000) intervals.Add(n2);
-					// Console.WriteLine($"Relation: {rel.ToString()}, Value: {value}");
-					// Console.WriteLine($"Removed: {val}");
-					// Console.WriteLine($"Split into: {n1}, {n2}");
 				}
 			}
 
 			public void Solve() {
-				ReadInput();
 				Dictionary<Rule.TargetFields, List<Interval>> intervals =
 					new Dictionary<Rule.TargetFields, List<Interval>>();
-				intervals.Add(Rule.TargetFields.a, [new Interval(Rule.TargetFields.a, 1, 4000)]);
-				intervals.Add(Rule.TargetFields.x, [new Interval(Rule.TargetFields.x, 1, 4000)]);
-				intervals.Add(Rule.TargetFields.m, [new Interval(Rule.TargetFields.m, 1, 4000)]);
-				intervals.Add(Rule.TargetFields.s, [new Interval(Rule.TargetFields.s, 1, 4000)]);
+				intervals.Add(Rule.TargetFields.a, new List<Interval> { new Interval(Rule.TargetFields.a, 1, 4000) });
+				intervals.Add(Rule.TargetFields.x, new List<Interval> { new Interval(Rule.TargetFields.x, 1, 4000) });
+				intervals.Add(Rule.TargetFields.m, new List<Interval> { new Interval(Rule.TargetFields.m, 1, 4000) });
+				intervals.Add(Rule.TargetFields.s, new List<Interval> { new Interval(Rule.TargetFields.s, 1, 4000) });
 
-				//collect all points in a,x,m,s where a new interval is needed
-				//later run the same rule matching as day 1, but only for 1 number in all intervals
 				foreach (var wf in workflows) {
 					foreach (var r in wf.Value.Where(r => r.Rel != Rule.Relations.Fallback)) {
 						var list = intervals[r.TargetField];
@@ -100,11 +66,9 @@ namespace Year2023.Day19 {
 
 				foreach (var kvp in intervals) {
 					Console.WriteLine($"{kvp.Key}: {kvp.Value.Count} intervals");
-					// foreach (var a in kvp.Value.OrderBy(x => x.from)) {
-					// 	Console.WriteLine(a);
-					// }
 				}
 
+				long result = 0;
 				foreach (var a in intervals[Rule.TargetFields.a]) {
 					foreach (var x in intervals[Rule.TargetFields.x]) {
 						foreach (var m in intervals[Rule.TargetFields.m]) {
@@ -114,38 +78,30 @@ namespace Year2023.Day19 {
 								var dummy2 = new Part(x.to, m.to, a.to, s.to);
 								var rDummy2 = TraverseWorkflows(dummy2, "in");
 								if (rDummy != rDummy2) {
-									throw new Exception(
-										$"{dummy}={rDummy} does not equal {dummy2}={rDummy2}"); //if the ranges are set correctly, both start & end of range should be the same result either A or R
+									throw new Exception($"{dummy}={rDummy} does not equal {dummy2}={rDummy2}");
 								}
-
-								//TODO: shortinput works, testinput fails:
-								//Part { x = 881, m = 1609, a = 1, s = 2010 }= A does not equal Part { x = 902, m = 1610, a = 98, s = 2039 }= R
-								//Part { x = 1251, m = 1609, a = 1, s = 2010 }=A does not equal Part { x = 1269, m = 1610, a = 98, s = 2039 }=R
 								if (rDummy == Results.A)
-									result += (a.to - a.from + 1) * (m.to - m.from + 1) * (x.to - x.from + 1) *
-											  (s.to - s.from + 1);
+									result += (a.to - a.from + 1) * (m.to - m.from + 1) * (x.to - x.from + 1) * (s.to - s.from + 1);
 							}
 						}
 					}
 				}
-
 				Console.WriteLine($"Result: {result}");
 			}
 		}
 
-		public class SolverPart1(string inputFileName) : SolverBase(inputFileName) {
+		public class SolverPart1 : SolverBase {
+			public SolverPart1(string[] input) : base(input) { }
 			public void Solve() {
-				ReadInput();
 				result = 0;
 				foreach (var part in parts) {
 					CheckPart(part);
 				}
-
 				Console.WriteLine(result);
 			}
 		}
 
-		public class SolverBase(string inputFileName) {
+		public class SolverBase {
 			protected Dictionary<string, List<Rule>> workflows;
 			protected List<Part> parts;
 			protected long result;
@@ -160,10 +116,8 @@ namespace Year2023.Day19 {
 				switch (r) {
 					case Results.A:
 						result += part.a + part.m + part.x + part.s;
-						//Console.WriteLine($"part {part} is accepted");
 						break;
 					case Results.R:
-						//Console.WriteLine($"part {part} is rejected");
 						break;
 					default:
 						throw new ArgumentOutOfRangeException();
@@ -179,17 +133,14 @@ namespace Year2023.Day19 {
 						return TraverseWorkflows(part, rule.NextStep);
 					}
 				}
-
 				throw new Exception("shouldn't happen");
 			}
 
-
-			protected void ReadInput() {
-				var lines = File.ReadAllLines(inputFileName);
+			protected void ReadInput(string[] input) {
 				workflows = new Dictionary<string, List<Rule>>();
-				parts = new();
+				parts = new List<Part>();
 				bool isWorkflows = true;
-				foreach (var l in lines) {
+				foreach (var l in input) {
 					if (string.IsNullOrWhiteSpace(l)) isWorkflows = false;
 					else if (isWorkflows) {
 						var w = l.Split('{');
@@ -197,12 +148,9 @@ namespace Year2023.Day19 {
 						foreach (var rule in w[1].Substring(0, w[1].Length - 1).Split(',')) {
 							rules.Add(Rule.ParseRule(rule));
 						}
-
-						//there are tons of dummy rules eg.: ld{x<1281:R,R} this is always a reject and can be replaced with ld{R}
 						string next = rules[0].NextStep;
 						if (rules.All(x => x.NextStep == next))
-							rules = [new Rule(Rule.Relations.Fallback, Rule.TargetFields.a, 1, next)];
-
+							rules = new List<Rule> { new Rule(Rule.Relations.Fallback, Rule.TargetFields.a, 1, next) };
 						workflows.Add(w[0], rules);
 					} else {
 						var p = l.Substring(1, l.Length - 2).Split(',');
@@ -217,18 +165,24 @@ namespace Year2023.Day19 {
 
 			protected record struct Part(long x, long m, long a, long s);
 
-			protected class Rule(Rule.Relations rel, Rule.TargetFields targetField, int value, string nextStep) {
-				public string NextStep => nextStep;
-				public Relations Rel => rel;
-				public TargetFields TargetField => targetField;
-				public int Value => value;
+			protected class Rule {
+				public string NextStep { get; }
+				public Relations Rel { get; }
+				public TargetFields TargetField { get; }
+				public int Value { get; }
+
+				public Rule(Relations rel, TargetFields targetField, int value, string nextStep) {
+					Rel = rel;
+					TargetField = targetField;
+					Value = value;
+					NextStep = nextStep;
+				}
 
 				public static Rule ParseRule(string str) {
 					if (!str.Contains("<") && !str.Contains(">")) {
 						return new Rule(Relations.Fallback, TargetFields.a, 0, str);
 					}
-
-					var targetField = Enum.Parse<Rule.TargetFields>(str.Substring(0, 1));
+					var targetField = Enum.Parse<TargetFields>(str.Substring(0, 1));
 					var relation = str.Substring(1, 1) == "<" ? Relations.LessThan : Relations.GreaterThan;
 					var value = str.Split(':')[0].Substring(2);
 					var nextStep = str.Split(':')[1];
@@ -249,24 +203,27 @@ namespace Year2023.Day19 {
 				}
 
 				public bool Match(Part part) {
-					if (rel == Relations.Fallback) return true;
-					switch (targetField) {
+					if (Rel == Relations.Fallback) return true;
+					switch (TargetField) {
 						case TargetFields.x:
-							return (rel == Rule.Relations.GreaterThan && value < part.x)
-								   || (rel == Rule.Relations.LessThan && value > part.x);
+							return (Rel == Relations.GreaterThan && Value < part.x)
+								|| (Rel == Relations.LessThan && Value > part.x);
 						case TargetFields.m:
-							return (rel == Rule.Relations.GreaterThan && value < part.m)
-								   || (rel == Rule.Relations.LessThan && value > part.m);
+							return (Rel == Relations.GreaterThan && Value < part.m)
+								|| (Rel == Relations.LessThan && Value > part.m);
 						case TargetFields.a:
-							return (rel == Rule.Relations.GreaterThan && value < part.a)
-								   || (rel == Rule.Relations.LessThan && value > part.a);
+							return (Rel == Relations.GreaterThan && Value < part.a)
+								|| (Rel == Relations.LessThan && Value > part.a);
 						case TargetFields.s:
-							return (rel == Rule.Relations.GreaterThan && value < part.s)
-								   || (rel == Rule.Relations.LessThan && value > part.s);
+							return (Rel == Relations.GreaterThan && Value < part.s)
+								|| (Rel == Relations.LessThan && Value > part.s);
 					}
-
 					throw new Exception("shouldnt happen");
 				}
+			}
+
+			public SolverBase(string[] input) {
+				ReadInput(input);
 			}
 		}
 	}

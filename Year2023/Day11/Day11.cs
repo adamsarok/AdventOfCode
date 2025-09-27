@@ -5,39 +5,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day11 {
-	public class Day11 : Solver {
-		public Day11() : base(2023, 11) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
+namespace Year2023 {
+	public class Day11 : IAocSolver {
+		public long SolvePart1(string[] input) {
+			return SolveDist(input, 2);
 		}
 
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
+		public long SolvePart2(string[] input) {
+			return SolveDist(input, 1000000);
 		}
 
-		protected override long SolvePart1() {
-			return SolveDist(2);
-		}
-
-		protected override long SolvePart2() {
-			return SolveDist(1000000);
-		}
-
-		private long SolveDist(int d) {
-			var lines = File.ReadAllLines("testinput.txt");
+		private long SolveDist(string[] input, int d) {
 			List<(int, int)> galaxies = new List<(int, int)>();
 			List<int> emptyRows = new List<int>();
 			List<int> emptyCols = new List<int>();
-			for (int y = 0; y < lines.Length; y++) {
-				var line = lines[y];
+			for (int y = 0; y < input.Length; y++) {
+				var line = input[y];
 				bool rowEmpty = true;
 				for (int x = 0; x < line.Length; x++) {
 					if (line[x] == '#') {
@@ -47,14 +30,9 @@ namespace Year2023.Day11 {
 				}
 				if (rowEmpty) emptyRows.Add(y);
 			}
-			for (int x = 0; x < lines[0].Length; x++) {
+			for (int x = 0; x < input[0].Length; x++) {
 				if (!galaxies.Any(g => g.Item1 == x)) emptyCols.Add(x);
 			}
-
-			//logic:
-			//1. calc distance
-			//2. doubling only means that if we cross an empty row or column, that is counted as 2
-			//why does this not for d > 1?
 			long result = 0;
 			int emptiesAdded = 0;
 			for (int i = 0; i < galaxies.Count - 1; i++) {
@@ -68,11 +46,9 @@ namespace Year2023.Day11 {
 						emptyCols.Where(x => x > g1.Item1 && x < g2.Item1) :
 						emptyCols.Where(x => x < g1.Item1 && x > g2.Item1)).ToList();
 					emptiesAdded += emptyColsBetween.Count() + emptyRowsBetween.Count();
-
 					int hDist = Math.Abs(g1.Item1 - g2.Item1) + (emptyColsBetween.Count() * (d - 1));
 					int vDist = Math.Abs(g1.Item2 - g2.Item2) + (emptyRowsBetween.Count() * (d - 1));
 					int dist = hDist + vDist;
-					//Console.WriteLine($"[Galaxy {i + 1}]->[Galaxy {j + 1}]:[{g1.Item1}:{g1.Item2}]->[{g2.Item1}:{g2.Item2}]={dist}");
 					result += dist;
 				}
 			}

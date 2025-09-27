@@ -5,23 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day04 {
-	public class Day04 : Solver {
-		public Day04() : base(2023, 4) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
+namespace Year2023 {
+	public class Day04 : IAocSolver {
 		public class Card {
 			public int Id { get; set; }
 			public int Instances { get; set; }
@@ -30,10 +15,9 @@ namespace Year2023.Day04 {
 			public List<int> MyNums { get; set; } = new List<int>();
 		}
 
-		protected override long SolvePart1() {
-			var lines = File.ReadAllLines("day4input.txt");
+		public long SolvePart1(string[] input) {
 			long total = 0;
-			foreach (var line in lines) {
+			foreach (var line in input) {
 				var s1 = line.Split(':');
 				var nums = s1[1];
 				var myNums = new List<int>();
@@ -53,12 +37,11 @@ namespace Year2023.Day04 {
 			return total;
 		}
 
-		protected override long SolvePart2() {
-			var lines = File.ReadAllLines("day4input.txt");
+		public long SolvePart2(string[] input) {
 			long total = 0;
-			var cards = new Card[lines.Length];
-			int id = 0; ;
-			foreach (var line in lines) {
+			var cards = new Card[input.Length];
+			int id = 0;
+			foreach (var line in input) {
 				var s1 = line.Split(':');
 				var nums = s1[1];
 				var myNums = new List<int>();

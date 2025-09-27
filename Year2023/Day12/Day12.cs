@@ -6,55 +6,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day12 {
-	public class Day12 : Solver {
-		public Day12() : base(2023, 12) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
-			var lines = File.ReadAllLines("testinput.txt");
+namespace Year2023 {
+	public class Day12 : IAocSolver {
+		public long SolvePart1(string[] input) {
 			int result = 0;
 			Stopwatch sw = Stopwatch.StartNew();
-			// Parallel.ForEach(lines, line => {
-			//     var solver = new Solver(line.Split(' '), false);
-			//     result += solver.Solutions.Count;
-			// });
-			foreach (var line in lines) { //current best is 1590ms 
+			foreach (var line in input) {
 				var solver = new Day12Solver(line.Split(' '), 5);
 				result += solver.Solutions.Count;
 			}
 			sw.Stop();
 			Console.WriteLine($"Part1 elapsed: {sw.ElapsedMilliseconds}");
-
-			//day2 will never finish with brute force approach 
-			// Stopwatch sw2 = Stopwatch.StartNew();
-			// Parallel.ForEach(lines, line => {
-			//     var solver = new Solver(line.Split(' '), true);
-			//     result += solver.Solutions.Count;
-			// });
-			// sw2.Stop();
-			// Console.WriteLine($"Part2 elapsed: {sw2.ElapsedMilliseconds}");
-
 			return result;
 		}
 
-		protected override long SolvePart2() {
-			long result = 0;
-
-			return result;
+		public long SolvePart2(string[] input) {
+			return 0;
 		}
 
 		private class Day12Solver {

@@ -6,28 +6,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day17 {
-	public class Day17 : Solver {
+namespace Year2023 {
+	public class Day17 : IAocSolver {
 		private string[] input;
 		private int height;
 		private int width;
 
-		public Day17() : base(2023, 17) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			input = File.ReadAllLines(fileName);
+		public long SolvePart1(string[] input) {
+			this.input = input;
 			height = input.Length;
 			width = input[0].Length;
+
+			return 0; // TODO: implement logic
 		}
-
-		protected override void ReadInputPart2(string fileName) {
-			ReadInputPart1(fileName);
-		}
-
-		protected override long SolvePart2() {
-			long result = 0;
-
-			return result;
+		public long SolvePart2(string[] input) {
+			return 0;
 		}
 
 
@@ -52,7 +45,7 @@ namespace Year2023.Day17 {
 		//this whole thing is bad, none of the costs match, what was I doing here?
 
 		record struct Vertex(int x, int y, int cost, Directions lastDir, int dirCount) { }
-		protected override long SolvePart1() {
+		protected long SolvePart1() {
 			//there is an error somewhere - if I check visited early, I don't get the optimal route 
 			//if I check late there are too many queued vertices but result is correct
 			//there is a fundamental error how dijkstra is implemented for this matrix

@@ -6,54 +6,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day18 {
-	public class Day18 : Solver {
-		public Day18() : base(2023, 18) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
+namespace Year2023 {
+	public class Day18 : IAocSolver {
+		public long SolvePart1(string[] input) {
 			long result = 0;
-
-			// var input = ReadFile("shortinput.txt");
-			// var s = new Solver(input, true);
-			// s.Solve();
-			// var input2 = ReadFile("testinput.txt"); 
-			// var s2 = new Solver(input2, true);
-			// s2.Solve();
-			var input = ReadFile("shortinput.txt");
-			var s = new SolverShoeLace(input);
+			var s = new SolverShoeLace(ReadFile(input));
 			s.Solve();
-			var input2 = ReadFile("testinput.txt");
-			var s2 = new SolverShoeLace(input2);
-			s2.Solve();
-
-			return result; //todo
+			return result;
 		}
-
-		protected override long SolvePart2() {
+		public long SolvePart2(string[] input) {
 			long result = 0;
-
-			var input = ReadFilePart2("shortinput.txt");
-			var s = new SolverShoeLace(input);
+			var s = new SolverShoeLace(ReadFilePart2(input));
 			s.Solve();
-			var input2 = ReadFilePart2("testinput.txt");
-			var s2 = new SolverShoeLace(input2);
-			s2.Solve();
-
-			return result; //todo
+			return result;
 		}
 
 
@@ -106,28 +71,26 @@ namespace Year2023.Day18 {
 		public enum Directions { R, D, L, U }
 		record struct Input(Directions dir, int length) { }
 
-		private static List<Input> ReadFile(string fileName) {
-			var file = File.ReadAllLines(fileName);
+		private static List<Input> ReadFile(string[] input) {
 			List<Input> result = new List<Input>();
-			foreach (var line in file) {
+			foreach (var line in input) {
 				var s = line.Split(' ');
-				var input = new Input(dir: Enum.Parse<Directions>(s[0]), length: int.Parse(s[1]));
-				result.Add(input);
+				var i = new Input(dir: Enum.Parse<Directions>(s[0]), length: int.Parse(s[1]));
+				result.Add(i);
 			}
 			return result;
 		}
 
-		private static List<Input> ReadFilePart2(string fileName) {
-			var file = File.ReadAllLines(fileName);
+		private static List<Input> ReadFilePart2(string[] input) {
 			List<Input> result = new List<Input>();
-			foreach (var line in file) {
+			foreach (var line in input) {
 				var s = line.Split(' ');
 				var hex = s[2].Substring(2, 5);
 				var dir = s[2].Substring(7, 1);
-				var input = new Input(
+				var i = new Input(
 					dir: Enum.Parse<Directions>(dir),
 					length: int.Parse(hex, System.Globalization.NumberStyles.HexNumber));
-				result.Add(input);
+				result.Add(i);
 			}
 			return result;
 		}
@@ -135,7 +98,7 @@ namespace Year2023.Day18 {
 
 		record struct Vertex(long x, long y) { }
 
-		class Solver(List<Input> inputs, bool doPrint) {
+		class Solver(List<Input> inputs) {
 			char[,] dig;
 			int height, width;
 			private int xInside, yInside;
@@ -147,9 +110,9 @@ namespace Year2023.Day18 {
 				InitMatrix();
 				Dig();
 				Shrink();
-				if (doPrint) PrintOut();
+				//if (doPrint) PrintOut();
 				Fill();
-				if (doPrint) PrintOut();
+				//if (doPrint) PrintOut();
 				Calc();
 				sw.Stop();
 				Console.WriteLine($"Solved in {sw.ElapsedMilliseconds} ms");

@@ -5,38 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day16 {
-	public class Day16 : Solver {
-		public Day16() : base(2023, 16) {
-		}
-		//empty space (.)
-		//mirrors (/ and \), 
-		//and splitters (| and -).
-		//static bool[,] energizedTiles;
+namespace Year2023 {
+	public class Day16 : IAocSolver {
 		record struct Coord(int X, int Y);
 		enum Directions { Up, Down, Left, Right, Stop };
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
-			var input = File.ReadAllLines("testinput.txt");
+		public long SolvePart1(string[] input) {
 			var b = new BeamMap(input, new Coord(-1, 0), Directions.Right);
 			return b.GetResult();
 		}
 
-		protected override long SolvePart2() {
-			var input = File.ReadAllLines("testinput.txt");
+		public long SolvePart2(string[] input) {
 			int result = 0;
 			for (int y = 0; y < input.Length; y++) {
 				var b = new BeamMap(input, new Coord(-1, y), Directions.Right);
@@ -50,7 +28,6 @@ namespace Year2023.Day16 {
 				b = new BeamMap(input, new Coord(x, input.Length), Directions.Up);
 				result = Math.Max(result, b.GetResult());
 			}
-
 			return result;
 		}
 

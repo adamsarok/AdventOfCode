@@ -5,52 +5,33 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day08 {
-	public class Day08 : Solver {
-		public Day08() : base(2023, 8) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
+namespace Year2023 {
+	public class Day08 : IAocSolver {
+		public long SolvePart1(string[] input) {
 			Dictionary<string, (string, string)> nodes;
 			char[] lr;
-			ReadInput(out nodes, out lr);
+			ReadInput(input, out nodes, out lr);
 			string node = "AAA";
 			int actLr = 0;
 			int result = 0;
 			while (node != "ZZZ") {
-				//Console.WriteLine(node);
 				result++;
 				if (actLr >= lr.Length) actLr = 0;
 				var next = nodes[node];
 				node = lr[actLr++] == 'L' ? next.Item1 : next.Item2;
 			}
-
 			return result;
 		}
 
-		protected override long SolvePart2() {
+		public long SolvePart2(string[] input) {
 			Dictionary<string, (string, string)> nodes;
 			char[] lr;
-			ReadInput(out nodes, out lr);
+			ReadInput(input, out nodes, out lr);
 			List<long> stepsToReach = new List<long>();
 			foreach (var k in nodes.Keys.Where(x => x.EndsWith("A"))) {
 				var s = new Day8Solver(k, nodes, lr);
 				stepsToReach.Add(s.CycleLength);
 			}
-
 			return LCM(stepsToReach.ToArray());
 		}
 
@@ -92,8 +73,8 @@ namespace Year2023.Day08 {
 			}
 		}
 
-		private static void ReadInput(out Dictionary<string, (string, string)> nodes, out char[] lr) {
-			var lines = File.ReadAllLines("testinput.txt");
+		private static void ReadInput(string[] input, out Dictionary<string, (string, string)> nodes, out char[] lr) {
+			var lines = input;
 			nodes = new Dictionary<string, (string, string)>();
 			lr = lines[0].ToCharArray();
 			for (int i = 2; i < lines.Length; i++) {
@@ -105,21 +86,6 @@ namespace Year2023.Day08 {
 					refs[0].Trim().Substring(1, 3),
 					refs[1].Trim().Substring(0, 3)
 				));
-			}
-		}
-
-		public class BureForceSolver {
-			private string node { get; set; } = "";
-			Dictionary<string, (string, string)> nodes;
-			public BureForceSolver(string node, Dictionary<string, (string, string)> nodes) {
-				this.node = node;
-				this.nodes = nodes;
-			}
-			public bool MoveNext(bool isLeft) {
-				//Console.WriteLine(node);
-				var next = nodes[node];
-				node = isLeft ? next.Item1 : next.Item2;
-				return node.EndsWith("Z");
 			}
 		}
 	}

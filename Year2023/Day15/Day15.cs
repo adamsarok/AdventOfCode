@@ -6,53 +6,36 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day15 {
-	public class Day15 : Solver {
-		public Day15() : base(2023, 15) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
-			var inputs = File.ReadAllLines("testinput.txt")[0].Split(',');
+namespace Year2023 {
+	public class Day15 : IAocSolver {
+		public long SolvePart1(string[] input) {
+			var inputs = input[0].Split(',');
 			var result = 0;
 			Debug.Assert(HASHMAP.Hash("HASH") == 52, "Hashing is incorrect");
-			foreach (var input in inputs) {
-				result += HASHMAP.Hash(input);
+			foreach (var inp in inputs) {
+				result += HASHMAP.Hash(inp);
 			}
-
 			return result;
 		}
 
-		protected override long SolvePart2() {
+		public long SolvePart2(string[] input) {
 			long result = 0;
-			var inputs = File.ReadAllLines("testinput.txt")[0].Split(',');
+			var inputs = input[0].Split(',');
 			Debug.Assert(HASHMAP.Hash("HASH") == 52, "Hashing is incorrect");
 			var h = new HASHMAP(256);
-			foreach (var input in inputs) {
-				if (input.Contains("=")) {
-					var s = input.Split('=');
+			foreach (var inp in inputs) {
+				if (inp.Contains("=")) {
+					var s = inp.Split('=');
 					var label = s[0];
 					var focal = s[1];
 					h.Add(label, int.Parse(focal));
 				} else {
-					var label = input.Split('-')[0];
+					var label = inp.Split('-')[0];
 					h.Remove(label);
 				}
 			}
 			h.PrintResult();
-			return result; //TODO what
+			return result;
 		}
 
 		private class Lens {

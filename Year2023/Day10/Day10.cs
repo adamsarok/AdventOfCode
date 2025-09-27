@@ -5,26 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day10 {
-	public class Day10 : Solver {
-		public Day10() : base(2023, 10) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
-			input = ReadInput();
+namespace Year2023 {
+	public class Day10 : IAocSolver {
+		public long SolvePart1(string[] input) {
 			Queue<Step> q = new Queue<Step>();
 			for (int y = 0; y < input.Length; y++) {
 				var row = input[y];
@@ -42,11 +25,10 @@ namespace Year2023.Day10 {
 					}
 				}
 			}
-
 			return result;
 		}
 
-		protected override long SolvePart2() {
+		public long SolvePart2(string[] input) {
 			//start flood fill from all edge tiles
 			//how do I check if a tile is floodable with the squeeze rule?
 			//it would be easy without the squeeze
@@ -180,5 +162,6 @@ namespace Year2023.Day10 {
 			}
 			return result;
 		}
+
 	}
 }

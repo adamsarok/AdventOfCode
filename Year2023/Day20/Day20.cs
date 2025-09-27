@@ -5,29 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day20 {
-	public class Day20 : Solver {
-		public Day20() : base(2023, 20) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
+namespace Year2023 {
+	public class Day20 : IAocSolver {
+		public long SolvePart1(string[] input) {
 			long result = 0;
 
 			Circuit circuit = new Circuit();
-			var input = File.ReadAllLines("shortinput.txt");
 			foreach (var l in input) {
 				var s = l.Split("->");
 				var m = s[0].Trim();
@@ -63,10 +46,8 @@ namespace Year2023.Day20 {
 			return result;
 		}
 
-		protected override long SolvePart2() {
-			long result = 0;
-
-			return result;
+		public long SolvePart2(string[] input) {
+			return 0;
 		}
 
 		public class Circuit {

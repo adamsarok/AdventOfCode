@@ -5,37 +5,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Year2023.Day03 {
-	public class Day03 : Solver {
-		public Day03() : base(2023, 3) {
-		}
-		protected override void ReadInputPart1(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override void ReadInputPart2(string fileName) {
-			//input = new();
-			foreach (var l in File.ReadAllLines(fileName)) {
-
-			}
-		}
-
-		protected override long SolvePart1() {
+namespace Year2023 {
+	public class Day03 : IAocSolver {
+		public long SolvePart1(string[] input) {
 			int part1 = 0;
-			var lines = File.ReadAllLines("day3input.txt");
 			using (StreamWriter outputFile = new StreamWriter("day3output.txt")) {
-
-				for (int i = 0; i < lines.Length; i++) {
-					var line = lines[i];
+				for (int i = 0; i < input.Length; i++) {
+					var line = input[i];
 					outputFile.Write(line + "   ");
 					string lineBefore = null;
 					string lineAfter = null;
-					if (i >= 1) lineBefore = lines[i - 1];
-					if (lines.Length > i + 1) lineAfter = lines[i + 1];
-
+					if (i >= 1) lineBefore = input[i - 1];
+					if (input.Length > i + 1) lineAfter = input[i + 1];
 					string actNumber = "";
 					bool isPart = false;
 					for (int j = 0; j < line.Length; j++) {
@@ -50,11 +31,11 @@ namespace Year2023.Day03 {
 								|| CheckPartChar(lineAfter, j - 1)
 								|| CheckPartChar(lineAfter, j)
 								|| CheckPartChar(lineAfter, j + 1))) {
-								isPart = true;
-							}
-						} else {
-							SetNum(ref part1, outputFile, ref actNumber, ref isPart);
+							isPart = true;
 						}
+					} else {
+						SetNum(ref part1, outputFile, ref actNumber, ref isPart);
+					}
 					}
 					SetNum(ref part1, outputFile, ref actNumber, ref isPart);
 					outputFile.WriteLine();
@@ -63,19 +44,18 @@ namespace Year2023.Day03 {
 			return (long)part1;
 		}
 
-		protected override long SolvePart2() {
+		public long SolvePart2(string[] input) {
 			int part2 = 0;
-			var lines = File.ReadAllLines("day3input.txt");
 			Dictionary<Vec, List<int>> numbersForGears = new Dictionary<Vec, List<int>>();
 			Dictionary<int, int> numbersByID = new Dictionary<int, int>();
 			using (StreamWriter outputFile = new StreamWriter("day3output.txt")) {
-				for (int i = 0; i < lines.Length; i++) {
-					var line = lines[i];
+				for (int i = 0; i < input.Length; i++) {
+					var line = input[i];
 					outputFile.Write(line + "   ");
 					string lineBefore = null;
 					string lineAfter = null;
-					if (i >= 1) lineBefore = lines[i - 1];
-					if (lines.Length > i + 1) lineAfter = lines[i + 1];
+					if (i >= 1) lineBefore = input[i - 1];
+					if (input.Length > i + 1) lineAfter = input[i + 1];
 					string actNumber = "";
 					int actID = 0;
 					List<Vec> gearCharsForThisNum = new List<Vec>();
