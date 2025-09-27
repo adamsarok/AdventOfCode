@@ -10,18 +10,20 @@ namespace Year2023 {
 	public class Day12 : IAocSolver {
 		public long SolvePart1(string[] input) {
 			int result = 0;
-			Stopwatch sw = Stopwatch.StartNew();
 			foreach (var line in input) {
-				var solver = new Day12Solver(line.Split(' '), 5);
+				var solver = new Day12Solver(line.Split(' '), 1);
 				result += solver.Solutions.Count;
 			}
-			sw.Stop();
-			Console.WriteLine($"Part1 elapsed: {sw.ElapsedMilliseconds}");
 			return result;
 		}
 
 		public long SolvePart2(string[] input) {
-			return 0;
+			int result = 0;
+			foreach (var line in input) {
+				var solver = new Day12Solver(line.Split(' '), 5);
+				result += solver.Solutions.Count;
+			}
+			return result;
 		}
 
 		private class Day12Solver {
@@ -30,6 +32,7 @@ namespace Year2023 {
 			string line = "";
 			public Day12Solver(string[] inputs, int repeat) {
 				for (int i = 0; i < repeat; i++) {
+					if (i > 0) line += "?";
 					line += inputs[0];
 					conditions.AddRange(GetConditions(inputs[1]));
 				}
