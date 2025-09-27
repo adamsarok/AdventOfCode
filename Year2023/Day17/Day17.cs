@@ -1,10 +1,7 @@
 using Helpers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Year2023 {
 	public class Day17 : IAocSolver {
@@ -16,141 +13,110 @@ namespace Year2023 {
 			this.input = input;
 			height = input.Length;
 			width = input[0].Length;
-
-			return 0; // TODO: implement logic
+			return FindMinHeatLoss(1, 3);
 		}
+
 		public long SolvePart2(string[] input) {
-			return 0;
+			this.input = input;
+			height = input.Length;
+			width = input[0].Length;
+			return FindMinHeatLoss(4, 10);
 		}
 
+		private long FindMinHeatLoss(int minSteps, int maxSteps) {
+			// State: (row, col, direction, consecutive_steps)
+			var distances = new Dictionary<State, int>();
+			var pq = new PriorityQueue<State, int>();
+			
+			// Initialize with starting positions (can go right or down from start)
+			var startRight = new State(0, 0, Direction.Right, 0);
+			var startDown = new State(0, 0, Direction.Down, 0);
+			
+			distances[startRight] = 0;
+			distances[startDown] = 0;
+			pq.Enqueue(startRight, 0);
+			pq.Enqueue(startDown, 0);
 
+			while (pq.Count > 0) {
+				var current = pq.Dequeue();
+				var currentDist = distances[current];
 
-		int[,] costs;
+				// Check if we reached the destination
+				if (current.Row == height - 1 && current.Col == width - 1) {
+					return currentDist;
+				}
 
-		// we have to store visited as visited FROM a direction, otherwose we would mark the 2nd row as visited
-		// starting from the left and we could not turn back (from example input)
+				// Try all possible moves
+				foreach (var direction in Enum.GetValues<Direction>()) {
+					var newRow = current.Row + GetRowDelta(direction);
+					var newCol = current.Col + GetColDelta(direction);
 
-		Directions[,] visited;
+					// Check bounds
+					if (newRow < 0 || newRow >= height || newCol < 0 || newCol >= width) {
+						continue;
+					}
 
-		[Flags]
-		enum Directions {
-			None = 0,
-			Left = 1,
-			Right = 1 << 1,
-			Up = 1 << 2,
-			Down = 1 << 3
-		}
-		HashSet<Vertex> dirty;
+					// Check if we can't go in the opposite direction
+					if (IsOppositeDirection(current.Direction, direction)) {
+						continue;
+					}
 
-		//this whole thing is bad, none of the costs match, what was I doing here?
+					var newConsecutive = (current.Direction == direction) ? current.ConsecutiveSteps + 1 : 1;
 
-		record struct Vertex(int x, int y, int cost, Directions lastDir, int dirCount) { }
-		protected long SolvePart1() {
-			//there is an error somewhere - if I check visited early, I don't get the optimal route 
-			//if I check late there are too many queued vertices but result is correct
-			//there is a fundamental error how dijkstra is implemented for this matrix
+					// Check consecutive step constraints
+					if (newConsecutive > maxSteps) {
+						continue;
+					}
 
-			//input[0][0] = '0';
-			costs = new int[width, height];
-			visited = new Directions[width, height];
-			for (int x = 0; x < input[0].Length; x++) {
-				for (int y = 0; y < input.Length; y++) {
-					costs[y, x] = int.MaxValue;
+					// For Part 2: must move at least minSteps before turning
+					if (current.ConsecutiveSteps > 0 && current.ConsecutiveSteps < minSteps && current.Direction != direction) {
+						continue;
+					}
+
+					var newState = new State(newRow, newCol, direction, newConsecutive);
+					var newDist = currentDist + GetHeatLoss(newRow, newCol);
+
+					if (!distances.ContainsKey(newState) || newDist < distances[newState]) {
+						distances[newState] = newDist;
+						pq.Enqueue(newState, newDist);
+					}
 				}
 			}
-			dirty = new HashSet<Vertex>();
-			dirty.Add(new Vertex(0, 0, 0, Directions.None, 0));
-			long cnt = 0;
-			while (dirty.Count > 0) {
-				//cnt++;
-				var next = dirty.First();
-				dirty.Remove(next);
-				//if (next.lastDir != Directions.None && visited[next.y, next.x].HasFlag(next.lastDir)) continue;
-				//PrintOut(next);
-				visited[next.x, next.y] = visited[next.x, next.y] | next.lastDir;
 
-				//TODO: we now finish in OK time, but something is still not right
-				//on the testinput we get 104 instead of 102 :(
-
-				//Console.WriteLine($"Visiting {next.x}:{next.y}");
-				//if (IsDone(ref cnt)) break;
-				if (next.lastDir != Directions.Down) TryQueue(next, Directions.Up);
-				if (next.lastDir != Directions.Up) TryQueue(next, Directions.Down);
-				if (next.lastDir != Directions.Right) TryQueue(next, Directions.Left);
-				if (next.lastDir != Directions.Left) TryQueue(next, Directions.Right);
-				Debug();
-			}
-			Debug();
-			return cnt;
+			return -1; // Should not reach here
 		}
 
-		private void Debug( List<Vec> blue = null, List<Vec> red = null) {
-			Console.Clear();
-			for (int y = 0; y < height; y++) {
-				for (int x = 0; x < width; x++) {
-					if (blue != null && blue.Any(p => p.x == x && p.y == y)) {
-						Console.ForegroundColor = ConsoleColor.Blue;
-					}
-					if (red != null && red.Any(p => p.x == x && p.y == y)) {
-						Console.ForegroundColor = ConsoleColor.Red;
-					}
-					if (input[y][x] == '#') Console.Write(height > 20 ? "#" : "  #  ");
-					else {
-						if (height > 20) Console.Write(input[y][x]);
-						else Console.Write(costs[x, y] == long.MaxValue ? " 000 " : $" {costs[x, y].ToString("000")} ");
-					}
-					Console.ResetColor();
-				}
-				Console.WriteLine();
-			}
-			Thread.Sleep(250);
+		private int GetHeatLoss(int row, int col) {
+			return int.Parse(input[row][col].ToString());
 		}
 
-
-		private void TryQueue(Vertex prev, Directions dir) {
-			int x = prev.x, y = prev.y;
-			int dirCount = prev.lastDir == dir ? prev.dirCount + 1 : 1;
-			if (dirCount > 3) {
-				return;
-			}
-			switch (dir) {
-				case Directions.Left:
-					x--;
-					break;
-				case Directions.Right:
-					x++;
-					break;
-				case Directions.Up:
-					y--;
-					break;
-				case Directions.Down:
-					y++;
-					break;
-			}
-			if (x < 0 || y < 0 ||
-				x >= input[0].Length || y >= input.Length) return;
-			var costTo = int.Parse((input[y][x]).ToString()) + prev.cost;
-			if (costTo < costs[y, x]) costs[y, x] = costTo;
-			if (dir != Directions.None && visited[x, y].HasFlag(dir)) return;
-
-			// if (visited[y, x] != Directions.None) return;
-			dirty.Add(new Vertex(x, y, costTo, dir, dirCount));
+		private int GetRowDelta(Direction direction) {
+			return direction switch {
+				Direction.Up => -1,
+				Direction.Down => 1,
+				_ => 0
+			};
 		}
 
-		private void PrintResult(long cnt) {
-			var result = costs[input.Length - 1, input[0].Length - 1];
-			var l = result.ToString().Length + 1;
-			for (int y = 0; y < input.Length; ++y) {
-				for (int x = 0; x < input[0].Length; x++) {
-					var d = costs[y, x].ToString();
-					Console.Write(d.PadRight(l, ' '));
-				}
-				Console.WriteLine();
-			}
-			Console.WriteLine(costs[input.Length - 1, input[0].Length - 1]);
-			Console.WriteLine($"in steps: {cnt}");
+		private int GetColDelta(Direction direction) {
+			return direction switch {
+				Direction.Left => -1,
+				Direction.Right => 1,
+				_ => 0
+			};
 		}
 
+		private bool IsOppositeDirection(Direction dir1, Direction dir2) {
+			return (dir1 == Direction.Up && dir2 == Direction.Down) ||
+				   (dir1 == Direction.Down && dir2 == Direction.Up) ||
+				   (dir1 == Direction.Left && dir2 == Direction.Right) ||
+				   (dir1 == Direction.Right && dir2 == Direction.Left);
+		}
 
+		private enum Direction {
+			Up, Down, Left, Right
+		}
+
+		private record State(int Row, int Col, Direction Direction, int ConsecutiveSteps);
 	}
 }
