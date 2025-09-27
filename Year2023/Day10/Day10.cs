@@ -31,76 +31,71 @@ namespace Year2023 {
 		}
 
 		public long SolvePart2(string[] input) {
-			// First get the main loop path from part 1
+			// Get the main loop path from part 1
 			SolvePart1(input);
-
 			int height = input.Length;
 			int width = input[0].Length;
-			bool[,] isOutside = new bool[height * 2 - 1, width * 2 - 1];
-			Queue<(int y, int x)> queue = new Queue<(int y, int x)>();
 
-			// Initialize edges of the expanded grid
-			for (int y = 0; y < height * 2 - 1; y++) {
-				queue.Enqueue((y, 0));
-				queue.Enqueue((y, width * 2 - 2));
-			}
-			for (int x = 0; x < width * 2 - 1; x++) {
-				queue.Enqueue((0, x));
-				queue.Enqueue((height * 2 - 2, x));
-			}
+			// Build ordered loop path
+			var loopPath = BuildOrderedLoopPath();
 
-			// Flood fill on a doubled grid to handle squeezing
-			while (queue.Count > 0) {
-				var (y, x) = queue.Dequeue();
-				if (y < 0 || x < 0 || y >= height * 2 - 1 || x >= width * 2 - 1 || isOutside[y, x])
-					continue;
-
-				isOutside[y, x] = true;
-
-				// If we're on an actual tile position (not between tiles)
-				if (y % 2 == 0 && x % 2 == 0) {
-					int realY = y / 2;
-					int realX = x / 2;
-					// Only spread through non-pipe tiles or unvisited coordinates
-					if (!IsPartOfLoop(realX, realY)) {
-						queue.Enqueue((y + 2, x)); // Down
-						queue.Enqueue((y - 2, x)); // Up
-						queue.Enqueue((y, x + 2)); // Right
-						queue.Enqueue((y, x - 2)); // Left
-					}
-				}
-
-				// Handle squeezing - check if we can pass between pipes
-				if (y % 2 == 1) { // Vertical gap
-					bool canSqueeze = CanSqueezeVertically(x / 2, y / 2);
-					if (canSqueeze) {
-						queue.Enqueue((y + 1, x));
-						queue.Enqueue((y - 1, x));
-					}
-				}
-				if (x % 2 == 1) { // Horizontal gap
-					bool canSqueeze = CanSqueezeHorizontally(x / 2, y / 2);
-					if (canSqueeze) {
-						queue.Enqueue((y, x + 1));
-						queue.Enqueue((y, x - 1));
-					}
-				}
-			}
-
-			// Count inside tiles
 			int insideCount = 0;
-			for (int y = 0; y < height; y++) {
-				for (int x = 0; x < width; x++) {
-					if (!IsPartOfLoop(x, y) && !isOutside[y * 2, x * 2]) {
-						insideCount++;
+			using (StreamWriter writer = new StreamWriter("debug_output.txt")) {
+				for (int y = 0; y < height; y++) {
+					for (int x = 0; x < width; x++) {
+						if (IsPartOfLoop(x, y)) {
+							writer.Write(input[y][x]);
+						} else if (IsPointInPolygon(x + 0.5, y + 0.5, loopPath)) {
+							writer.Write('*');
+							insideCount++;
+						} else {
+							writer.Write('.');
+						}
 					}
+					writer.WriteLine();
 				}
 			}
-
-			// Write debug output to file
-            WriteDebugOutput(input, isOutside);
-
 			return insideCount;
+		}
+
+		private List<(double x, double y)> BuildOrderedLoopPath() {
+			// Find the start point
+			var start = visitedCoords.SelectMany(kvp => kvp.Value.Select(y => (kvp.Key, y))).First();
+			var path = new List<(double x, double y)>();
+			var visited = new HashSet<(int, int)>();
+			(int, int) current = start;
+			visited.Add(current);
+			path.Add((current.Item1 + 0.5, current.Item2 + 0.5));
+			while (true) {
+				bool found = false;
+				foreach (var (dx, dy) in new[] { (0, 1), (1, 0), (0, -1), (-1, 0) }) {
+					var next = (current.Item1 + dx, current.Item2 + dy);
+					if (visited.Contains(next)) continue;
+					if (IsPartOfLoop(next.Item1, next.Item2)) {
+						visited.Add(next);
+						path.Add((next.Item1 + 0.5, next.Item2 + 0.5));
+						current = next;
+						found = true;
+						break;
+					}
+				}
+				if (!found) break;
+				if (current == start) break;
+			}
+			return path;
+		}
+
+		private bool IsPointInPolygon(double px, double py, List<(double x, double y)> poly) {
+			int crossings = 0;
+			for (int i = 0; i < poly.Count; i++) {
+				var a = poly[i];
+				var b = poly[(i + 1) % poly.Count];
+				if (((a.y > py) != (b.y > py)) &&
+					(px < (b.x - a.x) * (py - a.y) / (b.y - a.y + 1e-12) + a.x)) {
+					crossings++;
+				}
+			}
+			return crossings % 2 == 1;
 		}
 
 		private bool IsPartOfLoop(int x, int y) {
@@ -127,6 +122,37 @@ namespace Year2023 {
 
 			// Only block if both are part of the loop and both connect across the gap
 			return !(leftLoop && rightLoop && ConnectsRight(left) && ConnectsLeft(right));
+		}
+
+		private bool CanSqueezeDiagonalDR(int x, int y) {
+    // Between (x, y) and (x+1, y+1)
+    if (x < 0 || y < 0 || x + 1 >= input[0].Length || y + 1 >= input.Length) return true;
+    char c1 = input[y][x];
+    char c2 = input[y + 1][x + 1];
+    bool loop1 = IsPartOfLoop(x, y);
+    bool loop2 = IsPartOfLoop(x + 1, y + 1);
+    return !(loop1 && loop2 && ConnectsDownLeft(c1) && ConnectsUpRight(c2));
+}
+private bool CanSqueezeDiagonalDL(int x, int y) {
+    // Between (x+1, y) and (x, y+1)
+    if (x + 1 >= input[0].Length || y < 0 || x < 0 || y + 1 >= input.Length) return true;
+    char c1 = input[y][x + 1];
+    char c2 = input[y + 1][x];
+    bool loop1 = IsPartOfLoop(x + 1, y);
+    bool loop2 = IsPartOfLoop(x, y + 1);
+    return !(loop1 && loop2 && ConnectsDownRight(c1) && ConnectsUpLeft(c2));
+}
+		private bool ConnectsDownLeft(char c) {
+			return c == 'J';
+		}
+		private bool ConnectsUpRight(char c) {
+			return c == 'F';
+		}
+		private bool ConnectsDownRight(char c) {
+			return c == 'L';
+		}
+		private bool ConnectsUpLeft(char c) {
+			return c == '7';
 		}
 
 		private bool ConnectsUp(char c) {
