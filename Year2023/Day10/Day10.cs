@@ -31,21 +31,22 @@ namespace Year2023 {
 		}
 
 		public long SolvePart2(string[] input) {
-			// Get the main loop path from part 1
 			SolvePart1(input);
 			int height = input.Length;
 			int width = input[0].Length;
-
-			// Build ordered loop path
-			var loopPath = BuildOrderedLoopPath();
-
 			int insideCount = 0;
 			using (StreamWriter writer = new StreamWriter("debug_output.txt")) {
 				for (int y = 0; y < height; y++) {
+					bool inside = false;
 					for (int x = 0; x < width; x++) {
 						if (IsPartOfLoop(x, y)) {
-							writer.Write(input[y][x]);
-						} else if (IsPointInPolygon(x + 0.5, y + 0.5, loopPath)) {
+							char c = input[y][x];
+							writer.Write(c);
+							// Toggle inside on vertical crossings
+							if (c == '|' || c == 'J' || c == 'L' || c == 'S') {
+								inside = !inside;
+							}
+						} else if (inside) {
 							writer.Write('*');
 							insideCount++;
 						} else {
@@ -56,6 +57,60 @@ namespace Year2023 {
 				}
 			}
 			return insideCount;
+		}
+
+		private List<(double x, double y)> BuildLoopPolygon() {
+			// Find the start tile
+			var start = visitedCoords.SelectMany(kvp => kvp.Value.Select(y => (kvp.Key, y))).First();
+			int x = start.Item1, y = start.Item2;
+			// Find the first valid direction from S
+			(int dx, int dy) = (0, 0);
+			foreach (var dir in new[] { (0, 1), (1, 0), (0, -1), (-1, 0) }) {
+				int nx = x + dir.Item1, ny = y + dir.Item2;
+				if (nx < 0 || ny < 0 || ny >= input.Length || nx >= input[0].Length) continue;
+				if (IsPartOfLoop(nx, ny)) {
+					dx = dir.Item1; dy = dir.Item2;
+					break;
+				}
+			}
+			var polygon = new List<(double x, double y)>();
+			var visited = new HashSet<(int, int, int, int)>();
+			int startX = x, startY = y, startDx = dx, startDy = dy;
+			do {
+				polygon.Add((x + 0.5, y + 0.5));
+				visited.Add((x, y, dx, dy));
+				(int nx, int ny, int ndx, int ndy) = GetNextPipe(x, y, dx, dy);
+				x = nx; y = ny; dx = ndx; dy = ndy;
+				if (visited.Contains((x, y, dx, dy))) break; // Prevent infinite loop
+			} while (!(x == startX && y == startY && dx == startDx && dy == startDy));
+			return polygon;
+		}
+
+		private (int nx, int ny, int ndx, int ndy) GetNextPipe(int x, int y, int dx, int dy) {
+			int nx = x + dx, ny = y + dy;
+			char pipe = input[ny][nx];
+			// Determine next direction based on pipe type
+			if (pipe == '-') {
+				return (nx, ny, dx, 0);
+			} else if (pipe == '|') {
+				return (nx, ny, 0, dy);
+			} else if (pipe == 'L') {
+				if (dx == 0 && dy == -1) return (nx, ny, 1, 0); // from north to east
+				if (dx == -1 && dy == 0) return (nx, ny, 0, 1); // from west to south
+			} else if (pipe == 'J') {
+				if (dx == 0 && dy == -1) return (nx, ny, -1, 0); // from north to west
+				if (dx == 1 && dy == 0) return (nx, ny, 0, 1); // from east to south
+			} else if (pipe == '7') {
+				if (dx == 0 && dy == 1) return (nx, ny, -1, 0); // from south to west
+				if (dx == 1 && dy == 0) return (nx, ny, 0, -1); // from east to north
+			} else if (pipe == 'F') {
+				if (dx == 0 && dy == 1) return (nx, ny, 1, 0); // from south to east
+				if (dx == -1 && dy == 0) return (nx, ny, 0, -1); // from west to north
+			} else if (pipe == 'S') {
+				// Should not happen except at start
+				return (nx, ny, dx, dy);
+			}
+			return (nx, ny, dx, dy);
 		}
 
 		private List<(double x, double y)> BuildOrderedLoopPath() {
@@ -100,79 +155,6 @@ namespace Year2023 {
 
 		private bool IsPartOfLoop(int x, int y) {
 			return visitedCoords.TryGetValue(x, out var yList) && yList.Contains(y);
-		}
-
-		private bool CanSqueezeVertically(int x, int y) {
-			if (y < 0 || y >= input.Length - 1) return true;
-			char top = input[y][x];
-			char bottom = input[y + 1][x];
-			bool topLoop = IsPartOfLoop(x, y);
-			bool bottomLoop = IsPartOfLoop(x, y + 1);
-
-			// Only block if both are part of the loop and both connect across the gap
-			return !(topLoop && bottomLoop && ConnectsDown(top) && ConnectsUp(bottom));
-		}
-
-		private bool CanSqueezeHorizontally(int x, int y) {
-			if (x < 0 || x >= input[y].Length - 1) return true;
-			char left = input[y][x];
-			char right = input[y][x + 1];
-			bool leftLoop = IsPartOfLoop(x, y);
-			bool rightLoop = IsPartOfLoop(x + 1, y);
-
-			// Only block if both are part of the loop and both connect across the gap
-			return !(leftLoop && rightLoop && ConnectsRight(left) && ConnectsLeft(right));
-		}
-
-		private bool CanSqueezeDiagonalDR(int x, int y) {
-    // Between (x, y) and (x+1, y+1)
-    if (x < 0 || y < 0 || x + 1 >= input[0].Length || y + 1 >= input.Length) return true;
-    char c1 = input[y][x];
-    char c2 = input[y + 1][x + 1];
-    bool loop1 = IsPartOfLoop(x, y);
-    bool loop2 = IsPartOfLoop(x + 1, y + 1);
-    return !(loop1 && loop2 && ConnectsDownLeft(c1) && ConnectsUpRight(c2));
-}
-private bool CanSqueezeDiagonalDL(int x, int y) {
-    // Between (x+1, y) and (x, y+1)
-    if (x + 1 >= input[0].Length || y < 0 || x < 0 || y + 1 >= input.Length) return true;
-    char c1 = input[y][x + 1];
-    char c2 = input[y + 1][x];
-    bool loop1 = IsPartOfLoop(x + 1, y);
-    bool loop2 = IsPartOfLoop(x, y + 1);
-    return !(loop1 && loop2 && ConnectsDownRight(c1) && ConnectsUpLeft(c2));
-}
-		private bool ConnectsDownLeft(char c) {
-			return c == 'J';
-		}
-		private bool ConnectsUpRight(char c) {
-			return c == 'F';
-		}
-		private bool ConnectsDownRight(char c) {
-			return c == 'L';
-		}
-		private bool ConnectsUpLeft(char c) {
-			return c == '7';
-		}
-
-		private bool ConnectsUp(char c) {
-			// Up: |, F, 7, S
-			return c == '|' || c == 'F' || c == '7' || c == 'S';
-		}
-
-		private bool ConnectsDown(char c) {
-			// Down: |, J, L, S
-			return c == '|' || c == 'J' || c == 'L' || c == 'S';
-		}
-
-		private bool ConnectsLeft(char c) {
-			// Left: -, L, F, S
-			return c == '-' || c == 'L' || c == 'F' || c == 'S';
-		}	
-
-		private bool ConnectsRight(char c) {
-			// Right: -, J, 7, S
-			return c == '-' || c == 'J' || c == '7' || c == 'S';
 		}
 
 		Dictionary<int, List<int>> visitedCoords = new Dictionary<int, List<int>>();
