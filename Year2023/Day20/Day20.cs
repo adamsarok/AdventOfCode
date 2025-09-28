@@ -9,50 +9,20 @@ using static Year2023.Day20;
 namespace Year2023 {
 	public class Day20 : IAocSolver {
 		public long SolvePart1(string[] input) {
-			long result = 0;
-
-			Circuit circuit = new Circuit();
-			foreach (var l in input) {
-				var s = l.Split("->");
-				var m = s[0].Trim();
-				Module module;
-				switch (m[0]) {
-					case 'b':
-						module = new Broadcaster(m, circuit);
-						break;
-					case '%':
-						module = new FlipFlop(m.Substring(1), circuit);
-						break;
-					case '&':
-						module = new Conjunction(m.Substring(1), circuit);
-						break;
-					default: throw new Exception("module parse failed");
-				}
-				circuit.Modules.Add(module);
-			}
-			foreach (var l in input) {
-				var s = l.Split("->");
-				var m = s[0].Trim().Replace("%", "").Replace("&", "");
-				var connected = s[1].Split(",");
-				var inputModule = circuit.Modules.Where(x => x.ModuleName == m).FirstOrDefault();
-				foreach (var c in connected) {
-					var output = circuit.Modules.Where(x => x.ModuleName == c.Trim()).FirstOrDefault();
-					if (output == null) output = circuit.AddDummy(c.Trim());
-					inputModule.AddOutputModule(output);
-					output.AddInputModule(inputModule);
-				}
-			}
-			var b = circuit.Modules.FirstOrDefault(x => x.ModuleName == "broadcaster");
-			var button = circuit.AddDummy("button");
+			var circuit = new Circuit(input);
 			for (int i = 0; i < 1000; i++) {
-				circuit.Enqueue(button, b, false);
-				circuit.ProcessQueue();
+				circuit.PressButton();
 			}
-
 			return circuit.HighPulsesSent * circuit.LowPulsesSent;
 		}
 
 		public long SolvePart2(string[] input) {
+			//var circuit = new Circuit(input); 
+			//if (!circuit.Modules.Any(x => x.ModuleName == "rx")) return 0;
+			//while (circuit.RxMin == 0) { 
+			//	circuit.PressButton();
+			//}
+			//we could wait a few year for this to finish
 			return 0;
 		}
 
@@ -61,6 +31,48 @@ namespace Year2023 {
 			public List<Module> Modules = new();
 			public long HighPulsesSent = 0;
 			public long LowPulsesSent = 0;
+			public long ButtonPresses = 0;
+			public long RxMin = 0;
+			private Module button;
+			public Circuit(string[] input) {
+				button = AddDummy("button");
+				foreach (var l in input) {
+					var s = l.Split("->");
+					var m = s[0].Trim();
+					Module module;
+					switch (m[0]) {
+						case 'b':
+							module = new Broadcaster(m, this);
+							break;
+						case '%':
+							module = new FlipFlop(m.Substring(1), this);
+							break;
+						case '&':
+							module = new Conjunction(m.Substring(1), this);
+							break;
+						default: throw new Exception("module parse failed");
+					}
+					Modules.Add(module);
+				}
+				foreach (var l in input) {
+					var s = l.Split("->");
+					var m = s[0].Trim().Replace("%", "").Replace("&", "");
+					var connected = s[1].Split(",");
+					var inputModule = Modules.Where(x => x.ModuleName == m).FirstOrDefault();
+					foreach (var c in connected) {
+						var output = Modules.Where(x => x.ModuleName == c.Trim()).FirstOrDefault();
+						if (output == null) output = AddDummy(c.Trim());
+						inputModule.AddOutputModule(output);
+						output.AddInputModule(inputModule);
+					}
+				}
+			}
+			public void PressButton() {
+				ButtonPresses++;
+				var b = Modules.FirstOrDefault(x => x.ModuleName == "broadcaster");
+				Enqueue(button, b, false);
+				ProcessQueue();
+			}
 			public void Enqueue(Module from, Module to, bool pulse) {
 				if (pulse) HighPulsesSent++;
 				else LowPulsesSent++;
@@ -101,10 +113,10 @@ namespace Year2023 {
 			public override void ReceivePulse(Module from, Module to, bool pulse) {
 				if (!pulse) {
 					State = !State;
-					Console.WriteLine($"{from.ModuleName} -{(pulse ? "high" : "low")}-> {to.ModuleName}");
+					//Console.WriteLine($"{from.ModuleName} -{(pulse ? "high" : "low")}-> {to.ModuleName}");
 					foreach (var module in OutputModules) circuit.Enqueue(this, module, State);
 				} else {
-					Console.WriteLine($"{from.ModuleName}  - {(pulse ? "high" : "low")} ->  {to.ModuleName}");
+					//Console.WriteLine($"{from.ModuleName}  - {(pulse ? "high" : "low")} ->  {to.ModuleName}");
 				}
 			}
 		}
@@ -118,20 +130,24 @@ namespace Year2023 {
 			public override void ReceivePulse(Module from, Module to, bool pulse) {
 				rememberedStates[from.ModuleName] = pulse;
 				State = rememberedStates.Any(x => !x.Value);
-				Console.WriteLine($"{from.ModuleName} -{(pulse ? "high" : "low")}-> {ModuleName}");
+				//Console.WriteLine($"{from.ModuleName} -{(pulse ? "high" : "low")}-> {ModuleName}");
 				foreach (var module in OutputModules) circuit.Enqueue(this, module, State);
 			}
 		}
 		public class Broadcaster : Module {
 			public Broadcaster(string moduleName, Circuit circuit) : base(moduleName, circuit) { }
 			public override void ReceivePulse(Module from, Module to, bool pulse) {
-				Console.WriteLine($"{from.ModuleName} -{(pulse ? "high" : "low")}-> {ModuleName}");
+				//Console.WriteLine($"{from.ModuleName} -{(pulse ? "high" : "low")}-> {ModuleName}");
 				foreach (var module in OutputModules) circuit.Enqueue(this, module, State);
 			}
 		}
 		public class Dummy : Module { //output, button, module with no definition -> does nothing w/ input
 			public Dummy(string moduleName, Circuit circuit) : base(moduleName, circuit) { }
-			public override void ReceivePulse(Module from, Module to, bool pulse) { }
+			public override void ReceivePulse(Module from, Module to, bool pulse) {
+				if (!pulse && ModuleName == "rx" && circuit.RxMin == 0) {
+					circuit.RxMin = circuit.ButtonPresses;
+				}
+			}
 		}
 	}
 }
