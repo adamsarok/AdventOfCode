@@ -1,230 +1,232 @@
 using Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Year2023 {
-	public class Day19 : IAocSolver {
-		public long SolvePart1(string[] input) {
-			long result = 0;
-			var s = new SolverPart1(input);
-			s.Solve();
-			return result;
+
+namespace Year2023;
+public class Day19 : IAocSolver {
+	public long SolvePart1(string[] input) {
+		var s = new SolverPart1(input);
+		return s.Solve();
+	}
+	public long SolvePart2(string[] input) {
+		long result = 0;
+		var s = new SolverPart2(input);
+		return s.Solve();
+	}
+	public class SolverPart2 : SolverBase {
+		public SolverPart2(string[] input) : base(input) { }
+
+		public long Solve() {
+			return CountAccepted(new Dictionary<Rule.TargetFields, (long min, long max)> {
+					{ Rule.TargetFields.x, (1, 4000) },
+					{ Rule.TargetFields.m, (1, 4000) },
+					{ Rule.TargetFields.a, (1, 4000) },
+					{ Rule.TargetFields.s, (1, 4000) }
+				}, "in");
 		}
-		public long SolvePart2(string[] input) {
-			long result = 0;
-			var s = new SolverPart2(input);
-			s.Solve();
-			return result;
-		}
 
-		public class SolverPart2 : SolverBase {
-			public SolverPart2(string[] input) : base(input) { }
-			record struct Interval(Rule.TargetFields targetField, long from, long to) { }
+		private long CountAccepted(Dictionary<Rule.TargetFields, (long min, long max)> ranges, string workflowName) {
+			if (workflowName == "A") {
+				return (ranges[Rule.TargetFields.x].max - ranges[Rule.TargetFields.x].min + 1) *
+					   (ranges[Rule.TargetFields.m].max - ranges[Rule.TargetFields.m].min + 1) *
+					   (ranges[Rule.TargetFields.a].max - ranges[Rule.TargetFields.a].min + 1) *
+					   (ranges[Rule.TargetFields.s].max - ranges[Rule.TargetFields.s].min + 1);
+			}
+			if (workflowName == "R") {
+				return 0;
+			}
 
-			void SplitIntervals(Rule.Relations rel, int value, ref List<Interval> intervals) {
-				Interval? toSplit;
-				if (rel == Rule.Relations.GreaterThan) {
-					toSplit = intervals.FirstOrDefault(x => x.from < value && x.to > value);
+			long total = 0;
+			var currentRanges = new Dictionary<Rule.TargetFields, (long min, long max)>(ranges);
+
+			foreach (var rule in workflows[workflowName]) {
+				if (rule.Rel == Rule.Relations.Fallback) {
+					total += CountAccepted(currentRanges, rule.NextStep);
 				} else {
-					toSplit = intervals.FirstOrDefault(x => x.from < value && x.to >= value);
-				}
+					var (passingRanges, failingRanges) = SplitRanges(currentRanges, rule);
 
-				if (toSplit != null) {
-					var val = toSplit.Value;
-					intervals.Remove(val);
-					Interval n1, n2;
-					if (rel == Rule.Relations.GreaterThan) {
-						n1 = new Interval(val.targetField, val.from, value);
-						n2 = new Interval(val.targetField, value + 1, val.to);
-					} else {
-						n1 = new Interval(val.targetField, val.from, value - 1);
-						n2 = new Interval(val.targetField, value, val.to);
+					if (passingRanges != null) {
+						total += CountAccepted(passingRanges, rule.NextStep);
 					}
 
-					if (n1.from > 0 && n1.from <= 4000 && n1.to > 0 && n1.to <= 4000) intervals.Add(n1);
-					if (n2.from > 0 && n2.from <= 4000 && n2.to > 0 && n2.to <= 4000) intervals.Add(n2);
+					currentRanges = failingRanges;
 				}
 			}
 
-			public void Solve() {
-				Dictionary<Rule.TargetFields, List<Interval>> intervals =
-					new Dictionary<Rule.TargetFields, List<Interval>>();
-				intervals.Add(Rule.TargetFields.a, new List<Interval> { new Interval(Rule.TargetFields.a, 1, 4000) });
-				intervals.Add(Rule.TargetFields.x, new List<Interval> { new Interval(Rule.TargetFields.x, 1, 4000) });
-				intervals.Add(Rule.TargetFields.m, new List<Interval> { new Interval(Rule.TargetFields.m, 1, 4000) });
-				intervals.Add(Rule.TargetFields.s, new List<Interval> { new Interval(Rule.TargetFields.s, 1, 4000) });
+			return total;
+		}
 
-				foreach (var wf in workflows) {
-					foreach (var r in wf.Value.Where(r => r.Rel != Rule.Relations.Fallback)) {
-						var list = intervals[r.TargetField];
-						SplitIntervals(r.Rel, r.Value, ref list);
-					}
+		private (Dictionary<Rule.TargetFields, (long min, long max)>? passing, Dictionary<Rule.TargetFields, (long min, long max)> failing)
+			SplitRanges(Dictionary<Rule.TargetFields, (long min, long max)> ranges, Rule rule) {
+
+			var passingRanges = new Dictionary<Rule.TargetFields, (long min, long max)>(ranges);
+			var failingRanges = new Dictionary<Rule.TargetFields, (long min, long max)>(ranges);
+
+			var fieldRange = ranges[rule.TargetField];
+
+			if (rule.Rel == Rule.Relations.GreaterThan) {
+				if (fieldRange.max > rule.Value) {
+					passingRanges[rule.TargetField] = (Math.Max(fieldRange.min, rule.Value + 1), fieldRange.max);
+				} else {
+					passingRanges = null;
 				}
 
-				foreach (var kvp in intervals) {
-					Console.WriteLine($"{kvp.Key}: {kvp.Value.Count} intervals");
+				if (fieldRange.min <= rule.Value) {
+					failingRanges[rule.TargetField] = (fieldRange.min, Math.Min(fieldRange.max, rule.Value));
+				} else {
+					failingRanges = null;
+				}
+			} else { 
+				if (fieldRange.min < rule.Value) {
+					passingRanges[rule.TargetField] = (fieldRange.min, Math.Min(fieldRange.max, rule.Value - 1));
+				} else {
+					passingRanges = null;
 				}
 
-				long result = 0;
-				foreach (var a in intervals[Rule.TargetFields.a]) {
-					foreach (var x in intervals[Rule.TargetFields.x]) {
-						foreach (var m in intervals[Rule.TargetFields.m]) {
-							foreach (var s in intervals[Rule.TargetFields.s]) {
-								var dummy = new Part(x.from, m.from, a.from, s.from);
-								var rDummy = TraverseWorkflows(dummy, "in");
-								var dummy2 = new Part(x.to, m.to, a.to, s.to);
-								var rDummy2 = TraverseWorkflows(dummy2, "in");
-								if (rDummy != rDummy2) {
-									throw new Exception($"{dummy}={rDummy} does not equal {dummy2}={rDummy2}");
-								}
-								if (rDummy == Results.A)
-									result += (a.to - a.from + 1) * (m.to - m.from + 1) * (x.to - x.from + 1) * (s.to - s.from + 1);
-							}
-						}
-					}
+				if (fieldRange.max >= rule.Value) {
+					failingRanges[rule.TargetField] = (Math.Max(fieldRange.min, rule.Value), fieldRange.max);
+				} else {
+					failingRanges = null;
 				}
-				Console.WriteLine($"Result: {result}");
+			}
+
+			return (passingRanges, failingRanges);
+		}
+	}
+
+	public class SolverPart1 : SolverBase {
+		public SolverPart1(string[] input) : base(input) { }
+		public long Solve() {
+			result = 0;
+			foreach (var part in parts) {
+				CheckPart(part);
+			}
+			return result;
+		}
+	}
+
+	public class SolverBase {
+		protected Dictionary<string, List<Rule>> workflows;
+		protected List<Part> parts;
+		protected long result;
+
+		protected enum Results {
+			A,
+			R
+		}
+
+		protected void CheckPart(Part part) {
+			var r = TraverseWorkflows(part, "in");
+			switch (r) {
+				case Results.A:
+					result += part.a + part.m + part.x + part.s;
+					break;
+				case Results.R:
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 
-		public class SolverPart1 : SolverBase {
-			public SolverPart1(string[] input) : base(input) { }
-			public void Solve() {
-				result = 0;
-				foreach (var part in parts) {
-					CheckPart(part);
+		protected Results TraverseWorkflows(Part part, string workflowKey) {
+			var rules = workflows[workflowKey];
+			foreach (var rule in rules) {
+				if (rule.Match(part)) {
+					Results r;
+					if (Enum.TryParse(rule.NextStep, out r)) return r;
+					return TraverseWorkflows(part, rule.NextStep);
 				}
-				Console.WriteLine(result);
+			}
+			throw new Exception("shouldn't happen");
+		}
+
+		protected void ReadInput(string[] input) {
+			workflows = new Dictionary<string, List<Rule>>();
+			parts = new List<Part>();
+			bool isWorkflows = true;
+			foreach (var l in input) {
+				if (string.IsNullOrWhiteSpace(l)) isWorkflows = false;
+				else if (isWorkflows) {
+					var w = l.Split('{');
+					List<Rule> rules = new List<Rule>();
+					foreach (var rule in w[1].Substring(0, w[1].Length - 1).Split(',')) {
+						rules.Add(Rule.ParseRule(rule));
+					}
+					string next = rules[0].NextStep;
+					if (rules.All(x => x.NextStep == next))
+						rules = new List<Rule> { new Rule(Rule.Relations.Fallback, Rule.TargetFields.a, 1, next) };
+					workflows.Add(w[0], rules);
+				} else {
+					var p = l.Substring(1, l.Length - 2).Split(',');
+					var x = int.Parse(p[0].Split('=')[1]);
+					var m = int.Parse(p[1].Split('=')[1]);
+					var a = int.Parse(p[2].Split('=')[1]);
+					var s = int.Parse(p[3].Split('=')[1]);
+					parts.Add(new Part(x, m, a, s));
+				}
 			}
 		}
 
-		public class SolverBase {
-			protected Dictionary<string, List<Rule>> workflows;
-			protected List<Part> parts;
-			protected long result;
+		protected record struct Part(long x, long m, long a, long s);
 
-			protected enum Results {
-				A,
-				R
+		protected class Rule {
+			public string NextStep { get; }
+			public Relations Rel { get; }
+			public TargetFields TargetField { get; }
+			public int Value { get; }
+
+			public Rule(Relations rel, TargetFields targetField, int value, string nextStep) {
+				Rel = rel;
+				TargetField = targetField;
+				Value = value;
+				NextStep = nextStep;
 			}
 
-			protected void CheckPart(Part part) {
-				var r = TraverseWorkflows(part, "in");
-				switch (r) {
-					case Results.A:
-						result += part.a + part.m + part.x + part.s;
-						break;
-					case Results.R:
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
+			public static Rule ParseRule(string str) {
+				if (!str.Contains("<") && !str.Contains(">")) {
+					return new Rule(Relations.Fallback, TargetFields.a, 0, str);
 				}
+				var targetField = Enum.Parse<TargetFields>(str.Substring(0, 1));
+				var relation = str.Substring(1, 1) == "<" ? Relations.LessThan : Relations.GreaterThan;
+				var value = str.Split(':')[0].Substring(2);
+				var nextStep = str.Split(':')[1];
+				return new Rule(relation, targetField, int.Parse(value), nextStep);
 			}
 
-			protected Results TraverseWorkflows(Part part, string workflowKey) {
-				var rules = workflows[workflowKey];
-				foreach (var rule in rules) {
-					if (rule.Match(part)) {
-						Results r;
-						if (Enum.TryParse(rule.NextStep, out r)) return r;
-						return TraverseWorkflows(part, rule.NextStep);
-					}
-				}
-				throw new Exception("shouldn't happen");
+			public enum Relations {
+				GreaterThan,
+				LessThan,
+				Fallback
 			}
 
-			protected void ReadInput(string[] input) {
-				workflows = new Dictionary<string, List<Rule>>();
-				parts = new List<Part>();
-				bool isWorkflows = true;
-				foreach (var l in input) {
-					if (string.IsNullOrWhiteSpace(l)) isWorkflows = false;
-					else if (isWorkflows) {
-						var w = l.Split('{');
-						List<Rule> rules = new List<Rule>();
-						foreach (var rule in w[1].Substring(0, w[1].Length - 1).Split(',')) {
-							rules.Add(Rule.ParseRule(rule));
-						}
-						string next = rules[0].NextStep;
-						if (rules.All(x => x.NextStep == next))
-							rules = new List<Rule> { new Rule(Rule.Relations.Fallback, Rule.TargetFields.a, 1, next) };
-						workflows.Add(w[0], rules);
-					} else {
-						var p = l.Substring(1, l.Length - 2).Split(',');
-						var x = int.Parse(p[0].Split('=')[1]);
-						var m = int.Parse(p[1].Split('=')[1]);
-						var a = int.Parse(p[2].Split('=')[1]);
-						var s = int.Parse(p[3].Split('=')[1]);
-						parts.Add(new Part(x, m, a, s));
-					}
-				}
+			public enum TargetFields {
+				x,
+				m,
+				a,
+				s
 			}
 
-			protected record struct Part(long x, long m, long a, long s);
-
-			protected class Rule {
-				public string NextStep { get; }
-				public Relations Rel { get; }
-				public TargetFields TargetField { get; }
-				public int Value { get; }
-
-				public Rule(Relations rel, TargetFields targetField, int value, string nextStep) {
-					Rel = rel;
-					TargetField = targetField;
-					Value = value;
-					NextStep = nextStep;
+			public bool Match(Part part) {
+				if (Rel == Relations.Fallback) return true;
+				switch (TargetField) {
+					case TargetFields.x:
+						return (Rel == Relations.GreaterThan && Value < part.x)
+							|| (Rel == Relations.LessThan && Value > part.x);
+					case TargetFields.m:
+						return (Rel == Relations.GreaterThan && Value < part.m)
+							|| (Rel == Relations.LessThan && Value > part.m);
+					case TargetFields.a:
+						return (Rel == Relations.GreaterThan && Value < part.a)
+							|| (Rel == Relations.LessThan && Value > part.a);
+					case TargetFields.s:
+						return (Rel == Relations.GreaterThan && Value < part.s)
+							|| (Rel == Relations.LessThan && Value > part.s);
 				}
-
-				public static Rule ParseRule(string str) {
-					if (!str.Contains("<") && !str.Contains(">")) {
-						return new Rule(Relations.Fallback, TargetFields.a, 0, str);
-					}
-					var targetField = Enum.Parse<TargetFields>(str.Substring(0, 1));
-					var relation = str.Substring(1, 1) == "<" ? Relations.LessThan : Relations.GreaterThan;
-					var value = str.Split(':')[0].Substring(2);
-					var nextStep = str.Split(':')[1];
-					return new Rule(relation, targetField, int.Parse(value), nextStep);
-				}
-
-				public enum Relations {
-					GreaterThan,
-					LessThan,
-					Fallback
-				}
-
-				public enum TargetFields {
-					x,
-					m,
-					a,
-					s
-				}
-
-				public bool Match(Part part) {
-					if (Rel == Relations.Fallback) return true;
-					switch (TargetField) {
-						case TargetFields.x:
-							return (Rel == Relations.GreaterThan && Value < part.x)
-								|| (Rel == Relations.LessThan && Value > part.x);
-						case TargetFields.m:
-							return (Rel == Relations.GreaterThan && Value < part.m)
-								|| (Rel == Relations.LessThan && Value > part.m);
-						case TargetFields.a:
-							return (Rel == Relations.GreaterThan && Value < part.a)
-								|| (Rel == Relations.LessThan && Value > part.a);
-						case TargetFields.s:
-							return (Rel == Relations.GreaterThan && Value < part.s)
-								|| (Rel == Relations.LessThan && Value > part.s);
-					}
-					throw new Exception("shouldnt happen");
-				}
+				throw new Exception("shouldnt happen");
 			}
+		}
 
-			public SolverBase(string[] input) {
-				ReadInput(input);
-			}
+		public SolverBase(string[] input) {
+			ReadInput(input);
 		}
 	}
 }
