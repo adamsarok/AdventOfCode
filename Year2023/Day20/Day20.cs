@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Helpers.Graph;
 using static Year2023.Day20;
 
 namespace Year2023 {
@@ -17,6 +18,11 @@ namespace Year2023 {
 		}
 
 		public long SolvePart2(string[] input) {
+			var graph = new Graph(
+				[new Graph.Node("a", "A"), new Graph.Node("b", "B")],
+				[new Edge("ab", "a", "b", "A -> B")]
+			);
+			graph.WriteToHtml();
 			//var circuit = new Circuit(input); 
 			//if (!circuit.Modules.Any(x => x.ModuleName == "rx")) return 0;
 			//while (circuit.RxMin == 0) { 
