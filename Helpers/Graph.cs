@@ -200,6 +200,10 @@ public class Graph(IEnumerable<Node> nodes, IEnumerable<Edge> edges) {
 			</html>
 
 			""");
-		Process.Start(path);
+		Process.Start(new ProcessStartInfo
+		{
+			FileName = htmlPath,
+			UseShellExecute = true
+		});
 	}
 }

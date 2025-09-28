@@ -18,8 +18,16 @@ namespace Year2023 {
 		}
 
 		public long SolvePart2(string[] input) {
+			var circuit = new Circuit(input);
+			var nodes = circuit.Modules.Select(x => new Node(x.ModuleName, x.ModuleName));
+			var edges = circuit.Modules.Select(x => x.OutputModules.Select(m =>
+				new Edge($"{x.ModuleName}-{m.ModuleName}",
+					x.ModuleName,
+					m.ModuleName,
+					$"{x.ModuleName}->{m.ModuleName}"
+				)));
 			var graph = new Graph(
-				[new Graph.Node("a", "A"), new Graph.Node("b", "B")],
+				[new Node("a", "A"), new Node("b", "B")],
 				[new Edge("ab", "a", "b", "A -> B")]
 			);
 			graph.WriteToHtml();
