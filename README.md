@@ -1,10 +1,10 @@
 Advent of Code Solutions
 
-*Started in 2024. Mostly C#, 2020 in TypeScript, 2018 in Python.*
+*Started in 2024. Mostly C#, Year 2020 in TypeScript, Year 2018 in Python.*
 
 [![2024](https://img.shields.io/badge/2024-50*-green)](https://adventofcode.com/)
 
-[![2023](https://img.shields.io/badge/2023-33*-yellow)](https://adventofcode.com/)
+[![2023](https://img.shields.io/badge/2023-40*-yellow)](https://adventofcode.com/)
 
 [![2022](https://img.shields.io/badge/2022-12*-yellow)](https://adventofcode.com/)
 
@@ -22,4 +22,4 @@ Advent of Code Solutions
 
 [![2015](https://img.shields.io/badge/2015-0*-red)](https://adventofcode.com/)
 
-[![Total](https://img.shields.io/badge/Total*-178*-yellow)](https://adventofcode.com/)
+[![Total](https://img.shields.io/badge/Total*-185*-yellow)](https://adventofcode.com/)
