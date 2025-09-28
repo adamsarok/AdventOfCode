@@ -38,7 +38,8 @@ public class Graph(IEnumerable<Node> nodes, IEnumerable<Edge> edges) {
 
 			        #cy {
 			            width: 100%;
-			            height: 600px;
+			            height: calc(100vh - 200px);
+			            min-height: 400px;
 			            border: 1px solid #ccc;
 			            background-color: white;
 			            border-radius: 8px;
@@ -192,6 +193,12 @@ public class Graph(IEnumerable<Node> nodes, IEnumerable<Edge> edges) {
 
 			        // Fit the graph to the container when it's ready
 			        cy.ready(function () {
+			            cy.fit();
+			        });
+
+			        // Handle window resize
+			        window.addEventListener('resize', function() {
+			            cy.resize();
 			            cy.fit();
 			        });
 			    </script>

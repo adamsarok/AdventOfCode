@@ -1,7 +1,9 @@
 using Helpers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
 using static Helpers.Graph;
@@ -20,23 +22,25 @@ namespace Year2023 {
 		public long SolvePart2(string[] input) {
 			var circuit = new Circuit(input);
 			var nodes = circuit.Modules.Select(x => new Node(x.ModuleName, x.ModuleName));
-			var edges = circuit.Modules.Select(x => x.OutputModules.Select(m =>
+			var edges = circuit.Modules.SelectMany(x => x.OutputModules.Select(m =>
 				new Edge($"{x.ModuleName}-{m.ModuleName}",
 					x.ModuleName,
 					m.ModuleName,
 					$"{x.ModuleName}->{m.ModuleName}"
 				)));
-			var graph = new Graph(
-				[new Node("a", "A"), new Node("b", "B")],
-				[new Edge("ab", "a", "b", "A -> B")]
-			);
+			var graph = new Graph(nodes, edges);
 			graph.WriteToHtml();
-			//var circuit = new Circuit(input); 
-			//if (!circuit.Modules.Any(x => x.ModuleName == "rx")) return 0;
-			//while (circuit.RxMin == 0) { 
-			//	circuit.PressButton();
-			//}
-			//we could wait a few year for this to finish
+			//this is a bit manual - by visualizing the graph, you can check what is connected to rx
+			//find a level which has a realistic
+			//then log when the modules feeding into rx are first set to low, then calculate LCM
+			circuit.LogModules(["qd", "dh", "bb", "dp"]);
+			for (int i = 0; i < 100000000; i++) {
+				circuit.PressButton();
+				if (!circuit.ModuleFirstSetToLow.Any(x => x.Value == 0)) {
+					foreach (var kvp in circuit.ModuleFirstSetToLow) Console.WriteLine($"{kvp.Key}:{kvp.Value}");
+					return Helpers.Helpers.LCM(circuit.ModuleFirstSetToLow.Select(x => x.Value).ToArray());
+				}
+			}
 			return 0;
 		}
 
@@ -46,8 +50,9 @@ namespace Year2023 {
 			public long HighPulsesSent = 0;
 			public long LowPulsesSent = 0;
 			public long ButtonPresses = 0;
-			public long RxMin = 0;
 			private Module button;
+			public Dictionary<string, long> ModuleFirstSetToLow;
+
 			public Circuit(string[] input) {
 				button = AddDummy("button");
 				foreach (var l in input) {
@@ -103,6 +108,10 @@ namespace Year2023 {
 				Modules.Add(dummy);
 				return dummy;
 			}
+
+			internal void LogModules(IEnumerable<string> moduleNames) {
+				ModuleFirstSetToLow = moduleNames.ToDictionary(k => k, e => (long)0);
+			}
 		}
 		public abstract class Module {
 			protected readonly Circuit circuit;
@@ -127,10 +136,7 @@ namespace Year2023 {
 			public override void ReceivePulse(Module from, Module to, bool pulse) {
 				if (!pulse) {
 					State = !State;
-					//Console.WriteLine($"{from.ModuleName} -{(pulse ? "high" : "low")}-> {to.ModuleName}");
 					foreach (var module in OutputModules) circuit.Enqueue(this, module, State);
-				} else {
-					//Console.WriteLine($"{from.ModuleName}  - {(pulse ? "high" : "low")} ->  {to.ModuleName}");
 				}
 			}
 		}
@@ -144,24 +150,23 @@ namespace Year2023 {
 			public override void ReceivePulse(Module from, Module to, bool pulse) {
 				rememberedStates[from.ModuleName] = pulse;
 				State = rememberedStates.Any(x => !x.Value);
-				//Console.WriteLine($"{from.ModuleName} -{(pulse ? "high" : "low")}-> {ModuleName}");
 				foreach (var module in OutputModules) circuit.Enqueue(this, module, State);
+				if (!pulse && circuit.ModuleFirstSetToLow != null && circuit.ModuleFirstSetToLow.TryGetValue(ModuleName, out var val)) {
+					if (val == 0) {
+						circuit.ModuleFirstSetToLow[ModuleName] = circuit.ButtonPresses;
+					}
+				}
 			}
 		}
 		public class Broadcaster : Module {
 			public Broadcaster(string moduleName, Circuit circuit) : base(moduleName, circuit) { }
 			public override void ReceivePulse(Module from, Module to, bool pulse) {
-				//Console.WriteLine($"{from.ModuleName} -{(pulse ? "high" : "low")}-> {ModuleName}");
 				foreach (var module in OutputModules) circuit.Enqueue(this, module, State);
 			}
 		}
 		public class Dummy : Module { //output, button, module with no definition -> does nothing w/ input
 			public Dummy(string moduleName, Circuit circuit) : base(moduleName, circuit) { }
-			public override void ReceivePulse(Module from, Module to, bool pulse) {
-				if (!pulse && ModuleName == "rx" && circuit.RxMin == 0) {
-					circuit.RxMin = circuit.ButtonPresses;
-				}
-			}
+			public override void ReceivePulse(Module from, Module to, bool pulse) {	}
 		}
 	}
 }
